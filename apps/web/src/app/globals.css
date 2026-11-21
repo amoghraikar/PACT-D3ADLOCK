@@ -37,6 +37,18 @@
   box-sizing: border-box;
 }
 
+img {
+  display: block;
+  max-width: 100%;
+}
+
+.logo {
+  height: 38px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
 body {
   background: var(--ice-50);
   color: var(--ink-800);

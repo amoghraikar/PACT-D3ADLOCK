@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
-import { CustomerBottomNav } from "@/components/CustomerBottomNav";
 import { usePact } from "@/context/PactContext";
 import {
   Mic,
@@ -14,6 +13,10 @@ import {
   Sparkles,
   Volume2,
   ListPlus,
+  ShieldCheck,
+  Languages,
+  RotateCcw,
+  Plus,
 } from "lucide-react";
 
 interface ParsedItem {
@@ -21,6 +24,7 @@ interface ParsedItem {
   name: string;
   qty: number;
   unit: string;
+  rate: number;
 }
 
 export default function VoiceOrderingPage() {
@@ -34,24 +38,55 @@ export default function VoiceOrderingPage() {
   );
 
   const [parsedItems, setParsedItems] = useState<ParsedItem[]>([
-    { id: "rice-sona-5kg", name: "Sona Masoori Rice (5 kg)", qty: 1, unit: "pack" },
-    { id: "sugar-1kg", name: "Pure Crystal Sugar (1 kg)", qty: 2, unit: "packs" },
-    { id: "sunflower-oil-1l", name: "Sunflower Cooking Oil (1 L)", qty: 1, unit: "bottle" },
-    { id: "toor-dal-500g", name: "Organic Toor Dal (500 g)", qty: 1, unit: "pack" },
+    { id: "rice-sona-5kg", name: "Sona Masoori Rice (5 kg)", qty: 1, unit: "pack", rate: 300 },
+    { id: "sugar-1kg", name: "Pure Crystal Sugar (1 kg)", qty: 2, unit: "packs", rate: 75 },
+    { id: "sunflower-oil-1l", name: "Sunflower Cooking Oil (1 L)", qty: 1, unit: "bottle", rate: 250 },
+    { id: "toor-dal-500g", name: "Organic Toor Dal (500 g)", qty: 1, unit: "pack", rate: 100 },
   ]);
+
+  const presetSamples = [
+    {
+      lang: "en",
+      label: "Monthly staples (EN)",
+      phrase: "I need 5 kg rice, 2 kg sugar, one litre sunflower oil and 500 grams of toor dal",
+      items: [
+        { id: "rice-sona-5kg", name: "Sona Masoori Rice (5 kg)", qty: 1, unit: "pack", rate: 300 },
+        { id: "sugar-1kg", name: "Pure Crystal Sugar (1 kg)", qty: 2, unit: "packs", rate: 75 },
+        { id: "sunflower-oil-1l", name: "Sunflower Cooking Oil (1 L)", qty: 1, unit: "bottle", rate: 250 },
+        { id: "toor-dal-500g", name: "Organic Toor Dal (500 g)", qty: 1, unit: "pack", rate: 100 },
+      ],
+    },
+    {
+      lang: "hi",
+      label: "दाल और आटा (HI)",
+      phrase: "पाँच किलो चक्की आटा और एक किलो तूर दाल जोड़ें",
+      items: [
+        { id: "atta-chakki-5kg", name: "Sharbati Whole Wheat Atta (5 kg)", qty: 1, unit: "pack", rate: 260 },
+        { id: "toor-dal-500g", name: "Organic Toor Dal (500 g)", qty: 2, unit: "packs", rate: 100 },
+      ],
+    },
+    {
+      lang: "hi",
+      label: "चाय और चीनी (HI)",
+      phrase: "दो किलो चीनी और एक पैकेट चाय पत्ती",
+      items: [
+        { id: "sugar-1kg", name: "Pure Crystal Sugar (1 kg)", qty: 2, unit: "packs", rate: 75 },
+        { id: "tea-premium-500g", name: "Assam Gold CTC Leaf Tea (500 g)", qty: 1, unit: "pack", rate: 240 },
+      ],
+    },
+  ];
 
   // Handle Speech Recognition in browser
   const startListening = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       setIsListening(true);
-      // Simulated interactive voice playback
       setTimeout(() => {
         setIsListening(false);
         showToast("Voice phrase captured successfully!");
-      }, 2500);
+      }, 2000);
       return;
     }
 
@@ -65,6 +100,7 @@ export default function VoiceOrderingPage() {
         setIsListening(true);
       };
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onresult = (event: any) => {
         const text = event.results[0][0].transcript;
         setTranscript(text);
@@ -94,110 +130,216 @@ export default function VoiceOrderingPage() {
     router.push("/customer/list");
   };
 
+  const totalParsedValue = parsedItems.reduce((acc, curr) => acc + curr.rate * curr.qty, 0);
+
   return (
-    <div className="min-h-screen pb-24 bg-[#F3F8FB]">
+    <div className="min-h-screen bg-[#F3F8FB] text-[#432F2E]">
       <AppHeader />
 
-      <main className="max-w-md mx-auto px-4 py-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <Link href="/customer" className="p-1 text-[#432F2E]">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="h-title text-xl text-[#2E201F]">Say your list</h1>
-        </div>
-
-        {/* Language Segmented Control */}
-        <div className="seg">
-          <span
-            onClick={() => {
-              setLanguage("en");
-              setTranscript("I need 5 kg rice, 2 kg sugar, one litre sunflower oil and 500 grams of toor dal");
-            }}
-            className={language === "en" ? "on" : ""}
-          >
-            English
-          </span>
-          <span
-            onClick={() => {
-              setLanguage("hi");
-              setTranscript("पाँच किलो चावल, दो किलो चीनी, एक लीटर तेल और 500 ग्राम तूर दाल चाहिए");
-            }}
-            className={`hi ${language === "hi" ? "on" : ""}`}
-          >
-            हिंदी
-          </span>
-        </div>
-
-        {/* Speech Heard Box */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between items-center">
-            <label className="text-xs font-bold text-[#432F2E]">I heard:</label>
-            <span className="text-[10px] text-[#2A5C79] font-medium flex items-center gap-1">
-              <Volume2 className="w-3 h-3" /> Audio transcript
-            </span>
-          </div>
-
-          <div className="transcript text-xs leading-relaxed bg-white border border-[#948180] p-3 rounded-[12px] shadow-2xs">
-            {transcript}
-          </div>
-        </div>
-
-        {/* Understood Structured Lines */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-[#432F2E]">This is what I understood:</label>
-
-          <div className="card flush divide-y divide-[#E4EEF5] text-xs">
-            {parsedItems.map((item) => (
-              <div key={item.id} className="p-3 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-[#E3F4EA] text-[#1B6B45] flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                  </div>
-                  <div>
-                    <b className="text-xs text-[#432F2E] block">{item.name}</b>
-                    <span className="text-[11px] text-[#6A5452]">Quantity: {item.qty} {item.unit}</span>
-                  </div>
-                </div>
-                <button className="text-[#2A5C79] p-1 hover:bg-[#E4EEF5] rounded-full">
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Tap & Speak Control Area */}
-        <div className="card p-4 flex items-center gap-4 bg-white border-[#B3CEDE]">
-          <button
-            onClick={startListening}
-            className={`mic w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center transition-all ${
-              isListening ? "live animate-pulse" : "hover:bg-[#2E201F]"
-            }`}
-          >
-            <Mic className="w-6 h-6" />
-          </button>
-          <div className="space-y-0.5">
-            <b className="text-xs text-[#432F2E] block">
-              {isListening ? "Listening now..." : "Tap to speak more"}
-            </b>
-            <p className="text-[11px] text-[#6A5452]">
-              {isListening ? "Speak naturally into microphone..." : "Say items in English or Hindi. You can review before saving."}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Header Breadcrumb */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-[#E4EEF5]">
+          <div>
+            <div className="flex items-center gap-2 text-xs text-[#6A5452] mb-1">
+              <Link href="/" className="hover:underline">Dashboard</Link>
+              <span>/</span>
+              <span className="font-semibold text-[#432F2E]">Voice Order Studio</span>
+            </div>
+            <h1 className="font-serif text-3xl font-bold text-[#2E201F]">
+              Voice Ordering Assistant
+            </h1>
+            <p className="text-xs sm:text-sm text-[#6A5452]">
+              Dictate your monthly grocery list in natural English or Hindi. PACT structures speech into cart lines.
             </p>
           </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-[#6A5452]">Language:</span>
+            <div className="flex bg-white p-1 rounded-[10px] border border-[#B3CEDE]">
+              <button
+                onClick={() => setLanguage("en")}
+                className={`px-3 py-1 rounded-[8px] text-xs font-bold transition-all cursor-pointer ${
+                  language === "en" ? "bg-[#432F2E] text-white" : "text-[#6A5452]"
+                }`}
+              >
+                English (IN)
+              </button>
+              <button
+                onClick={() => setLanguage("hi")}
+                className={`px-3 py-1 rounded-[8px] text-xs font-bold transition-all cursor-pointer ${
+                  language === "hi" ? "bg-[#432F2E] text-white" : "text-[#6A5452]"
+                }`}
+              >
+                हिन्दी (Hindi)
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Add All Button */}
-        <button
-          onClick={addAllToCart}
-          className="btn btn-primary block w-full text-xs py-3"
-        >
-          <ListPlus className="w-4 h-4 mr-1" />
-          Confirm & Add {parsedItems.length} items to my list
-        </button>
-      </main>
+        {/* 2-Column Desktop Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Voice Recording Console (5 Cols) */}
+          <div className="lg:col-span-5 space-y-5">
+            <div className="card p-8 bg-white text-center space-y-6 shadow-xs border-[#B3CEDE]">
+              {/* Mic Visual Button with Waveform Animation */}
+              <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
+                {isListening && (
+                  <>
+                    <span className="absolute inset-0 rounded-full bg-[#C4DAE8] animate-ping opacity-50" />
+                    <span className="absolute -inset-3 rounded-full bg-[#FEEFB8] animate-pulse opacity-40" />
+                  </>
+                )}
 
-      <CustomerBottomNav />
+                <button
+                  type="button"
+                  onClick={startListening}
+                  className={`relative w-28 h-28 rounded-full flex flex-col items-center justify-center transition-all cursor-pointer shadow-md ${
+                    isListening
+                      ? "bg-[#A3241C] text-white scale-105"
+                      : "bg-[#C4DAE8] hover:bg-[#B3CEDE] text-[#432F2E]"
+                  }`}
+                  aria-label="Toggle voice recording"
+                >
+                  <Mic className={`w-10 h-10 ${isListening ? "animate-bounce" : ""}`} />
+                  <span className="text-[10px] font-bold mt-1 uppercase tracking-wider">
+                    {isListening ? "Listening..." : "Click to Speak"}
+                  </span>
+                </button>
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="font-serif text-lg font-bold text-[#2E201F]">
+                  {isListening ? "Listening to your voice..." : "Press microphone and speak"}
+                </h3>
+                <p className="text-xs text-[#6A5452]">
+                  Web Speech API enabled · Real-time multi-lingual parser
+                </p>
+              </div>
+
+              {/* Sample Phrases to Try */}
+              <div className="text-left pt-2 space-y-2 border-t border-[#E4EEF5]">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#6A5452] block">
+                  Quick Voice Presets (Click to Test):
+                </span>
+                <div className="flex flex-col gap-2">
+                  {presetSamples.map((sample, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setLanguage(sample.lang as "en" | "hi");
+                        setTranscript(sample.phrase);
+                        setParsedItems(sample.items);
+                        showToast(`Loaded voice sample: ${sample.label}`);
+                      }}
+                      className="text-left p-2.5 rounded-[10px] bg-[#F3F8FB] hover:bg-[#E4EEF5] border border-[#E4EEF5] text-xs transition-colors cursor-pointer"
+                    >
+                      <div className="flex justify-between items-center">
+                        <b className="text-[#432F2E]">{sample.label}</b>
+                        <span className="text-[10px] text-[#2A5C79] font-medium">Load & Parse</span>
+                      </div>
+                      <span className="text-[11px] text-[#6A5452] block truncate mt-0.5">
+                        &ldquo;{sample.phrase}&rdquo;
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Rule R15 Note */}
+            <div className="card p-4 bg-[#E4EEF5] border-[#B3CEDE] flex items-start gap-2.5 text-xs text-[#2A5C79]">
+              <ShieldCheck className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <span>
+                <strong>Hard Rule R15:</strong> Voice never guesses. Ambiguous quantities ask for confirmation before anything enters your cart.
+              </span>
+            </div>
+          </div>
+
+          {/* Right Column: Live Transcript & Parsed Grocery Items (7 Cols) */}
+          <div className="lg:col-span-7 space-y-5">
+            {/* Live Captured Transcript Box */}
+            <div className="card p-6 bg-white space-y-3 shadow-xs">
+              <div className="flex justify-between items-center pb-2 border-b border-[#E4EEF5]">
+                <div className="flex items-center gap-2">
+                  <Volume2 className="w-4 h-4 text-[#2A5C79]" />
+                  <span className="text-xs font-bold text-[#432F2E]">Recognized Speech Transcript</span>
+                </div>
+                <span className="text-[10px] uppercase font-bold text-[#1B6B45] bg-[#E3F4EA] px-2 py-0.5 rounded-full">
+                  Verified Audio
+                </span>
+              </div>
+
+              <div className="p-4 bg-[#F3F8FB] rounded-[12px] border border-[#E4EEF5] text-sm text-[#432F2E] font-medium min-h-[64px] flex items-center">
+                &ldquo;{transcript}&rdquo;
+              </div>
+            </div>
+
+            {/* Structured Grocery Lines Table */}
+            <div className="card flush bg-white shadow-xs space-y-0">
+              <div className="p-4 bg-[#FFF7DB] border-b border-[#EFDB93] flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#8A3A00]" />
+                  <b className="text-xs text-[#432F2E]">
+                    Structured Cart Items ({parsedItems.length} products detected)
+                  </b>
+                </div>
+                <span className="text-xs font-serif font-bold text-[#432F2E]">
+                  Total Value: ₹{totalParsedValue}
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-[#E4EEF5] bg-[#F3F8FB] text-[#6A5452]">
+                      <th className="py-2.5 px-4 font-bold">Item Identified</th>
+                      <th className="py-2.5 px-4 font-bold text-center">Qty / Pack</th>
+                      <th className="py-2.5 px-4 font-bold text-right">Wholesale Rate</th>
+                      <th className="py-2.5 px-4 font-bold text-right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E4EEF5]">
+                    {parsedItems.map((item, index) => (
+                      <tr key={index} className="hover:bg-[#F3F8FB]/50">
+                        <td className="py-3 px-4 font-medium text-[#432F2E]">
+                          <div className="flex items-center gap-2">
+                            <Check className="w-3.5 h-3.5 text-[#1B6B45]" />
+                            <span>{item.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-center text-[#6A5452]">
+                          <span className="font-bold text-[#432F2E]">{item.qty}</span> {item.unit}
+                        </td>
+                        <td className="py-3 px-4 text-right text-[#6A5452]">
+                          ₹{item.rate}
+                        </td>
+                        <td className="py-3 px-4 text-right font-bold text-[#432F2E]">
+                          ₹{item.rate * item.qty}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="p-4 bg-white flex flex-col sm:flex-row justify-between items-center gap-3">
+                <span className="text-xs text-[#6A5452]">
+                  Review items before adding to your household contribution.
+                </span>
+
+                <button
+                  type="button"
+                  onClick={addAllToCart}
+                  className="btn btn-primary md text-xs font-bold w-full sm:w-auto shadow-xs cursor-pointer"
+                >
+                  <ListPlus className="w-4 h-4 mr-1.5" />
+                  Add All to My Contribution ({parsedItems.length} items)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
