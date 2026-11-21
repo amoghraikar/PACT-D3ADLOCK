@@ -28,6 +28,7 @@ from app.modules.notifications.router import router as notifications_router
 from app.modules.payments.invoices_router import router as invoices_router
 from app.modules.payments.webhooks_router import router as webhooks_router
 from app.modules.retailer.dashboard_router import router as retailer_dashboard_router
+from app.modules.retailer.inventory_router import router as retailer_inventory_router
 from app.modules.retailer.orders_router import router as retailer_orders_router
 from app.modules.voice.router import router as voice_router
 
@@ -64,6 +65,7 @@ app.include_router(catalogue_router, prefix=settings.API_PREFIX)
 app.include_router(cart_router, prefix=settings.API_PREFIX)
 app.include_router(orders_router, prefix=settings.API_PREFIX)
 app.include_router(retailer_orders_router, prefix=settings.API_PREFIX)
+app.include_router(retailer_inventory_router, prefix=settings.API_PREFIX)
 app.include_router(retailer_dashboard_router, prefix=settings.API_PREFIX)
 app.include_router(admin_dashboard_router, prefix=settings.API_PREFIX)
 app.include_router(notifications_router)

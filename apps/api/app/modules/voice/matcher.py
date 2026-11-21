@@ -86,22 +86,32 @@ def match_segment(
     # Resolve product alias
     canon_alias = PRODUCT_ALIASES.get(prod_phrase, prod_phrase)
 
-    matched_products = []
-    for p in visible_products:
-        p_name = p["name"].lower()
-        p_aliases = [a.lower() for a in p["aliases"]]
+    # 1. Prefer exact alias matches (e.g. 'rice', 'chawal', 'toor dal', 'sugar')
+    alias_matched = [
+        p for p in visible_products
+        if any(a == prod_phrase or a == canon_alias for a in [al.lower() for al in p.get("aliases", [])])
+    ]
 
-        if (
-            prod_phrase in p_name
-            or p_name in prod_phrase
-            or any(a == prod_phrase or a == canon_alias for a in p_aliases)
-            or (canon_alias == "rice" and "rice" in p_name)
-            or (canon_alias == "sugar" and "sugar" in p_name)
-            or (canon_alias == "oil" and "oil" in p_name)
-            or (canon_alias == "toor_dal" and ("toor" in p_name or "dal" in p_name))
-            or (canon_alias == "atta" and "atta" in p_name)
-        ):
-            matched_products.append(p)
+    if alias_matched:
+        matched_products = alias_matched
+    else:
+        # Fallback to name contains or generic matching
+        matched_products = []
+        for p in visible_products:
+            p_name = p["name"].lower()
+            p_aliases = [a.lower() for a in p["aliases"]]
+
+            if (
+                prod_phrase in p_name
+                or p_name in prod_phrase
+                or any(a == prod_phrase or a == canon_alias for a in p_aliases)
+                or (canon_alias == "rice" and "rice" in p_name)
+                or (canon_alias == "sugar" and "sugar" in p_name)
+                or (canon_alias == "oil" and "oil" in p_name)
+                or (canon_alias == "toor_dal" and ("toor" in p_name or "dal" in p_name))
+                or (canon_alias == "atta" and "atta" in p_name)
+            ):
+                matched_products.append(p)
 
     # Trigram / fuzzy fallback if no exact alias match
     if not matched_products:
