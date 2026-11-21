@@ -1,5 +1,7 @@
 import hashlib
+import json
 import logging
+import os
 import random
 import time
 
@@ -33,7 +35,7 @@ COMMUNITIES = {
     },
 }
 
-USERS: dict[str, dict] = {
+USERS_INITIAL: dict[str, dict] = {
     "+919999900001": {
         "id": "usr-asha-1",
         "phone": "+919999900001",
@@ -126,18 +128,65 @@ USERS: dict[str, dict] = {
     },
 }
 
+USERS_STORE_FILE = os.path.join(os.path.dirname(__file__), "users_store.json")
+
+
+def _load_persisted_users() -> dict[str, dict]:
+    users = dict(USERS_INITIAL)
+    if os.path.exists(USERS_STORE_FILE):
+        try:
+            with open(USERS_STORE_FILE, "r", encoding="utf-8") as f:
+                saved = json.load(f)
+                users.update(saved)
+        except Exception as e:
+            logger.warning(f"Could not load users_store.json: {e}")
+    else:
+        try:
+            with open(USERS_STORE_FILE, "w", encoding="utf-8") as f:
+                json.dump(users, f, indent=2)
+        except Exception as e:
+            logger.warning(f"Could not initialize users_store.json: {e}")
+    return users
+
+
+def _persist_users():
+    try:
+        with open(USERS_STORE_FILE, "w", encoding="utf-8") as f:
+            json.dump(USERS, f, indent=2)
+    except Exception as e:
+        logger.warning(f"Could not persist users_store.json: {e}")
+
+
+USERS: dict[str, dict] = _load_persisted_users()
+
 # OTP Challenge Store: phone -> { code_hash, expires_at, attempts, requested_times: [...] }
 OTP_STORE: dict[str, dict] = {}
 
 
 def normalize_phone(phone: str) -> str:
     cleaned = "".join(c for c in phone if c.isdigit() or c == "+")
-    if not cleaned.startswith("+"):
-        if len(cleaned) == 10:
-            cleaned = "+91" + cleaned
-        elif cleaned.startswith("91") and len(cleaned) == 12:
-            cleaned = "+" + cleaned
-    return cleaned
+    if cleaned.startswith("+"):
+        return cleaned
+    if cleaned.startswith("0") and len(cleaned) == 11:
+        cleaned = cleaned[1:]
+    if len(cleaned) == 10:
+        return "+91" + cleaned
+    if cleaned.startswith("91") and len(cleaned) == 12:
+        return "+" + cleaned
+    return "+" + cleaned if not cleaned.startswith("+") else cleaned
+
+
+def find_user_by_phone(phone: str) -> dict | None:
+    norm = normalize_phone(phone)
+    if norm in USERS:
+        return USERS[norm]
+    digits = "".join(c for c in phone if c.isdigit())
+    last10 = digits[-10:] if len(digits) >= 10 else digits
+    for p, u in USERS.items():
+        u_digits = "".join(c for c in p if c.isdigit())
+        if u_digits.endswith(last10):
+            return u
+    return None
 
 
 class OtpRequestIn(BaseModel):
@@ -266,17 +315,18 @@ def verify_otp(body: OtpVerifyIn, response: Response):
             )
 
     # Success: find or create user
-    user = USERS.get(phone)
+    user = find_user_by_phone(phone)
     if not user:
         user_id = f"usr-{random.randint(100000, 999999)}"
         user = {
             "id": user_id,
-            "phone": phone,
+            "phone": normalize_phone(phone),
             "name": "",
             "role": None,
             "language": "en",
         }
-        USERS[phone] = user
+        USERS[normalize_phone(phone)] = user
+        _persist_users()
 
     # Create signed session token
     token = create_session_token(user["id"])
@@ -302,11 +352,11 @@ def verify_otp(body: OtpVerifyIn, response: Response):
             }
 
     retailer = None
-    if user.get("store_id"):
+    if user.get("store_id") or user.get("role") == "retailer":
         retailer = {
-            "id": user["store_id"],
-            "store_name": user.get("store_name", ""),
-            "status": user.get("store_status", "pending"),
+            "id": user.get("store_id", f"ret-{user['id']}"),
+            "store_name": user.get("store_name", user.get("name", "Local Store")),
+            "status": user.get("store_status", "active"),
         }
 
     return {
@@ -351,11 +401,11 @@ def get_me(
             }
 
     retailer = None
-    if user.get("store_id"):
+    if user.get("store_id") or user.get("role") == "retailer":
         retailer = {
-            "id": user["store_id"],
-            "store_name": user.get("store_name", ""),
-            "status": user.get("store_status", "pending"),
+            "id": user.get("store_id", f"ret-{user['id']}"),
+            "store_name": user.get("store_name", user.get("name", "Local Store")),
+            "status": user.get("store_status", "active"),
         }
 
     return {
@@ -396,6 +446,7 @@ def register_resident(body: RegisterResidentIn, response: Response):
         "unit_label": body.unit_label.strip(),
     }
     USERS[phone] = user
+    _persist_users()
 
     token = create_session_token(user["id"])
     response.set_cookie(
@@ -442,8 +493,11 @@ def register_retailer(body: RegisterRetailerIn, response: Response):
         "store_id": store_id,
         "store_name": body.store_name.strip(),
         "store_status": "active",
+        "address": body.address.strip(),
+        "gstin": body.gstin.strip() if body.gstin else None,
     }
     USERS[phone] = user
+    _persist_users()
 
     token = create_session_token(user["id"])
     response.set_cookie(
@@ -523,6 +577,7 @@ def onboard_resident(
     user["role"] = "customer"
     user["community_id"] = matching_comm["id"]
     user["unit_label"] = body.unit_label.strip()
+    _persist_users()
 
     return {
         "user": {
@@ -564,6 +619,7 @@ def onboard_retailer(
     user["store_id"] = store_id
     user["store_name"] = body.store_name.strip()
     user["store_status"] = "pending"
+    _persist_users()
 
     return {
         "user": {

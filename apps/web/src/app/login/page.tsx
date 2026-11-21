@@ -108,9 +108,15 @@ function LoginContent() {
       else if (res.user.role === "retailer") router.push("/retailer");
       else if (res.user.role === "community_admin") router.push("/admin");
       else if (res.user.role === "platform_admin") router.push("/platform");
-      else router.push("/customer");
+      else {
+        setActiveTab("register");
+        setErrorMsg("Please complete your registration first.");
+      }
     } else {
       setErrorMsg(res.error || "Incorrect or expired code.");
+      if (res.error?.includes("register")) {
+        setRegPhone(phone.replace(/[^0-9]/g, "").slice(-10));
+      }
     }
   };
 
