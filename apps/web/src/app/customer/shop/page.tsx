@@ -61,8 +61,8 @@ export default function CustomerShopPage() {
     async function loadCatalogue() {
       try {
         const [catRes, prodRes] = await Promise.all([
-          fetch("/api/v1/catalogue/categories"),
-          fetch("/api/v1/catalogue/products"),
+          fetch("/api/v1/catalogue/categories", { credentials: "include" }),
+          fetch("/api/v1/catalogue/products", { credentials: "include" }),
         ]);
 
         let loadedCategories: Category[] = [];
@@ -111,6 +111,8 @@ export default function CustomerShopPage() {
       }
     }
     loadCatalogue();
+    const interval = setInterval(loadCatalogue, 4000);
+    return () => clearInterval(interval);
   }, []);
 
   // Filter products by category and search query

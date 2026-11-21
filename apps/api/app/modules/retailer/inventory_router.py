@@ -5,7 +5,13 @@ from fastapi import APIRouter, Cookie, Header, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from app.modules.auth.router import get_user_from_token
-from app.modules.catalogue.router import PRODUCTS, RETAILER_LISTINGS
+from app.modules.catalogue.router import (
+    PRODUCTS,
+    RETAILER_LISTINGS,
+    CreateProductRequest,
+    create_new_product_and_listing,
+    save_catalogue_store,
+)
 
 router = APIRouter(prefix="/retailer/inventory", tags=["retailer-inventory"])
 
@@ -166,6 +172,8 @@ def update_inventory_item(
     if req.mrp_paise is not None:
         listing["mrp_paise"] = req.mrp_paise
 
+    save_catalogue_store()
+
     return {
         "success": True,
         "variant_id": variant_id,
@@ -210,6 +218,8 @@ def record_stock_inward(
         "created_at": now_utc().isoformat(),
     }
     INWARD_BILLS.append(inward_record)
+
+    save_catalogue_store()
 
     return {
         "success": True,
@@ -271,6 +281,8 @@ def auto_reorder_low_stock(
     total_units = sum(it.reorder_qty for it in req.items)
     supplier_names_list = list(suppliers_map.keys())
 
+    save_catalogue_store()
+
     return {
         "success": True,
         "message": f"Successfully confirmed restock purchase orders! Added {total_units} units across {len(updated_items)} items from {len(supplier_names_list)} distributors.",
@@ -284,3 +296,18 @@ def auto_reorder_low_stock(
 @router.get("/inward/history")
 def list_inward_history():
     return {"inward_bills": list(reversed(INWARD_BILLS))}
+
+
+@router.post("/add-product")
+def add_inventory_product(
+    req: CreateProductRequest,
+    authorization: Annotated[str | None, Header()] = None,
+    pact_token: Annotated[str | None, Cookie()] = None,
+):
+    """
+    Retailer adds a new product to catalogue and lists it in their inventory.
+    Saves to store and makes it immediately available to community customers.
+    """
+    retailer_id = get_current_retailer_id(authorization, pact_token)
+    return create_new_product_and_listing(req, retailer_id)
+

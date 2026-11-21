@@ -130,5 +130,14 @@
     "language": "en",
     "community_id": "comm-lake-1",
     "unit_label": "A-305"
+  },
+  "+919888877777": {
+    "id": "usr-489418",
+    "phone": "+919888877777",
+    "name": "Karthik Subramanian",
+    "role": "customer",
+    "language": "en",
+    "community_id": "comm-green-1",
+    "unit_label": "C-501"
   }
 }

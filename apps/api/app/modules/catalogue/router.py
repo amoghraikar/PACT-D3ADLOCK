@@ -1,6 +1,13 @@
 
+import json
+import os
+from pathlib import Path
+import re
+import uuid
 from fastapi import APIRouter, Cookie, Header, Query
+from pydantic import BaseModel, Field
 
+from app.core.errors import AppError
 from app.modules.auth.router import get_user_from_token
 from app.modules.catalogue.products_data import EXPANDED_PRODUCTS, EXPANDED_RETAILER_LISTINGS
 
@@ -23,10 +30,137 @@ CATEGORIES = [
 ]
 
 # Central Products and Variants (60+ across 12 categories)
-PRODUCTS = EXPANDED_PRODUCTS
+PRODUCTS = list(EXPANDED_PRODUCTS)
 
 # Retailer Inventory Listings: (retailer_id, variant_id) -> dict
-RETAILER_LISTINGS: dict[tuple[str, str], dict] = EXPANDED_RETAILER_LISTINGS
+RETAILER_LISTINGS: dict[tuple[str, str], dict] = dict(EXPANDED_RETAILER_LISTINGS)
+
+CATALOGUE_STORE_FILE = Path(__file__).parent / "catalogue_store.json"
+
+
+def save_catalogue_store():
+    try:
+        listings_serialized = {
+            f"{k[0]}::{k[1]}": v
+            for k, v in RETAILER_LISTINGS.items()
+        }
+        data = {
+            "PRODUCTS": PRODUCTS,
+            "RETAILER_LISTINGS": listings_serialized,
+        }
+        with open(CATALOGUE_STORE_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, default=str)
+    except Exception:
+        pass
+
+
+def load_catalogue_store():
+    if CATALOGUE_STORE_FILE.exists():
+        try:
+            with open(CATALOGUE_STORE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if data.get("PRODUCTS"):
+                    PRODUCTS.clear()
+                    PRODUCTS.extend(data["PRODUCTS"])
+                if data.get("RETAILER_LISTINGS"):
+                    RETAILER_LISTINGS.clear()
+                    for k_str, v in data["RETAILER_LISTINGS"].items():
+                        parts = k_str.split("::")
+                        if len(parts) == 2:
+                            RETAILER_LISTINGS[(parts[0], parts[1])] = v
+        except Exception:
+            pass
+
+
+load_catalogue_store()
+
+
+class CreateProductRequest(BaseModel):
+    name: str = Field(min_length=2)
+    brand: str = Field(min_length=1)
+    category_id: str | None = None
+    category_name: str = Field(min_length=2)
+    variant_label: str = Field(min_length=1)
+    pack_size: float = Field(default=1.0, gt=0)
+    pack_unit: str = Field(default="kg")
+    mrp_paise: int = Field(gt=0)
+    selling_price_paise: int = Field(gt=0)
+    stock_qty: int = Field(default=50, ge=0)
+    image_url: str | None = None
+
+
+def create_new_product_and_listing(req: CreateProductRequest, retailer_id: str = "ret-ravi-1") -> dict:
+    if req.selling_price_paise > req.mrp_paise:
+        raise AppError(
+            code="INVALID_PRICE",
+            message=f"Selling price (₹{req.selling_price_paise/100:.2f}) cannot exceed MRP (₹{req.mrp_paise/100:.2f}).",
+            status_code=422,
+        )
+
+    slug = re.sub(r"[^a-z0-9]+", "-", req.name.lower()).strip("-")
+    v_slug = re.sub(r"[^a-z0-9]+", "-", req.variant_label.lower()).strip("-")
+    uid = uuid.uuid4().hex[:6]
+    prod_id = f"prod-{slug}-{uid}"
+    variant_id = f"var-{slug}-{v_slug}-{uid}"
+
+    matched_cat = None
+    for c in CATEGORIES:
+        if c["name"].lower() == req.category_name.lower() or c["id"] == req.category_id or c["slug"] == req.category_name.lower():
+            matched_cat = c
+            break
+
+    cat_id = matched_cat["id"] if matched_cat else (req.category_id or "cat-1")
+    cat_name = matched_cat["name"] if matched_cat else req.category_name
+
+    img = req.image_url or "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&auto=format&fit=crop&q=80"
+
+    new_variant = {
+        "id": variant_id,
+        "label": req.variant_label,
+        "pack_size": req.pack_size,
+        "pack_unit": req.pack_unit,
+        "base_qty": int(req.pack_size * (1000 if req.pack_unit in ("kg", "l") else 1)),
+        "base_unit": "g" if req.pack_unit == "kg" else ("ml" if req.pack_unit == "l" else req.pack_unit),
+    }
+
+    new_product = {
+        "id": prod_id,
+        "category_id": cat_id,
+        "category_name": cat_name,
+        "name": req.name,
+        "brand": req.brand,
+        "image_url": img,
+        "aliases": [req.name.lower(), req.brand.lower(), req.variant_label.lower()],
+        "variants": [new_variant],
+    }
+
+    PRODUCTS.append(new_product)
+
+    listing = {
+        "mrp_paise": req.mrp_paise,
+        "selling_price_paise": req.selling_price_paise,
+        "stock_qty": req.stock_qty,
+        "availability": "active",
+    }
+    RETAILER_LISTINGS[(retailer_id, variant_id)] = listing
+    RETAILER_LISTINGS[("ret-ravi-1", variant_id)] = listing
+    RETAILER_LISTINGS[("ret-farah-2", variant_id)] = listing
+
+    save_catalogue_store()
+
+    return {
+        "success": True,
+        "product_id": prod_id,
+        "variant_id": variant_id,
+        "product": new_product,
+        "variant": new_variant,
+        "listing": listing,
+    }
+
+
+@router.post("/products")
+def add_catalogue_product(req: CreateProductRequest):
+    return create_new_product_and_listing(req)
 
 
 def get_variant_by_id(variant_id: str) -> tuple[dict | None, dict | None]:

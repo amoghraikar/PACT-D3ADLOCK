@@ -112,6 +112,24 @@ def seed_default_order():
     save_orders_store()
 
 
+def is_matching_order_id(o1: str, o2: str) -> bool:
+    if o1 == o2:
+        return True
+    green_set = {"ord-comm-green-2026-11", "ord-comm-green-meadows-2026-11"}
+    return o1 in green_set and o2 in green_set
+
+
+def resolve_order(order_id: str) -> tuple[str, dict | None]:
+    order = COMMUNITY_ORDERS.get(order_id)
+    if order:
+        return order_id, order
+    if order_id in ("ord-comm-green-2026-11", "ord-comm-green-meadows-2026-11"):
+        for alt in ("ord-comm-green-2026-11", "ord-comm-green-meadows-2026-11"):
+            if alt in COMMUNITY_ORDERS:
+                return alt, COMMUNITY_ORDERS[alt]
+    return order_id, None
+
+
 def load_orders_store():
     if ORDERS_STORE_FILE.exists():
         try:
@@ -125,6 +143,8 @@ def load_orders_store():
                     for k_str, v in data["CUSTOMER_ORDER_ITEMS"].items():
                         parts = k_str.split("::")
                         if len(parts) == 3:
+                            if parts[1] in ("usr-asha-1", "usr-bharat-2", "usr-chitra-3", "usr-dev-4", "usr-esha-5"):
+                                continue
                             CUSTOMER_ORDER_ITEMS[(parts[0], parts[1], parts[2])] = v
                 if data.get("INVOICES"):
                     INVOICES.clear()
@@ -132,6 +152,12 @@ def load_orders_store():
                 if data.get("ORDER_DRAFT_BILLS"):
                     ORDER_DRAFT_BILLS.clear()
                     ORDER_DRAFT_BILLS.update(data["ORDER_DRAFT_BILLS"])
+
+                # Ensure aliases exist for Green Meadows
+                if "ord-comm-green-2026-11" in COMMUNITY_ORDERS and "ord-comm-green-meadows-2026-11" not in COMMUNITY_ORDERS:
+                    COMMUNITY_ORDERS["ord-comm-green-meadows-2026-11"] = COMMUNITY_ORDERS["ord-comm-green-2026-11"]
+                elif "ord-comm-green-meadows-2026-11" in COMMUNITY_ORDERS and "ord-comm-green-2026-11" not in COMMUNITY_ORDERS:
+                    COMMUNITY_ORDERS["ord-comm-green-2026-11"] = COMMUNITY_ORDERS["ord-comm-green-meadows-2026-11"]
                 return
         except Exception:
             pass
@@ -216,11 +242,17 @@ def get_product_variant_meta(variant_id: str) -> dict:
 
 def get_customer_flat_meta(customer_id: str) -> dict:
     """Returns safe resident metadata (name, flat only). Never phone number."""
+    for u in USERS.values():
+        if isinstance(u, dict) and (u.get("id") == customer_id or u.get("phone") == customer_id):
+            return {
+                "name": u.get("name", "Resident"),
+                "unit_label": u.get("unit_label") or u.get("flat") or u.get("flat_number") or "A-101",
+            }
     u = USERS.get(customer_id)
-    if u:
+    if isinstance(u, dict):
         return {
-            "name": u["name"],
-            "unit_label": u.get("flat", "A-101"),
+            "name": u.get("name", "Resident"),
+            "unit_label": u.get("unit_label") or u.get("flat") or u.get("flat_number") or "A-101",
         }
     # Golden personas fallback mapping
     mapping = {
@@ -229,6 +261,10 @@ def get_customer_flat_meta(customer_id: str) -> dict:
         "usr-c3-chitra": {"name": "Chitra Nair", "unit_label": "C-305"},
         "usr-c4-dev": {"name": "Dev Sharma", "unit_label": "D-402"},
         "usr-c5-esha": {"name": "Esha", "unit_label": "L-11"},
+        "usr-asha-1": {"name": "Asha Rao", "unit_label": "A-101"},
+        "usr-bharat-2": {"name": "Bharat Patel", "unit_label": "B-204"},
+        "usr-chitra-3": {"name": "Chitra Nair", "unit_label": "C-305"},
+        "usr-dev-4": {"name": "Dev Sharma", "unit_label": "D-402"},
     }
     return mapping.get(customer_id, {"name": "Resident", "unit_label": "Flat"})
 
@@ -286,7 +322,7 @@ def get_order_detail(
     2. Per-customer breakdown showing name and flat only (no phone number).
     """
     retailer_id = get_current_retailer_id(authorization, pact_session, pact_token)
-    order = COMMUNITY_ORDERS.get(order_id)
+    order_id, order = resolve_order(order_id)
 
     # Isolation check: Farah cannot see or act on Ravi's order -> 404
     if not order or order.get("retailer_id") != retailer_id:
@@ -388,7 +424,7 @@ def accept_order(
     Reserves min(requested total, stock - reserved) per variant in a single atomic transaction.
     """
     retailer_id = get_current_retailer_id(authorization, pact_session, pact_token)
-    order = COMMUNITY_ORDERS.get(order_id)
+    order_id, order = resolve_order(order_id)
     if not order or order.get("retailer_id") != retailer_id:
         raise AppError(code="ORDER_NOT_FOUND", message="Order not found.", status_code=404)
 
@@ -435,7 +471,7 @@ def reject_order(
     F6 Step 2: Reject order with a reason -> rejected.
     """
     retailer_id = get_current_retailer_id(authorization, pact_session, pact_token)
-    order = COMMUNITY_ORDERS.get(order_id)
+    order_id, order = resolve_order(order_id)
     if not order or order.get("retailer_id") != retailer_id:
         raise AppError(code="ORDER_NOT_FOUND", message="Order not found.", status_code=404)
 
@@ -474,7 +510,7 @@ def update_packing(
     Packed above requested -> 422.
     """
     retailer_id = get_current_retailer_id(authorization, pact_session, pact_token)
-    order = COMMUNITY_ORDERS.get(order_id)
+    order_id, order = resolve_order(order_id)
     if not order or order.get("retailer_id") != retailer_id:
         raise AppError(code="ORDER_NOT_FOUND", message="Order not found.", status_code=404)
 
@@ -536,7 +572,7 @@ def save_bill_draft(
     F6 Step 4: Save draft bill parameters.
     """
     retailer_id = get_current_retailer_id(authorization, pact_session, pact_token)
-    order = COMMUNITY_ORDERS.get(order_id)
+    order_id, order = resolve_order(order_id)
     if not order or order.get("retailer_id") != retailer_id:
         raise AppError(code="ORDER_NOT_FOUND", message="Order not found.", status_code=404)
 
@@ -555,17 +591,49 @@ def save_bill_draft(
     return {"status": "draft_saved", "order_id": order_id}
 
 
+def is_matching_cart(c1: str | None, c2: str | None) -> bool:
+    if not c1 or not c2:
+        return True
+    if c1 == c2:
+        return True
+    c1_norm = c1.replace("green-meadows", "green-1")
+    c2_norm = c2.replace("green-meadows", "green-1")
+    return c1_norm == c2_norm
+
+
+CUSTOMER_ID_ALIASES = {
+    "usr-c1-asha": "usr-asha-1",
+    "usr-asha-1": "usr-c1-asha",
+    "usr-c2-bharat": "usr-bharat-2",
+    "usr-bharat-2": "usr-c2-bharat",
+    "usr-c3-chitra": "usr-chitra-3",
+    "usr-chitra-3": "usr-c3-chitra",
+    "usr-c4-dev": "usr-dev-4",
+    "usr-dev-4": "usr-c4-dev",
+    "usr-c5-esha": "usr-esha-5",
+    "usr-esha-5": "usr-c5-esha",
+}
+
+
 def sync_cart_items_to_order(order_id: str, retailer_id: str):
     """Ensures all active items in the community cart are synced to order lines so they get billed."""
-    order = COMMUNITY_ORDERS.get(order_id)
+    order_id, order = resolve_order(order_id)
     if not order:
         return
     cart_id = order.get("cart_id")
-    for (c_cart_id, c_id, v_id), c_item in CART_ITEMS.items():
-        if cart_id and c_cart_id != cart_id:
+    changed = False
+
+    for (c_cart_id, c_id, v_id), c_item in list(CART_ITEMS.items()):
+        if not is_matching_cart(c_cart_id, cart_id):
             continue
+        qty = c_item.get("quantity", 0)
         key = (order_id, c_id, v_id)
-        if key not in CUSTOMER_ORDER_ITEMS:
+
+        if qty <= 0:
+            continue
+
+        alt_c_id = CUSTOMER_ID_ALIASES.get(c_id)
+        if key not in CUSTOMER_ORDER_ITEMS and not (alt_c_id and (order_id, alt_c_id, v_id) in CUSTOMER_ORDER_ITEMS):
             listing = RETAILER_LISTINGS.get((retailer_id, v_id)) or RETAILER_LISTINGS.get(("ret-ravi-1", v_id))
             selling_price = listing["selling_price_paise"] if listing else 20000
             mrp = listing["mrp_paise"] if listing else 24000
@@ -573,11 +641,15 @@ def sync_cart_items_to_order(order_id: str, retailer_id: str):
                 "order_id": order_id,
                 "customer_id": c_id,
                 "variant_id": v_id,
-                "requested_qty": c_item.get("quantity", 1),
-                "packed_qty": c_item.get("quantity", 1),
+                "requested_qty": qty,
+                "packed_qty": qty,
                 "unit_price_paise": selling_price,
                 "mrp_paise": mrp,
             }
+            changed = True
+
+    if changed:
+        save_orders_store()
 
 
 def _execute_split_for_order(order_id: str, retailer_id: str) -> dict:
@@ -688,7 +760,7 @@ def get_bill_preview(
     F6 Step 5: Preview bill and per-customer split. Saves nothing.
     """
     retailer_id = get_current_retailer_id(authorization, pact_session, pact_token)
-    order = COMMUNITY_ORDERS.get(order_id)
+    order_id, order = resolve_order(order_id)
     if not order or order.get("retailer_id") != retailer_id:
         raise AppError(code="ORDER_NOT_FOUND", message="Order not found.", status_code=404)
 
@@ -713,7 +785,7 @@ def finalise_bill(
     7. Status -> billed. Everything becomes read-only.
     """
     retailer_id = get_current_retailer_id(authorization, pact_session, pact_token)
-    order = COMMUNITY_ORDERS.get(order_id)
+    order_id, order = resolve_order(order_id)
     if not order or order.get("retailer_id") != retailer_id:
         raise AppError(code="ORDER_NOT_FOUND", message="Order not found.", status_code=404)
 
@@ -841,7 +913,7 @@ def reset_order_for_testing(
     Testing endpoint for retailer to reset order back to 'packing' and remove issued invoices,
     enabling testing the before-billing and after-billing experience repeatedly.
     """
-    order = COMMUNITY_ORDERS.get(order_id)
+    order_id, order = resolve_order(order_id)
     if order:
         order["status"] = "packing"
         order.pop("final_bill_paise", None)

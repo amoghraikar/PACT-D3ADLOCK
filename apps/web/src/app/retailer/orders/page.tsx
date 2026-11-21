@@ -295,6 +295,8 @@ export default function RetailerOrdersPage() {
     }
 
     loadBackendOrder();
+    const interval = setInterval(loadBackendOrder, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const syncLines = (newLines: OrderLine[]) => {

@@ -109,6 +109,8 @@ function CustomerBillContent() {
 
   useEffect(() => {
     fetchInvoice();
+    const interval = setInterval(fetchInvoice, 3000);
+    return () => clearInterval(interval);
   }, [fetchInvoice]);
 
   // UNIFIED PRODUCT LIST: Guarantees BOTH Estimated and Actual bills render the EXACT SAME products!

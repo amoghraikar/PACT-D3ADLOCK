@@ -99,6 +99,21 @@ export default function RetailerInventoryPage() {
   ]);
   const [savingInward, setSavingInward] = useState(false);
 
+  // Add Product Modal State
+  const [addProductOpen, setAddProductOpen] = useState(false);
+  const [newProdName, setNewProdName] = useState("");
+  const [newProdBrand, setNewProdBrand] = useState("");
+  const [newProdCategory, setNewProdCategory] = useState("Rice & Grains");
+  const [newProdVariantLabel, setNewProdVariantLabel] = useState("1 kg");
+  const [newProdPackSize, setNewProdPackSize] = useState("1");
+  const [newProdPackUnit, setNewProdPackUnit] = useState("kg");
+  const [newProdMrpRupees, setNewProdMrpRupees] = useState("");
+  const [newProdSellingRupees, setNewProdSellingRupees] = useState("");
+  const [newProdStock, setNewProdStock] = useState("50");
+  const [newProdImageUrl, setNewProdImageUrl] = useState("");
+  const [addProdError, setAddProdError] = useState<string | null>(null);
+  const [savingNewProd, setSavingNewProd] = useState(false);
+
   // Auto-Restock / Low Stock Quick Reorder Modal State
   const [autoRestockOpen, setAutoRestockOpen] = useState(false);
   const [submittingRestock, setSubmittingRestock] = useState(false);
@@ -110,7 +125,7 @@ export default function RetailerInventoryPage() {
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/v1/retailer/inventory");
+      const res = await fetch("/api/v1/retailer/inventory", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setItems(data.inventory || []);
@@ -124,6 +139,8 @@ export default function RetailerInventoryPage() {
 
   useEffect(() => {
     fetchInventory();
+    const interval = setInterval(fetchInventory, 4000);
+    return () => clearInterval(interval);
   }, []);
 
   // Filtered Items
@@ -209,6 +226,7 @@ export default function RetailerInventoryPage() {
       const res = await fetch(`/api/v1/retailer/inventory/${editingItem.variant_id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           stock_qty: editStock,
           selling_price_paise: sellingPaise,
@@ -240,6 +258,7 @@ export default function RetailerInventoryPage() {
       const res = await fetch("/api/v1/retailer/inventory/inward", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           supplier_name: supplierName,
           invoice_no: invoiceNo,
@@ -288,6 +307,7 @@ export default function RetailerInventoryPage() {
       const res = await fetch("/api/v1/retailer/inventory/auto-reorder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ items: reorderPayload }),
       });
 
@@ -307,6 +327,69 @@ export default function RetailerInventoryPage() {
     }
   };
 
+  // Add New Product Submission
+  const handleAddNewProduct = async () => {
+    if (!newProdName.trim() || !newProdBrand.trim() || !newProdVariantLabel.trim()) {
+      setAddProdError("Please enter product name, brand, and variant label.");
+      return;
+    }
+    const mrp = Math.round(parseFloat(newProdMrpRupees || "0") * 100);
+    const selling = Math.round(parseFloat(newProdSellingRupees || "0") * 100);
+    const stock = parseInt(newProdStock || "0");
+    const packSize = parseFloat(newProdPackSize || "1");
+
+    if (mrp <= 0 || selling <= 0) {
+      setAddProdError("MRP and Selling price must be greater than zero.");
+      return;
+    }
+    if (selling > mrp) {
+      setAddProdError(`Selling price (₹${newProdSellingRupees}) cannot exceed MRP (₹${newProdMrpRupees}).`);
+      return;
+    }
+
+    try {
+      setSavingNewProd(true);
+      setAddProdError(null);
+      const res = await fetch("/api/v1/retailer/inventory/add-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name: newProdName.trim(),
+          brand: newProdBrand.trim(),
+          category_name: newProdCategory,
+          variant_label: newProdVariantLabel.trim(),
+          pack_size: packSize,
+          pack_unit: newProdPackUnit,
+          mrp_paise: mrp,
+          selling_price_paise: selling,
+          stock_qty: stock,
+          image_url: newProdImageUrl.trim() || undefined,
+        }),
+      });
+
+      if (res.ok) {
+        setToastMessage(`🎉 Successfully added "${newProdName}" to catalogue & inventory!`);
+        setAddProductOpen(false);
+        setNewProdName("");
+        setNewProdBrand("");
+        setNewProdVariantLabel("1 kg");
+        setNewProdMrpRupees("");
+        setNewProdSellingRupees("");
+        setNewProdStock("50");
+        setNewProdImageUrl("");
+        fetchInventory();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setAddProdError(err.detail || err.message || "Failed to add product");
+      }
+    } catch {
+      setAddProdError("Network error while adding product");
+    } finally {
+      setSavingNewProd(false);
+    }
+  };
+
   return (
     <RetailerLayout>
       <div className="space-y-6">
@@ -321,7 +404,19 @@ export default function RetailerInventoryPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Plus className="w-4 h-4 text-teal-700" />}
+              onClick={() => {
+                setAddProdError(null);
+                setAddProductOpen(true);
+              }}
+            >
+              + Add New Product
+            </Button>
+
             {lowStockCount > 0 && (
               <Button
                 variant="secondary"
@@ -795,6 +890,154 @@ export default function RetailerInventoryPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </Dialog>
+
+        {/* Add New Product Dialog */}
+        <Dialog
+          isOpen={addProductOpen}
+          onClose={() => setAddProductOpen(false)}
+          title="Add New Product to Store Catalogue"
+          description="Enter product details to list it in your inventory and make it available for community orders."
+          confirmLabel={savingNewProd ? "Adding Product..." : "Add Product to Catalogue"}
+          onConfirm={handleAddNewProduct}
+        >
+          <div className="space-y-4 pt-2">
+            {addProdError && (
+              <Banner kind="danger" message={addProdError} />
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1 col-span-2 sm:col-span-1">
+                <label className="text-xs font-semibold text-ink-700 block">Product Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Sona Masoori Rice, Aashirvaad Atta"
+                  value={newProdName}
+                  onChange={(e) => setNewProdName(e.target.value)}
+                  className="w-full h-10 px-3 rounded-ctl border border-ice-300 bg-white text-xs text-ink-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
+                />
+              </div>
+
+              <div className="space-y-1 col-span-2 sm:col-span-1">
+                <label className="text-xs font-semibold text-ink-700 block">Brand *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Heritage, Tata, Sunpure"
+                  value={newProdBrand}
+                  onChange={(e) => setNewProdBrand(e.target.value)}
+                  className="w-full h-10 px-3 rounded-ctl border border-ice-300 bg-white text-xs text-ink-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-ink-700 block">Category *</label>
+                <select
+                  value={newProdCategory}
+                  onChange={(e) => setNewProdCategory(e.target.value)}
+                  className="w-full h-10 px-2 rounded-ctl border border-ice-300 bg-white text-xs text-ink-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
+                >
+                  {CATEGORIES.filter((c) => c !== "All").map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-ink-700 block">Pack Variant Label *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 5 kg, 1 L, 500 g, 1 pack"
+                  value={newProdVariantLabel}
+                  onChange={(e) => setNewProdVariantLabel(e.target.value)}
+                  className="w-full h-10 px-3 rounded-ctl border border-ice-300 bg-white text-xs text-ink-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-ink-700 block">Pack Size</label>
+                <input
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  value={newProdPackSize}
+                  onChange={(e) => setNewProdPackSize(e.target.value)}
+                  className="w-full h-10 px-3 text-center rounded-ctl border border-ice-300 bg-white text-xs text-ink-800 font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-ink-700 block">Unit</label>
+                <select
+                  value={newProdPackUnit}
+                  onChange={(e) => setNewProdPackUnit(e.target.value)}
+                  className="w-full h-10 px-2 rounded-ctl border border-ice-300 bg-white text-xs text-ink-800"
+                >
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                  <option value="l">L</option>
+                  <option value="ml">ml</option>
+                  <option value="pack">pack</option>
+                  <option value="pcs">pcs</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-ink-700 block">Initial Stock</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={newProdStock}
+                  onChange={(e) => setNewProdStock(e.target.value)}
+                  className="w-full h-10 px-3 text-center rounded-ctl border border-ice-300 bg-white text-xs text-ink-800 font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 p-3 bg-ice-50 rounded-ctl border border-ice-200">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-ink-700 block">MRP (₹) *</label>
+                <input
+                  type="number"
+                  min="1"
+                  step="0.5"
+                  placeholder="e.g. 350"
+                  value={newProdMrpRupees}
+                  onChange={(e) => setNewProdMrpRupees(e.target.value)}
+                  className="w-full h-10 px-3 text-center rounded-ctl border border-ice-300 bg-white text-xs text-ink-800 font-bold"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-teal-700 block">Selling Price (₹) *</label>
+                <input
+                  type="number"
+                  min="1"
+                  step="0.5"
+                  placeholder="e.g. 320"
+                  value={newProdSellingRupees}
+                  onChange={(e) => setNewProdSellingRupees(e.target.value)}
+                  className="w-full h-10 px-3 text-center rounded-ctl border border-teal-500 bg-white text-xs text-teal-800 font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-ink-700 block">Image URL (Optional)</label>
+              <input
+                type="url"
+                placeholder="https://... (leave blank for realistic grocery photo)"
+                value={newProdImageUrl}
+                onChange={(e) => setNewProdImageUrl(e.target.value)}
+                className="w-full h-10 px-3 rounded-ctl border border-ice-300 bg-white text-xs text-ink-800"
+              />
             </div>
           </div>
         </Dialog>

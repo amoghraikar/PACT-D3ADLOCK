@@ -1,4 +1,6 @@
 from datetime import datetime
+import json
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from app.core.clock import BUSINESS_TZ, now_business, now_utc
@@ -13,6 +15,48 @@ CART_ITEMS: dict[tuple[str, str, str], dict] = {}
 COMMUNITY_ORDERS: dict[str, dict] = {}
 # CustomerOrderItems: (order_id, customer_id, variant_id) -> dict
 CUSTOMER_ORDER_ITEMS: dict[tuple[str, str, str], dict] = {}
+
+CART_STORE_FILE = Path(__file__).parent / "cart_store.json"
+
+
+def save_cart_store():
+    try:
+        serialized_items = {
+            f"{k[0]}::{k[1]}::{k[2]}": v for k, v in CART_ITEMS.items()
+        }
+        tmp_file = CART_STORE_FILE.with_suffix(".tmp")
+        with open(tmp_file, "w", encoding="utf-8") as f:
+            json.dump({
+                "CARTS": CARTS,
+                "CART_ITEMS": serialized_items,
+            }, f, indent=2, default=str)
+        tmp_file.replace(CART_STORE_FILE)
+    except Exception as e:
+        print("Error saving cart store:", e)
+
+
+def load_cart_store():
+    if not CART_STORE_FILE.exists():
+        return
+    try:
+        with open(CART_STORE_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if data.get("CARTS"):
+                CARTS.update(data["CARTS"])
+            if data.get("CART_ITEMS"):
+                for k_str, val in data["CART_ITEMS"].items():
+                    parts = k_str.split("::")
+                    if len(parts) == 3:
+                        CART_ITEMS[(parts[0], parts[1], parts[2])] = val
+    except Exception as e:
+        print("Error loading cart store:", e)
+        try:
+            CART_STORE_FILE.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+
+load_cart_store()
 
 
 def get_cycle_boundaries(target_dt: datetime | None = None) -> tuple[str, datetime, datetime]:
@@ -73,6 +117,14 @@ def is_cart_locked(cart: dict) -> bool:
     """
     A cart is locked if its status is not 'open', or if current UTC time >= locks_at.
     """
-    if cart["status"] != "open":
+    if cart.get("status") != "open":
         return True
-    return now_utc() >= cart["locks_at"]
+    locks_at = cart.get("locks_at")
+    if not locks_at:
+        return False
+    if isinstance(locks_at, str):
+        try:
+            locks_at = datetime.fromisoformat(locks_at)
+        except Exception:
+            return False
+    return now_utc() >= locks_at

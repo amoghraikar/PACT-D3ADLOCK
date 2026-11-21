@@ -150,6 +150,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await fetch("/api/v1/cart", {
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -183,6 +184,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       try {
         const res = await fetch("/api/v1/cart", {
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
         });
         if (res.ok && isMounted) {
           const data = await res.json();
@@ -210,8 +212,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
     };
     loadCart();
+    const interval = setInterval(loadCart, 4000);
     return () => {
       isMounted = false;
+      clearInterval(interval);
     };
   }, []);
 
@@ -273,6 +277,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch(`/api/v1/cart/items/${variant_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ quantity }),
       });
 

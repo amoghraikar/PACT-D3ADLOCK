@@ -90,14 +90,19 @@ export default function CustomerSpeakPage() {
 
   // Fetch central catalogue
   useEffect(() => {
-    fetch("/api/v1/catalogue/products")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && data.products && data.products.length > 0) {
-          setProducts(data.products);
-        }
-      })
-      .catch(() => {});
+    const loadProds = () => {
+      fetch("/api/v1/catalogue/products", { credentials: "include" })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.products && data.products.length > 0) {
+            setProducts(data.products);
+          }
+        })
+        .catch(() => {});
+    };
+    loadProds();
+    const interval = setInterval(loadProds, 4000);
+    return () => clearInterval(interval);
   }, []);
 
   // Natural Language Multi-Product Parser: ignores middle filler words and extracts all products at once
