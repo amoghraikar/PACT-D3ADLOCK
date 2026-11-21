@@ -40,8 +40,14 @@ export default function Styleguide() {
               Three core tokens. Blue is calm structure, Butter is highlight, Chocopie is ink and action. Every component is accessible, verb-driven, and contains zero raw hex values in code.
             </p>
           </div>
-          <div className="w-[140px] h-[45px] relative">
-            <Image src="/brand/pact-logo-lockup.png" alt="PACT" fill className="object-contain" />
+          <div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/pact-logo-lockup.png"
+              alt="PACT"
+              style={{ height: "40px", width: "auto" }}
+              className="h-10 w-auto object-contain"
+            />
           </div>
         </div>
       </section>

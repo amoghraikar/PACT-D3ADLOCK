@@ -73,8 +73,14 @@ export default function AdminWorkspace() {
         <div className="desk">
           {/* Sidebar */}
           <aside className="side">
-            <div className="w-[140px] h-[40px] relative mb-3">
-              <Image src="/brand/pact-logo-lockup.png" alt="PACT" fill className="object-contain" />
+            <div className="mb-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/pact-logo-lockup.png"
+                alt="PACT"
+                style={{ height: "36px", width: "auto" }}
+                className="h-9 w-auto object-contain"
+              />
             </div>
 
             <a onClick={() => setActiveTab("paid")} className={activeTab === "paid" ? "on" : ""}>

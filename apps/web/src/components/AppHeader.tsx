@@ -62,6 +62,7 @@ export function AppHeader() {
             <img
               src="/brand/pact-logo-lockup.png"
               alt="PACT"
+              style={{ height: "38px", width: "auto", maxHeight: "38px" }}
               className="h-9 w-auto object-contain transition-transform group-hover:scale-105"
             />
           </Link>
@@ -87,19 +88,17 @@ export function AppHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-semibold transition-all ${
-                  isActive
-                    ? "bg-[#432F2E] text-[#FEEFB8] shadow-xs"
-                    : "text-[#432F2E] hover:bg-white/60"
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-semibold transition-all ${isActive
+                  ? "bg-[#432F2E] text-[#FEEFB8] shadow-xs"
+                  : "text-[#432F2E] hover:bg-white/60"
+                  }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{item.label}</span>
                 {item.badge && (
                   <span
-                    className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                      item.badgeColor || (isActive ? "bg-[#FEEFB8] text-[#432F2E]" : "bg-[#432F2E] text-white")
-                    }`}
+                    className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold ${item.badgeColor || (isActive ? "bg-[#FEEFB8] text-[#432F2E]" : "bg-[#432F2E] text-white")
+                      }`}
                   >
                     {item.badge}
                   </span>
@@ -115,31 +114,28 @@ export function AppHeader() {
           <div className="hidden xl:flex items-center gap-1 bg-white/60 p-0.5 rounded-[12px] border border-[#B3CEDE]">
             <Link
               href="/customer"
-              className={`px-2.5 py-1 rounded-[10px] text-xs font-medium transition-all ${
-                pathname.startsWith("/customer") || pathname === "/"
-                  ? "bg-[#432F2E] text-white font-bold"
-                  : "text-[#6A5452] hover:text-[#432F2E]"
-              }`}
+              className={`px-2.5 py-1 rounded-[10px] text-xs font-medium transition-all ${pathname.startsWith("/customer") || pathname === "/"
+                ? "bg-[#432F2E] text-white font-bold"
+                : "text-[#6A5452] hover:text-[#432F2E]"
+                }`}
             >
               Resident
             </Link>
             <Link
               href="/retailer"
-              className={`px-2.5 py-1 rounded-[10px] text-xs font-medium transition-all ${
-                pathname.startsWith("/retailer")
-                  ? "bg-[#432F2E] text-white font-bold"
-                  : "text-[#6A5452] hover:text-[#432F2E]"
-              }`}
+              className={`px-2.5 py-1 rounded-[10px] text-xs font-medium transition-all ${pathname.startsWith("/retailer")
+                ? "bg-[#432F2E] text-white font-bold"
+                : "text-[#6A5452] hover:text-[#432F2E]"
+                }`}
             >
               Retailer
             </Link>
             <Link
               href="/admin"
-              className={`px-2.5 py-1 rounded-[10px] text-xs font-medium transition-all ${
-                pathname.startsWith("/admin")
-                  ? "bg-[#432F2E] text-white font-bold"
-                  : "text-[#6A5452] hover:text-[#432F2E]"
-              }`}
+              className={`px-2.5 py-1 rounded-[10px] text-xs font-medium transition-all ${pathname.startsWith("/admin")
+                ? "bg-[#432F2E] text-white font-bold"
+                : "text-[#6A5452] hover:text-[#432F2E]"
+                }`}
             >
               Admin
             </Link>
@@ -191,9 +187,8 @@ export function AppHeader() {
                     setDropdownOpen(false);
                     router.push("/customer");
                   }}
-                  className={`w-full text-left px-3 py-2.5 flex items-center gap-2.5 hover:bg-[#F3F8FB] transition-colors cursor-pointer ${
-                    currentUser.role === "customer" ? "bg-[#FFF7DB] font-bold border-l-3 border-[#432F2E]" : ""
-                  }`}
+                  className={`w-full text-left px-3 py-2.5 flex items-center gap-2.5 hover:bg-[#F3F8FB] transition-colors cursor-pointer ${currentUser.role === "customer" ? "bg-[#FFF7DB] font-bold border-l-3 border-[#432F2E]" : ""
+                    }`}
                 >
                   <div className="w-7 h-7 rounded-full bg-[#E4EEF5] text-[#2A5C79] flex items-center justify-center font-bold">
                     A
@@ -213,9 +208,8 @@ export function AppHeader() {
                     setDropdownOpen(false);
                     router.push("/retailer");
                   }}
-                  className={`w-full text-left px-3 py-2.5 flex items-center gap-2.5 hover:bg-[#F3F8FB] transition-colors cursor-pointer ${
-                    currentUser.role === "retailer" ? "bg-[#FFF7DB] font-bold border-l-3 border-[#432F2E]" : ""
-                  }`}
+                  className={`w-full text-left px-3 py-2.5 flex items-center gap-2.5 hover:bg-[#F3F8FB] transition-colors cursor-pointer ${currentUser.role === "retailer" ? "bg-[#FFF7DB] font-bold border-l-3 border-[#432F2E]" : ""
+                    }`}
                 >
                   <div className="w-7 h-7 rounded-full bg-[#E3F4EA] text-[#1B6B45] flex items-center justify-center font-bold">
                     R
@@ -235,9 +229,8 @@ export function AppHeader() {
                     setDropdownOpen(false);
                     router.push("/admin");
                   }}
-                  className={`w-full text-left px-3 py-2.5 flex items-center gap-2.5 hover:bg-[#F3F8FB] transition-colors cursor-pointer ${
-                    currentUser.role === "admin" ? "bg-[#FFF7DB] font-bold border-l-3 border-[#432F2E]" : ""
-                  }`}
+                  className={`w-full text-left px-3 py-2.5 flex items-center gap-2.5 hover:bg-[#F3F8FB] transition-colors cursor-pointer ${currentUser.role === "admin" ? "bg-[#FFF7DB] font-bold border-l-3 border-[#432F2E]" : ""
+                    }`}
                 >
                   <div className="w-7 h-7 rounded-full bg-[#FFE3C4] text-[#8A3A00] flex items-center justify-center font-bold">
                     M
