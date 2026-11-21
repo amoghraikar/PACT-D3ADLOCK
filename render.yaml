@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: pact-api
+    env: python
+    rootDir: apps/api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: EVENT_TRANSPORT
+        value: kafka
+      - key: SEARCH_BACKEND
+        value: opensearch
+
+  - type: worker
+    name: pact-consumer
+    env: python
+    rootDir: apps/api
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.workers.consumer
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+
+  - type: cron
+    name: pact-cycle-tick
+    env: python
+    rootDir: apps/api
+    schedule: "*/5 * * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.workers.cycle_tick
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false

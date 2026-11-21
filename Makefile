@@ -44,4 +44,11 @@ lint:
 
 # Demo target (P26)
 demo:
-	@echo "Demo target placeholder (P26)"
+	@echo "Resetting dev database and seeding Golden Scenario G..."
+	cd apps/api && .venv/bin/python -m app.modules.dev.seed_golden
+	@echo "Ready at start of Scenario G. Open http://localhost:3000"
+
+demo-fast:
+	@echo "Running Golden Scenario G fast forward through API..."
+	cd apps/api && .venv/bin/python -m app.modules.dev.fast_forward_g
+	@echo "Scenario G advanced to 'bill ready'. Ready for customer payments at http://localhost:3000/customer/bill"

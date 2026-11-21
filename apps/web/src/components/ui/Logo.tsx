@@ -15,9 +15,9 @@ interface LogoProps {
  */
 export function Logo({ href = "/", className = "", size = "md" }: LogoProps) {
   const heightMap = {
-    sm: 32, // 64px width
-    md: 40, // 80px width
-    lg: 56, // 112px width
+    sm: 34,
+    md: 42,
+    lg: 54,
   };
 
   const height = heightMap[size];
@@ -32,7 +32,7 @@ export function Logo({ href = "/", className = "", size = "md" }: LogoProps) {
         height={height}
         priority
         className="object-contain h-auto"
-        style={{ width: `${Math.max(96, width)}px`, height: "auto" }}
+        style={{ height: `${height}px`, width: "auto" }}
       />
     </div>
   );

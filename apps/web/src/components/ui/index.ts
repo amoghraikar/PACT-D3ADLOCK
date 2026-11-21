@@ -21,3 +21,4 @@ export * from "./TopBar";
 export * from "./BottomNav";
 export * from "./Sidebar";
 export * from "./MicButton";
+export * from "./NotificationBell";

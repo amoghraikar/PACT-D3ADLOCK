@@ -1,7 +1,7 @@
 import React from "react";
-import { Info, AlertTriangle, AlertCircle } from "lucide-react";
+import { Info, AlertTriangle, AlertCircle, CheckCircle2 } from "lucide-react";
 
-export type BannerKind = "info" | "warning" | "danger";
+export type BannerKind = "info" | "warning" | "danger" | "success";
 
 export interface BannerProps {
   kind?: BannerKind;
@@ -33,6 +33,11 @@ export function Banner({
       bg: "bg-danger-100 text-danger-700 border-danger-100",
       icon: <AlertCircle className="w-5 h-5 text-danger-700 shrink-0 mt-0.5" />,
       actionText: "text-danger-700 underline font-semibold",
+    },
+    success: {
+      bg: "bg-success-100 text-success-700 border-success-100",
+      icon: <CheckCircle2 className="w-5 h-5 text-success-700 shrink-0 mt-0.5" />,
+      actionText: "text-success-700 hover:underline font-semibold",
     },
   };
 

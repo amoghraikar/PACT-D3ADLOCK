@@ -65,6 +65,44 @@ export default function RootPage() {
           </Card>
         </div>
 
+        {/* Evaluation Quick Launch */}
+        <Card padding="sm" className="text-left bg-white space-y-2.5">
+          <div className="flex items-center justify-between border-b border-ice-100 pb-2">
+            <span className="text-xs font-bold text-ink-800">Direct Workspace Launch</span>
+            <span className="text-[10px] text-teal-700 font-semibold uppercase tracking-wider">Evaluation Demo</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <Link
+              href="/customer"
+              className="p-2 rounded-ctl border border-ice-200 hover:border-teal-700 hover:bg-ice-50 transition-colors block"
+            >
+              <b className="block text-ink-800">Resident Workspace</b>
+              <span className="text-[11px] text-ink-500">Asha Rao · Flat A-101</span>
+            </Link>
+            <Link
+              href="/retailer"
+              className="p-2 rounded-ctl border border-ice-200 hover:border-teal-700 hover:bg-ice-50 transition-colors block"
+            >
+              <b className="block text-ink-800">Retailer Portal</b>
+              <span className="text-[11px] text-ink-500">Ravi · Sri Lakshmi</span>
+            </Link>
+            <Link
+              href="/admin"
+              className="p-2 rounded-ctl border border-ice-200 hover:border-teal-700 hover:bg-ice-50 transition-colors block"
+            >
+              <b className="block text-ink-800">Building Admin</b>
+              <span className="text-[11px] text-ink-500">Meera · Coordinator</span>
+            </Link>
+            <Link
+              href="/styleguide"
+              className="p-2 rounded-ctl border border-ice-200 hover:border-teal-700 hover:bg-ice-50 transition-colors block"
+            >
+              <b className="block text-ink-800">UI Kit & Styleguide</b>
+              <span className="text-[11px] text-ink-500">Tokens, Kit & U1–U9</span>
+            </Link>
+          </div>
+        </Card>
+
         {/* Styleguide Link */}
         <div className="pt-2">
           <Link

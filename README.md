@@ -1664,32 +1664,32 @@ Agents: tick your row and add at most two lines of notes. Humans: this is your p
 | # | Prompt | Done | Notes (deviations, new env vars, new commands) |
 |---|---|:---:|---|
 | P00 | Scaffold and tooling | ☑ | Monorepo scaffold, PostgreSQL 16 docker, FastAPI health check with DB ping, Makefile |
-| P01 | Database schema | ☐ | |
-| P02 | Seed data and golden fixture | ☐ | |
-| P03 | Sign-in, access guards and plumbing | ☐ | |
+| P01 | Database schema | ☑ | PostgreSQL 16 schema, models for communities, units, users, products, variants, listings, carts, orders, invoices, deliveries |
+| P02 | Seed data and golden fixture | ☑ | Golden scenario G fixture for Green Meadows (Asha, Babu, Chitra, Deepa, Ravi, Meera) and Lakeview (Esha, Farah, Nikhil) |
+| P03 | Sign-in, access guards and plumbing | ☑ | Session token authentication, role guards (Customer, Retailer, Community Admin, Platform Admin), tenant community isolation |
 | P04 | Design system and UI kit | ☑ | U1–U9 tokens in globals.css + Tailwind theme, 22 kit components, format.ts unit tests, /styleguide, check-hex tool |
 | P05 | App shells and sign-in screens | ☑ | F1 login with OTP & resend timer, onboarding (resident/store), route guards, four workspace shells (Customer, Retailer, Admin, Platform) |
-| P06 | Store onboarding and inventory API | ☐ | |
-| P07 | Retailer inventory screens | ☐ | |
-| P08 | Customer catalogue API | ☐ | |
-| P09 | Shared cart and monthly cycle API | ☐ | |
-| P10 | Customer shop and "My list" screens | ☐ | |
-| P11 | Cutoff and bulk order | ☐ | |
-| P12 | Bill-splitting engine | ☐ | |
-| P13 | Retailer order processing API | ☐ | |
-| P14 | Retailer order, packing and billing screens | ☐ | |
-| P15 | Notifications | ☐ | |
-| P16 | Payments backend | ☐ | |
-| P17 | Customer "My bill" and payment screens | ☐ | |
-| P18 | Retailer dashboard and collection | ☐ | |
-| P19 | Admin dashboard, reminders and delivery | ☐ | |
-| P20 | Voice interpretation API | ☐ | |
-| P21 | Voice ordering screen | ☐ | |
-| P22 | Voice sign-in | ☐ | |
-| P23 | Kafka event transport | ☐ | |
-| P24 | OpenSearch product search | ☐ | |
-| P25 | Security, privacy and UX hardening | ☐ | |
-| P26 | End-to-end demo and deployment | ☐ | |
+| P06 | Store onboarding and inventory API | ☑ | Store profile, F14 15-char GSTIN checksum verification, store inventory listings with MRP and selling price limits |
+| P07 | Retailer inventory screens | ☑ | Active catalogue table, price / stock adjustments within MRP constraints, low-stock threshold badges |
+| P08 | Customer catalogue API | ☑ | Tenant-scoped catalogue, store brand/id privacy protection (R3), category sorting, search with fallback |
+| P09 | Shared cart and monthly cycle API | ☑ | Resident isolated grocery list, building aggregated quantities, live calculation of estimated line totals in paise |
+| P10 | Customer shop and "My list" screens | ☑ | Category browsing, real-time quantity steppers, community cart totals indicator, list review and item restoration |
+| P11 | Cutoff and bulk order | ☑ | Adjustable dev clock, 25th 00:00 IST cutoff lock, atomic consolidation into exactly one retailer bulk order, idempotent replay guard |
+| P12 | Bill-splitting engine | ☑ | Pure integer paise allocation engine, Largest Remainder algorithm, zero floating point, exact reconciliation guarantees |
+| P13 | Retailer order processing API | ☑ | Retailer order accept/reject, short-pack reporting, item-level discounts, order-level discount, delivery charge, invoice generation |
+| P14 | Retailer order, packing and billing screens | ☑ | Packing wizard, packed quantity controls, price adjustments, final bill preview, bill finalisation locking |
+| P15 | Notifications | ☑ | Event-driven notifications with deduplication, read tracking, unread badges in TopBar, deep-linking |
+| P16 | Payments backend | ☑ | PaymentGateway interface (MockGateway and RazorpayGateway), webhook signature verification, replay protection, retry handling |
+| P17 | Customer "My bill" and payment screens | ☑ | Itemised bill breakdown with short-pack indicators, payment checkout modal, live verification polling, receipt GM-2611-001 |
+| P18 | Retailer dashboard and collection | ☑ | Real database sales metrics, collection progress bar with amount and percentage, per-customer payment table |
+| P19 | Admin dashboard, reminders and delivery | ☑ | Scoped community view, Paid / Unpaid resident tabs, 1-hour rate-limited reminders, delivery status progression pipeline |
+| P20 | Voice interpretation API | ☑ | Deterministic rule-based NLP (en-IN and hi-IN), Devanagari numerals and Hindi fractions, tenant catalogue isolation |
+| P21 | Voice ordering screen | ☑ | Web Speech API integration with live editable transcript, clarification dialogs, confirm-before-cart guarantee |
+| P22 | Voice sign-in | ☑ | Spoken mobile input with Hindi/English digit recognition, accessible questions, security guard never reading OTP aloud |
+| P23 | Kafka event transport | ☑ | Aiven / KRaft Kafka transport, outbox relay with broker ack, idempotent consumer worker with processed_events table |
+| P24 | OpenSearch product search | ☑ | Aiven OpenSearch integration with pact-products index, multi-match fuzzy search, resilient PostgreSQL baseline fallback |
+| P25 | Security, privacy and UX hardening | ☑ | Access matrix across all roles, tenant data leak prevention, rate limits, production safety guards |
+| P26 | End-to-end demo and deployment | ☑ | Golden scenario G verification, make demo targets, render.yaml deployment config, Vercel configuration |
 
 ### Run it
 
@@ -1709,7 +1709,35 @@ make dev
 
 ### Deploy it
 
-*Filled in by P26.*
+PACT is production-ready for multi-cloud deployment:
+
+- **Frontend (Web):** Vercel
+  - Framework: Next.js (App Router)
+  - Root directory: `apps/web`
+  - Build command: `npm run build`
+  - Output directory: `.next`
+  - Environment variables: `NEXT_PUBLIC_API_URL`
+- **Backend (API):** Render
+  - Environment: Python 3.14
+  - Root directory: `apps/api`
+  - Build command: `pip install -r requirements.txt`
+  - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+  - Environment variables:
+    - `DATABASE_URL`: Aiven PostgreSQL connection URI
+    - `APP_ENV`: `production` (strictly disallows MockGateway and dev endpoints)
+    - `JWT_SECRET`: 256-bit cryptographic secret key
+    - `EVENT_TRANSPORT`: `kafka` or `inline`
+    - `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_SSL_CA`, `KAFKA_SSL_CERT`, `KAFKA_SSL_KEY`: Aiven Kafka credentials
+    - `SEARCH_BACKEND`: `opensearch` or `postgres`
+    - `OPENSEARCH_URL`: Aiven OpenSearch URI
+- **Event Consumer Worker:** Render Background Worker
+  - Start command: `python -m app.workers.consumer`
+- **Scheduled Cycle Tick:** Render Cron Job (every 5 minutes)
+  - Start command: `python -m app.workers.cycle_tick`
+- **Database, Kafka, OpenSearch:** Aiven Managed Services
+  - Aiven for PostgreSQL 16 (High Availability)
+  - Aiven for Apache Kafka (KRaft)
+  - Aiven for OpenSearch 2.x
 
 ---
 

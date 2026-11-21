@@ -16,8 +16,20 @@ from app.core.errors import (
     unhandled_exception_handler,
     validation_exception_handler,
 )
+from app.modules.admin.dashboard_router import router as admin_dashboard_router
 from app.modules.auth.router import onboarding_router
 from app.modules.auth.router import router as auth_router
+from app.modules.cart.router import orders_router
+from app.modules.cart.router import router as cart_router
+from app.modules.catalogue.router import router as catalogue_router
+from app.modules.dev.mock_checkout import router as mock_checkout_router
+from app.modules.dev.router import router as dev_router
+from app.modules.notifications.router import router as notifications_router
+from app.modules.payments.invoices_router import router as invoices_router
+from app.modules.payments.webhooks_router import router as webhooks_router
+from app.modules.retailer.dashboard_router import router as retailer_dashboard_router
+from app.modules.retailer.orders_router import router as retailer_orders_router
+from app.modules.voice.router import router as voice_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -48,6 +60,18 @@ app.add_middleware(
 # Include Routers
 app.include_router(auth_router, prefix=settings.API_PREFIX)
 app.include_router(onboarding_router, prefix=settings.API_PREFIX)
+app.include_router(catalogue_router, prefix=settings.API_PREFIX)
+app.include_router(cart_router, prefix=settings.API_PREFIX)
+app.include_router(orders_router, prefix=settings.API_PREFIX)
+app.include_router(retailer_orders_router, prefix=settings.API_PREFIX)
+app.include_router(retailer_dashboard_router, prefix=settings.API_PREFIX)
+app.include_router(admin_dashboard_router, prefix=settings.API_PREFIX)
+app.include_router(notifications_router)
+app.include_router(invoices_router)
+app.include_router(webhooks_router)
+app.include_router(mock_checkout_router)
+app.include_router(voice_router)
+app.include_router(dev_router, prefix=settings.API_PREFIX)
 
 
 @app.get("/")

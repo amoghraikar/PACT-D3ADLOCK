@@ -97,11 +97,32 @@ export default function LoginPage() {
     }
   };
 
-  // Quick dev persona filler
-  const handleQuickSignIn = (p: string) => {
-    setPhone(p.replace("+91", ""));
+  // Quick dev persona filler (one-click instant login)
+  const handleQuickSignIn = async (p: string) => {
+    const rawPhone = p.replace("+91", "");
+    setPhone(rawPhone);
     setCode("000000");
-    setStep("code");
+    setErrorMsg(null);
+    setIsSubmitting(true);
+    const res = await verifyOtp(p, "000000");
+    setIsSubmitting(false);
+
+    if (res.success && res.user) {
+      if (res.user.role === "customer") {
+        setOrderMode(inputMode === "speak" ? "speak" : "type");
+        router.push("/customer/start");
+      } else if (res.user.role === "retailer") {
+        router.push("/retailer");
+      } else if (res.user.role === "community_admin") {
+        router.push("/admin");
+      } else if (res.user.role === "platform_admin") {
+        router.push("/platform");
+      } else {
+        router.push("/onboarding");
+      }
+    } else {
+      setStep("code");
+    }
   };
 
   return (
