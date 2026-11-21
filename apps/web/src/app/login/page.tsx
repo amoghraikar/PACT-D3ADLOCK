@@ -12,13 +12,13 @@ import {
 } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { copy } from "@/lib/copy/en";
-import { Mic, Keyboard, Sparkles } from "lucide-react";
+import { Sparkles, ArrowLeft, Building2 } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, requestOtp, verifyOtp, setOrderMode } = useAuth();
+  const { user, requestOtp, verifyOtp } = useAuth();
 
-  const [inputMode, setInputMode] = useState<"type" | "speak">("type");
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
@@ -29,7 +29,7 @@ export default function LoginPage() {
   // If already logged in with a role, redirect to their home
   useEffect(() => {
     if (user && user.role) {
-      if (user.role === "customer") router.push("/customer/start");
+      if (user.role === "customer") router.push("/customer");
       else if (user.role === "retailer") router.push("/retailer");
       else if (user.role === "community_admin") router.push("/admin");
       else if (user.role === "platform_admin") router.push("/platform");
@@ -83,8 +83,7 @@ export default function LoginPage() {
       if (!res.user.role) {
         router.push("/onboarding");
       } else if (res.user.role === "customer") {
-        setOrderMode(inputMode === "speak" ? "speak" : "type");
-        router.push("/customer/start");
+        router.push("/customer");
       } else if (res.user.role === "retailer") {
         router.push("/retailer");
       } else if (res.user.role === "community_admin") {
@@ -109,8 +108,7 @@ export default function LoginPage() {
 
     if (res.success && res.user) {
       if (res.user.role === "customer") {
-        setOrderMode(inputMode === "speak" ? "speak" : "type");
-        router.push("/customer/start");
+        router.push("/customer");
       } else if (res.user.role === "retailer") {
         router.push("/retailer");
       } else if (res.user.role === "community_admin") {
@@ -129,6 +127,24 @@ export default function LoginPage() {
     <div className="min-h-screen bg-ice-50 flex flex-col justify-center items-center p-4 sm:p-6">
       {/* Container max 480px per U4 / U8 */}
       <div className="w-full max-w-[440px] space-y-6">
+        {/* Navigation link to Onboarding overview */}
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-600 hover:text-ink-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Overview</span>
+          </Link>
+          <Link
+            href="/onboarding"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:underline"
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Join Building (Sign Up)</span>
+          </Link>
+        </div>
+
         {/* Brand Header on ice-200 with stripe band per U1 / U8 */}
         <div className="bg-ice-200 border border-ice-300 rounded-card p-6 sm:p-8 text-center relative overflow-hidden">
           <div className="absolute inset-x-0 top-0 h-16 bg-stripes opacity-40 pointer-events-none" />
@@ -145,34 +161,6 @@ export default function LoginPage() {
 
         {/* Sign-in Form Card */}
         <Card className="p-6 sm:p-8 space-y-6">
-          {/* Type | Speak toggle per U8 */}
-          <div className="grid grid-cols-2 p-1 bg-ice-100 rounded-ctl border border-ice-300">
-            <button
-              type="button"
-              onClick={() => setInputMode("type")}
-              className={`flex items-center justify-center gap-2 h-10 rounded-[9px] text-sm font-semibold transition-colors focus-ring cursor-pointer ${
-                inputMode === "type"
-                  ? "bg-ink-800 text-white shadow-xs"
-                  : "text-ink-600 hover:text-ink-800"
-              }`}
-            >
-              <Keyboard className="w-4 h-4" />
-              <span>{copy.auth.toggleType}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setInputMode("speak")}
-              className={`flex items-center justify-center gap-2 h-10 rounded-[9px] text-sm font-semibold transition-colors focus-ring cursor-pointer ${
-                inputMode === "speak"
-                  ? "bg-ink-800 text-white shadow-xs"
-                  : "text-ink-600 hover:text-ink-800"
-              }`}
-            >
-              <Mic className="w-4 h-4 text-teal-700" />
-              <span>{copy.auth.toggleSpeak}</span>
-            </button>
-          </div>
-
           {errorMsg && (
             <Banner kind="danger" message={errorMsg} />
           )}
@@ -291,6 +279,16 @@ export default function LoginPage() {
                 <span className="text-ink-500">Platform Admin</span>
               </button>
             </div>
+          </div>
+
+          {/* New resident registration prompt */}
+          <div className="pt-3 border-t border-ice-100 text-center">
+            <p className="text-xs text-ink-600">
+              New resident or store owner?{" "}
+              <Link href="/onboarding" className="font-semibold text-teal-700 hover:underline">
+                Register or Join Building →
+              </Link>
+            </p>
           </div>
         </Card>
       </div>

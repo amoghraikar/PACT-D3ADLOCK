@@ -11,7 +11,8 @@ import {
 } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { copy } from "@/lib/copy/en";
-import { Building2, Store, Clock } from "lucide-react";
+import { Building2, Store, Clock, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function OnboardingPage() {
     setIsSubmitting(false);
 
     if (res.success) {
-      router.push("/customer/start");
+      router.push("/customer");
     } else {
       setErrorMsg(res.error || "Failed to join building.");
     }
@@ -74,6 +75,22 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-ice-50 flex flex-col justify-center items-center p-4 sm:p-6">
       <div className="w-full max-w-[480px] space-y-6">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-600 hover:text-ink-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Overview</span>
+          </Link>
+          <Link
+            href="/login"
+            className="text-xs font-semibold text-teal-700 hover:underline"
+          >
+            Already have an account? Sign In →
+          </Link>
+        </div>
+
         <div className="text-center">
           <Logo size="md" />
         </div>
