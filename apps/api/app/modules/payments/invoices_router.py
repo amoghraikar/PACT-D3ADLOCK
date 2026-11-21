@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, Header
 from pydantic import BaseModel
 
+from app.core.clock import now_utc
 from app.core.errors import AppError
 from app.modules.auth.router import get_user_from_token
 from app.modules.payments.service import (
@@ -120,3 +121,51 @@ def verify_invoice(
     user_id = get_current_user_id(authorization, pact_token)
     result = verify_payment_transition(user_id, invoice_id)
     return result
+
+
+@router.post("/generate-retailer-bill")
+def generate_retailer_bill(
+    authorization: Annotated[str | None, Header()] = None,
+    pact_token: Annotated[str | None, Cookie()] = None,
+):
+    """
+    Convenience endpoint for testing & on-demand billing:
+    Finds active community order, finalises it (running split_bill and generating invoices),
+    and returns the generated invoice for the caller.
+    """
+    user_id = get_current_user_id(authorization, pact_token)
+    from app.modules.retailer.orders_router import COMMUNITY_ORDERS, _execute_split_for_order, INVOICES
+    order_id = "ord-comm-green-2026-11"
+    if order_id not in COMMUNITY_ORDERS:
+        for ord_k in COMMUNITY_ORDERS:
+            order_id = ord_k
+            break
+
+    order = COMMUNITY_ORDERS.get(order_id)
+    if order:
+        retailer_id = order.get("retailer_id", "ret-ravi-1")
+        split_res = _execute_split_for_order(order_id, retailer_id)
+        for inv_data in split_res["invoices"]:
+            inv_id = f"inv-{order_id}-{inv_data['customer_id']}"
+            INVOICES[inv_id] = {
+                "id": inv_id,
+                "order_id": order_id,
+                "customer_id": inv_data["customer_id"],
+                "subtotal_paise": inv_data["subtotal_paise"],
+                "overall_discount_share_paise": inv_data["overall_discount_share_paise"],
+                "delivery_share_paise": inv_data["delivery_share_paise"],
+                "rounding_adjustment_paise": inv_data["rounding_adjustment_paise"],
+                "total_paise": inv_data["total_paise"],
+                "status": "issued",
+                "items": inv_data["items"],
+                "created_at": now_utc().isoformat(),
+            }
+        order["status"] = "billed"
+        order["final_bill_paise"] = split_res["bill_total_paise"]
+
+    user_invoices = [inv for inv in INVOICES.values() if inv.get("customer_id") == user_id]
+    if user_invoices:
+        return {"invoice": user_invoices[0], "status": "generated"}
+    first_inv = list(INVOICES.values())[0] if INVOICES else None
+    return {"invoice": first_inv, "status": "generated"}
+

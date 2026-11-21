@@ -17,6 +17,8 @@ import {
   ShoppingCart,
   Trash2,
   Package,
+  Globe,
+  Radio,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -34,10 +36,41 @@ interface ParsedItem {
 }
 
 const SAMPLE_COMMANDS = [
-  "5 kg Sona Masoori Rice, 1 litre sunflower oil, and 1 kg toor dal",
-  "10 kg wheat atta, 2 kg sugar, and 500g ghee",
-  "1 kg moong dal, 200g turmeric powder, and 1 kg poha",
-  "5 kg basmati rice and 1 kg dragon fruit", // contains an unavailable item to demonstrate notification
+  "I want 2 packets of milk, 5 kg atta, and 1 kg sugar, please add them",
+  "give me 5 kg Sona Masoori Rice, 1 litre sunflower oil, and 1 kg toor dal",
+  "add 2 packets milk, 1 packet tata salt, and 500g haldi powder",
+  "please add 5 kg basmati rice and 1 kg dragon fruit", // contains unavailable item to demonstrate alert
+];
+
+// Conversational filler & noise words to completely ignore in the middle of speech
+const FILLER_WORDS = new Set([
+  "i", "want", "need", "please", "can", "you", "could", "add", "to", "cart",
+  "give", "me", "also", "and", "then", "um", "uh", "like", "actually", "hey",
+  "pact", "order", "put", "take", "bring", "for", "home", "fast", "today",
+  "aur", "tatha", "bhai", "kripya", "chahiye", "kar", "do", "dena", "lagana",
+  "dalna", "in", "my", "some", "the", "a", "an", "of", "listen", "item",
+  "items", "grocery", "groceries", "bhi", "saath", "mein", "bhejo", "rakho",
+]);
+
+// Number words to digits
+const NUMBER_WORDS: Record<string, number> = {
+  one: 1, a: 1, an: 1, single: 1, ek: 1,
+  two: 2, couple: 2, do: 2,
+  three: 3, teen: 3,
+  four: 4, chaar: 4,
+  five: 5, paanch: 5,
+  six: 6, chhah: 6,
+  seven: 7, saat: 7,
+  eight: 8, aath: 8,
+  nine: 9, nau: 9,
+  ten: 10, das: 10,
+};
+
+// Known unavailable/exotic items not carried in local community kirana
+const UNAVAILABLE_ITEMS = [
+  "dragon fruit", "avocado", "broccoli", "tofu", "strawberries", "kiwi",
+  "quinoa", "olive oil", "muesli", "soya milk", "mushrooms", "mayonnaise",
+  "kale", "chia seeds", "asparagus", "blueberry", "blueberries",
 ];
 
 export default function CustomerSpeakPage() {
@@ -45,6 +78,7 @@ export default function CustomerSpeakPage() {
   const { updateQuantity } = useCart();
 
   const [products, setProducts] = useState<Product[]>(FALLBACK_PRODUCTS);
+  const [selectedLang, setSelectedLang] = useState<"en-IN" | "hi-IN">("en-IN");
   const [micState, setMicState] = useState<"idle" | "listening" | "error">("idle");
   const [transcript, setTranscript] = useState("");
   const [previewItems, setPreviewItems] = useState<ParsedItem[]>([]);
@@ -66,102 +100,233 @@ export default function CustomerSpeakPage() {
       .catch(() => {});
   }, []);
 
-  // Intelligent speech & text parser for grocery items
-  const parseSpokenText = (text: string) => {
-    if (!text.trim()) return;
+  // Natural Language Multi-Product Parser: ignores middle filler words and extracts all products at once
+  const parseMultiProductSpeech = (rawText: string) => {
+    if (!rawText.trim()) return;
 
-    const lower = text.toLowerCase();
+    let text = rawText.toLowerCase();
+
+    // 1. Replace word numbers with digits
+    for (const [w, num] of Object.entries(NUMBER_WORDS)) {
+      const regex = new RegExp(`\\b${w}\\b`, "g");
+      text = text.replace(regex, num.toString());
+    }
+
+    // 2. Normalize units
+    text = text
+      .replace(/\b(kilograms|kilogram|kilos|kilo|kgs)\b/g, "kg")
+      .replace(/\b(litres|litre|liters|liter|ltrs|ltr)\b/g, "l")
+      .replace(/\b(packets|packet|pkts|pkt|pouches|pouch|bags|bag|bottles|bottle)\b/g, "pack")
+      .replace(/\b(grams|gram|gms|gm)\b/g, "g")
+      .replace(/\b(half|aadha)\b/g, "500 g");
+
+    // 3. Check for genuine unavailable items
+    const detectedUnavailable: string[] = [];
+    for (const unavail of UNAVAILABLE_ITEMS) {
+      if (text.includes(unavail)) {
+        detectedUnavailable.push(unavail);
+        text = text.replace(new RegExp(unavail, "g"), " ");
+      }
+    }
+
+    // 4. Split speech stream into item candidate chunks based on separators and quantity transitions
+    // Handles multi-product sentences: "2 packets milk, 5 kg atta, and 1 kg sugar" or "2 pack milk 5 kg atta 1 kg sugar"
+    const segments = text.split(/(?:,|\band\b|\baur\b|\bplus\b|\btatha\b|\balso\b|\bthen\b)/);
+
+    // Further split if multiple numbers and products were spoken without conjunctions
+    const chunks: string[] = [];
+    for (const seg of segments) {
+      const trimmed = seg.trim();
+      if (!trimmed) continue;
+      // If segment contains multiple quantity indicators like "2 pack milk 5 kg atta"
+      const subParts = trimmed.split(/(?=\b\d+\s*(?:kg|l|g|pack)?\b)/);
+      if (subParts.length > 1) {
+        for (const sp of subParts) {
+          if (sp.trim()) chunks.push(sp.trim());
+        }
+      } else {
+        chunks.push(trimmed);
+      }
+    }
+
     const matched: ParsedItem[] = [];
-    const notFound: string[] = [];
 
-    // Check for common staples and synonyms
-    const phrases = lower.split(/,|\band\b|\baur\b|\bplus\b|\btatha\b/);
+    // Keyword mapping for Indian staples
+    const PRODUCT_KEYWORDS: { keywords: string[]; prodMatch: (p: Product) => boolean }[] = [
+      {
+        keywords: ["milk", "doodh", "nandini", "amul milk"],
+        prodMatch: (p) => p.name.toLowerCase().includes("milk") || p.id.includes("milk"),
+      },
+      {
+        keywords: ["atta", "wheat flour", "aashirvaad", "chakki", "gehun"],
+        prodMatch: (p) => p.name.toLowerCase().includes("atta") || p.name.toLowerCase().includes("wheat"),
+      },
+      {
+        keywords: ["sona masoori", "sonamasoori", "rice", "chawal", "sona masuri"],
+        prodMatch: (p) => p.name.toLowerCase().includes("sona masoori") || (p.name.toLowerCase().includes("rice") && !p.name.toLowerCase().includes("basmati")),
+      },
+      {
+        keywords: ["basmati", "biryani rice", "daawat", "india gate"],
+        prodMatch: (p) => p.name.toLowerCase().includes("basmati"),
+      },
+      {
+        keywords: ["sugar", "cheeni", "shakkar", "madhur"],
+        prodMatch: (p) => p.name.toLowerCase().includes("sugar"),
+      },
+      {
+        keywords: ["sunflower oil", "sunpure", "cooking oil", "sunflower", "oil", "tel"],
+        prodMatch: (p) => p.name.toLowerCase().includes("sunflower") || p.name.toLowerCase().includes("oil"),
+      },
+      {
+        keywords: ["toor dal", "tur dal", "arhar dal", "tuvar", "toor", "tur"],
+        prodMatch: (p) => p.name.toLowerCase().includes("toor") || p.name.toLowerCase().includes("tur"),
+      },
+      {
+        keywords: ["moong dal", "mung dal", "moong"],
+        prodMatch: (p) => p.name.toLowerCase().includes("moong"),
+      },
+      {
+        keywords: ["chana dal", "chana"],
+        prodMatch: (p) => p.name.toLowerCase().includes("chana"),
+      },
+      {
+        keywords: ["salt", "namak", "tata salt"],
+        prodMatch: (p) => p.name.toLowerCase().includes("salt"),
+      },
+      {
+        keywords: ["turmeric", "haldi"],
+        prodMatch: (p) => p.name.toLowerCase().includes("turmeric") || p.name.toLowerCase().includes("haldi"),
+      },
+      {
+        keywords: ["chilli powder", "mirch", "lal mirch", "chili"],
+        prodMatch: (p) => p.name.toLowerCase().includes("chilli"),
+      },
+      {
+        keywords: ["coriander powder", "dhaniya"],
+        prodMatch: (p) => p.name.toLowerCase().includes("coriander"),
+      },
+      {
+        keywords: ["tea", "chai", "tea powder", "tata tea", "red label"],
+        prodMatch: (p) => p.name.toLowerCase().includes("tea"),
+      },
+      {
+        keywords: ["ghee", "amul ghee", "cow ghee", "desi ghee"],
+        prodMatch: (p) => p.name.toLowerCase().includes("ghee"),
+      },
+      {
+        keywords: ["curd", "dahi"],
+        prodMatch: (p) => p.name.toLowerCase().includes("curd") || p.name.toLowerCase().includes("dahi"),
+      },
+      {
+        keywords: ["paneer", "cottage cheese"],
+        prodMatch: (p) => p.name.toLowerCase().includes("paneer"),
+      },
+      {
+        keywords: ["poha", "aval", "flattened rice"],
+        prodMatch: (p) => p.name.toLowerCase().includes("poha"),
+      },
+      {
+        keywords: ["coffee", "bru", "nescafe"],
+        prodMatch: (p) => p.name.toLowerCase().includes("coffee"),
+      },
+    ];
 
-    for (let phrase of phrases) {
-      phrase = phrase.trim();
-      if (!phrase) continue;
+    for (const chunk of chunks) {
+      // Filter out words that are fillers
+      const words = chunk.split(/\s+/).filter((w) => !FILLER_WORDS.has(w));
+      const cleanedChunk = words.join(" ");
 
-      // Extract quantity: numbers or words
-      let qty = 1;
-      const numMatch = phrase.match(/(\d+)/);
+      if (!cleanedChunk) continue;
+
+      // Extract quantity: default 1
+      let quantity = 1;
+      const numMatch = cleanedChunk.match(/\b(\d+)\b/);
       if (numMatch) {
-        qty = parseInt(numMatch[1], 10) || 1;
-      } else if (/\btwo\b|\bdo\b/.test(phrase)) qty = 2;
-      else if (/\bthree\b|\bteen\b/.test(phrase)) qty = 3;
-      else if (/\bfour\b|\bchaar\b/.test(phrase)) qty = 4;
-      else if (/\bfive\b|\bpaanch\b/.test(phrase)) qty = 5;
-      else if (/\bten\b|\bdas\b/.test(phrase)) qty = 10;
+        quantity = parseInt(numMatch[1], 10) || 1;
+      }
 
-      // Match against products
-      let foundProd: Product | null = null;
-      let foundVariant: Variant | null = null;
+      // Find matching product
+      let matchedProd: Product | null = null;
+      let matchedVariant: Variant | null = null;
 
-      for (const prod of products) {
-        const prodName = prod.name.toLowerCase();
-        const brand = prod.brand.toLowerCase();
-        const words = prodName.split(" ").concat(brand.split(" "));
-
-        const isMatch = words.some((w) => w.length > 2 && phrase.includes(w));
-        if (isMatch) {
-          foundProd = prod;
-          // Prefer variant matching requested weight / pack
-          if (phrase.includes("10 kg") || phrase.includes("10kg") || phrase.includes("10 kilo")) {
-            foundVariant = prod.variants.find((v) => v.label.includes("10 kg")) || prod.variants[0];
-          } else if (phrase.includes("5 kg") || phrase.includes("5kg") || phrase.includes("5 kilo") || phrase.includes("5 l") || phrase.includes("5l")) {
-            foundVariant = prod.variants.find((v) => v.label.includes("5 kg") || v.label.includes("5 L")) || prod.variants[0];
-          } else if (phrase.includes("500") || phrase.includes("half")) {
-            foundVariant = prod.variants.find((v) => v.label.includes("500")) || prod.variants[0];
-          } else if (phrase.includes("1 kg") || phrase.includes("1kg") || phrase.includes("1 litre") || phrase.includes("1 l") || phrase.includes("1l")) {
-            foundVariant = prod.variants.find((v) => v.label.includes("1 kg") || v.label.includes("1 L")) || prod.variants[0];
-          } else {
-            foundVariant = prod.variants[0];
+      for (const mapping of PRODUCT_KEYWORDS) {
+        const hasKeyword = mapping.keywords.some((k) => cleanedChunk.includes(k));
+        if (hasKeyword) {
+          const prod = products.find(mapping.prodMatch) || products.find((p) => mapping.keywords.some((k) => p.name.toLowerCase().includes(k)));
+          if (prod) {
+            matchedProd = prod;
+            break;
           }
-          break;
         }
       }
 
-      if (foundProd && foundVariant) {
-        // Prevent duplicate variant in preview
-        const existing = matched.find((m) => m.variant_id === foundVariant!.id);
+      // If not found in mapping, search directly in products name and variants
+      if (!matchedProd) {
+        for (const prod of products) {
+          const pName = prod.name.toLowerCase();
+          const pBrand = prod.brand.toLowerCase();
+          const terms = pName.split(" ").concat(pBrand.split(" "));
+          if (terms.some((t) => t.length > 2 && cleanedChunk.includes(t))) {
+            matchedProd = prod;
+            break;
+          }
+        }
+      }
+
+      if (matchedProd && matchedProd.variants && matchedProd.variants.length > 0) {
+        // Find best variant according to size mentioned
+        if (cleanedChunk.includes("10 kg") || cleanedChunk.includes("10kg")) {
+          matchedVariant = matchedProd.variants.find((v) => v.label.includes("10 kg")) || matchedProd.variants[0];
+        } else if (cleanedChunk.includes("5 kg") || cleanedChunk.includes("5kg") || cleanedChunk.includes("5 l") || cleanedChunk.includes("5l")) {
+          matchedVariant = matchedProd.variants.find((v) => v.label.includes("5 kg") || v.label.includes("5 L")) || matchedProd.variants[0];
+        } else if (cleanedChunk.includes("500") || cleanedChunk.includes("half")) {
+          matchedVariant = matchedProd.variants.find((v) => v.label.includes("500")) || matchedProd.variants[0];
+        } else if (cleanedChunk.includes("1 kg") || cleanedChunk.includes("1kg") || cleanedChunk.includes("1 l") || cleanedChunk.includes("1l") || cleanedChunk.includes("1 pack")) {
+          matchedVariant = matchedProd.variants.find((v) => v.label.includes("1 kg") || v.label.includes("1 L")) || matchedProd.variants[0];
+        } else {
+          matchedVariant = matchedProd.variants[0];
+        }
+
+        // Add or update quantity in matched list
+        const existing = matched.find((m) => m.variant_id === matchedVariant!.id);
         if (existing) {
-          existing.quantity += qty;
+          existing.quantity += quantity;
         } else {
           matched.push({
-            id: `preview-${foundVariant.id}-${Date.now()}-${Math.random()}`,
-            product_id: foundProd.id,
-            variant_id: foundVariant.id,
-            name: foundProd.name,
-            brand: foundProd.brand,
-            variant_label: foundVariant.label,
-            quantity: qty,
-            est_unit_price_paise: foundVariant.selling_price_paise || foundProd.est_unit_price_paise || 20000,
-            mrp_paise: foundVariant.mrp_paise || foundProd.mrp_paise || 24000,
-            image_url: foundProd.image_url || "/brand/pact-mark.png",
+            id: `preview-${matchedVariant.id}-${Date.now()}-${Math.random()}`,
+            product_id: matchedProd.id,
+            variant_id: matchedVariant.id,
+            name: matchedProd.name,
+            brand: matchedProd.brand,
+            variant_label: matchedVariant.label,
+            quantity: quantity,
+            est_unit_price_paise: matchedVariant.selling_price_paise || matchedProd.est_unit_price_paise || 20000,
+            mrp_paise: matchedVariant.mrp_paise || matchedProd.mrp_paise || 24000,
+            image_url: matchedProd.image_url || "/brand/pact-mark.png",
           });
         }
       } else {
-        // Check if user specifically requested an exotic/unavailable item
-        const knownExotics = ["dragon fruit", "avocado", "muesli", "olive oil", "soya milk", "strawberries", "kiwi", "broccoli", "tofu", "quinoa"];
-        for (const ex of knownExotics) {
-          if (phrase.includes(ex)) {
-            notFound.push(ex);
-          }
-        }
-        if (!notFound.length && phrase.length > 3 && !phrase.includes("need") && !phrase.includes("want") && !phrase.includes("please")) {
-          // generic unmatched phrase
-          const cleanPhrase = phrase.replace(/^(i need|please add|i want|add)\s*/i, "").trim();
-          if (cleanPhrase.length > 2 && !cleanPhrase.includes("november") && !cleanPhrase.includes("order")) {
-            notFound.push(cleanPhrase);
-          }
+        // Check if user spoke a non-filler unmatched item
+        const remainingClean = cleanedChunk
+          .replace(/\b\d+\s*(?:kg|l|g|pack)?\b/g, "")
+          .trim();
+        if (
+          remainingClean.length > 2 &&
+          !FILLER_WORDS.has(remainingClean) &&
+          !detectedUnavailable.includes(remainingClean) &&
+          !remainingClean.includes("order") &&
+          !remainingClean.includes("november")
+        ) {
+          detectedUnavailable.push(remainingClean);
         }
       }
     }
 
     setPreviewItems(matched);
-    setNotFoundItems(Array.from(new Set(notFound)));
+    setNotFoundItems(Array.from(new Set(detectedUnavailable)));
   };
 
-  // Real Web Speech API Handler
+  // Real Web Speech API with explicit English (India) / Hindi language selection
   const handleToggleMic = () => {
     if (micState === "listening") {
       if (recognitionRef.current) {
@@ -177,14 +342,14 @@ export default function CustomerSpeakPage() {
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      // Fallback for browsers without Web Speech
+      // Browser fallback simulation
       setMicState("listening");
-      const defaultSample = "5 kg Sona Masoori Rice, 1 litre sunflower oil, 1 kg toor dal";
+      const defaultSample = "2 packets milk, 5 kg atta, and 1 kg sugar";
       setTranscript(defaultSample);
       setTimeout(() => {
         setMicState("idle");
-        parseSpokenText(defaultSample);
-      }, 1500);
+        parseMultiProductSpeech(defaultSample);
+      }, 1400);
       return;
     }
 
@@ -192,7 +357,8 @@ export default function CustomerSpeakPage() {
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = "en-IN"; // English (India) with Hindi accents
+      // Language configured specifically for Indian English pronunciations & vernacular grocery terms
+      recognition.lang = selectedLang;
 
       recognition.onstart = () => {
         setMicState("listening");
@@ -206,7 +372,7 @@ export default function CustomerSpeakPage() {
         }
         const clean = currentTranscript.trim();
         setTranscript(clean);
-        parseSpokenText(clean);
+        parseMultiProductSpeech(clean);
       };
 
       recognition.onerror = () => {
@@ -238,10 +404,21 @@ export default function CustomerSpeakPage() {
   // Quick Sample Phrases Handler
   const handleSelectSample = (sampleText: string) => {
     setTranscript(sampleText);
-    parseSpokenText(sampleText);
+    parseMultiProductSpeech(sampleText);
   };
 
-  // Add all previewed items to the actual user cart
+  // Stepper handlers for preview items
+  const handleUpdatePreviewQty = (variantId: string, newQty: number) => {
+    if (newQty <= 0) {
+      setPreviewItems((prev) => prev.filter((item) => item.variant_id !== variantId));
+    } else {
+      setPreviewItems((prev) =>
+        prev.map((item) => (item.variant_id === variantId ? { ...item, quantity: newQty } : item))
+      );
+    }
+  };
+
+  // Add all previewed items to the user cart
   const handleConfirmAndAddToCart = async () => {
     if (previewItems.length === 0) return;
 
@@ -258,7 +435,7 @@ export default function CustomerSpeakPage() {
       setToastMessage(`Added ${previewItems.length} items to your Cart!`);
       setTimeout(() => {
         router.push("/customer/list");
-      }, 600);
+      }, 500);
     });
   };
 
@@ -273,19 +450,48 @@ export default function CustomerSpeakPage() {
 
   return (
     <CustomerLayout>
-      <div className="space-y-6 max-w-4xl mx-auto">
-        {/* Header */}
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl text-ink-800">
-            Voice Grocery Assistant
-          </h1>
-          <p className="text-xs sm:text-sm text-ink-600 mt-1">
-            Dictate naturally in English or Hindi. PACT converts speech to standard grocery sizes and contributes to your building cart.
-          </p>
+      <div className="space-y-6 w-full max-w-full overflow-x-hidden">
+        {/* Header with Language Selector */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl sm:text-3xl text-ink-800 truncate">
+              Voice Grocery Assistant
+            </h1>
+            <p className="text-xs sm:text-sm text-ink-600 mt-1">
+              Speak multiple products at once. PACT recognizes Indian staples, ignores conversational filler words, and adds them to your cart.
+            </p>
+          </div>
+
+          {/* Language Selector: English (India) vs Hindi */}
+          <div className="flex items-center gap-1.5 p-1 bg-white border border-ice-300 rounded-ctl shrink-0 shadow-2xs">
+            <Globe className="w-3.5 h-3.5 text-teal-700 ml-1.5" />
+            <button
+              type="button"
+              onClick={() => setSelectedLang("en-IN")}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-ctl transition-colors cursor-pointer ${
+                selectedLang === "en-IN"
+                  ? "bg-teal-700 text-white shadow-2xs"
+                  : "text-ink-600 hover:text-ink-800"
+              }`}
+            >
+              English (India)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedLang("hi-IN")}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-ctl transition-colors cursor-pointer ${
+                selectedLang === "hi-IN"
+                  ? "bg-teal-700 text-white shadow-2xs"
+                  : "text-ink-600 hover:text-ink-800"
+              }`}
+            >
+              Hindi (हिन्दी)
+            </button>
+          </div>
         </div>
 
-        {/* Largely Visible Microphone Hero Card */}
-        <Card className="flex flex-col items-center justify-center p-8 sm:p-12 space-y-6 text-center bg-white border-ice-200 shadow-sm relative overflow-hidden">
+        {/* Large Prominent Microphone Hero Card */}
+        <Card className="flex flex-col items-center justify-center p-6 sm:p-10 space-y-6 text-center bg-white border-ice-200 shadow-sm relative overflow-hidden w-full">
           {/* Pulsing ring indicator when listening */}
           {micState === "listening" && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -304,7 +510,7 @@ export default function CustomerSpeakPage() {
                 ? "bg-warning-600 text-white ring-8 ring-warning-200"
                 : "bg-teal-700 hover:bg-teal-800 text-white ring-8 ring-teal-100"
             }`}
-            title={micState === "listening" ? "Click to stop listening" : "Click to speak your groceries"}
+            title={micState === "listening" ? "Click to stop listening" : "Click to speak multiple groceries"}
           >
             {micState === "listening" ? (
               <>
@@ -327,20 +533,25 @@ export default function CustomerSpeakPage() {
           <div className="space-y-1 relative z-10 max-w-md">
             <span className="text-base font-bold text-ink-800 block">
               {micState === "listening"
-                ? "Listening... Speak your grocery items and quantities now"
+                ? "Listening... Speak all products and quantities now"
                 : micState === "error"
                 ? "Microphone access issue. Tap above to try again or click a sample phrase."
-                : "Click the microphone and say your order"}
+                : "Click the microphone and say multiple products at once"}
             </span>
             <p className="text-xs text-ink-500">
-              For example: &ldquo;5 kg sona masoori rice, 1 litre sunflower oil, and 2 kg atta&rdquo;
+              For example: &ldquo;I want 2 packets of milk, 5 kg atta, and 1 kg sugar, please add them&rdquo;
             </p>
+            <div className="pt-1">
+              <span className="text-[11px] font-medium text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200 inline-block">
+                Configured: {selectedLang === "en-IN" ? "English (India) · en-IN" : "Hindi · hi-IN"}
+              </span>
+            </div>
           </div>
         </Card>
 
         {/* Live Speech Recognition Transcript */}
         {transcript && (
-          <Card className="p-4 sm:p-5 space-y-2 bg-ice-50 border-ice-200">
+          <Card className="p-4 sm:p-5 space-y-2 bg-ice-50 border-ice-200 w-full">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-ink-600 uppercase tracking-wider">
                 Live Speech Recognition Transcript
@@ -350,50 +561,57 @@ export default function CustomerSpeakPage() {
                 label={micState === "listening" ? "Streaming audio" : "Parsed"}
               />
             </div>
-            <p className="font-mono text-sm text-ink-800 bg-white p-3 rounded-ctl border border-ice-200 italic">
+            <p className="font-mono text-sm text-ink-800 bg-white p-3 rounded-ctl border border-ice-200 break-words">
               &ldquo;{transcript}&rdquo;
             </p>
           </Card>
         )}
 
-        {/* Notification when item said does not exist in any store */}
+        {/* Store Availability Warning Banner */}
         {notFoundItems.length > 0 && (
-          <div className="p-4 rounded-card bg-warning-50 border border-warning-300 text-warning-900 space-y-1.5 animate-in fade-in duration-200">
-            <div className="flex items-center gap-2 font-bold text-xs sm:text-sm">
-              <AlertTriangle className="w-4 h-4 text-warning-700 shrink-0" />
-              <span>Items Not Found in Store Catalogue:</span>
-            </div>
-            <p className="text-xs text-warning-800 leading-relaxed">
-              We couldn&apos;t find{" "}
-              <b className="font-semibold text-warning-950">
-                {notFoundItems.map((item) => `"${item}"`).join(", ")}
-              </b>{" "}
-              in your community kirana store. Only standard grocery staples in stock are available for pooling.
-            </p>
-          </div>
-        )}
-
-        {/* Preview of all items ordered through voice before processing further */}
-        {previewItems.length > 0 ? (
-          <Card className="p-6 space-y-5 bg-white border-ice-200 shadow-sm">
-            <div className="flex items-center justify-between border-b border-ice-100 pb-3">
-              <div>
-                <h3 className="font-display text-lg text-ink-800">
-                  Voice Order Preview ({previewItems.length} items detected)
-                </h3>
-                <p className="text-xs text-ink-500">
-                  Review and adjust quantities before confirming into your Cart.
+          <Card className="p-4 bg-warning-50 border-warning-300 space-y-2 w-full">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-warning-700 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="text-xs font-bold text-ink-800">
+                  Item Not Found in Neighborhood Catalogue
+                </h4>
+                <p className="text-xs text-ink-700 leading-relaxed">
+                  We could not find{" "}
+                  <b className="text-warning-800">
+                    &ldquo;{notFoundItems.join(", ")}&rdquo;
+                  </b>{" "}
+                  in Sri Lakshmi Stores. PACT supports everyday neighborhood staples (atta, rice, dal, oils, spices, milk, sugar, tea).
                 </p>
               </div>
-              <StatusPill kind="success" label="Ready to Add" />
+            </div>
+          </Card>
+        )}
+
+        {/* MULTI-PRODUCT ORDER PREVIEW CARD */}
+        {previewItems.length > 0 && (
+          <Card className="p-4 sm:p-6 space-y-4 bg-white border-teal-700 shadow-md w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ice-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-teal-700" />
+                <h3 className="font-display text-lg text-ink-800">
+                  Voice Order Preview ({previewItems.length} products detected)
+                </h3>
+              </div>
+              <span className="text-xs font-semibold text-teal-700">
+                Review items before adding to cart
+              </span>
             </div>
 
-            {/* Itemized Table */}
+            {/* List of Detected Items with Steppers & Realistic Thumbnails */}
             <div className="divide-y divide-ice-100">
               {previewItems.map((item) => (
-                <div key={item.id} className="py-3.5 flex items-center justify-between gap-3">
+                <div
+                  key={item.variant_id}
+                  className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-12 h-12 rounded-ctl overflow-hidden bg-ice-100 shrink-0 relative border border-ice-200">
+                    <div className="w-12 h-12 rounded-ctl overflow-hidden bg-ice-100 border border-ice-200 shrink-0 relative">
                       <Image
                         src={item.image_url}
                         alt={item.name}
@@ -403,51 +621,34 @@ export default function CustomerSpeakPage() {
                       />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="font-bold text-sm text-ink-800 truncate">{item.name}</h4>
+                      <h4 className="font-bold text-xs sm:text-sm text-ink-800 truncate">{item.name}</h4>
                       <p className="text-xs text-ink-500">
-                        {item.brand} · {item.variant_label}
+                        {item.brand} · <span className="font-semibold text-ink-700">{item.variant_label}</span>
                       </p>
-                      <div className="flex items-center gap-2 pt-0.5 text-xs">
-                        <span className="font-semibold text-teal-700">
-                          ₹{Math.round(item.est_unit_price_paise / 100)}
-                        </span>
-                        <span className="line-through text-ink-400 text-[11px]">
-                          ₹{Math.round(item.mrp_paise / 100)}
-                        </span>
+                      <div className="flex items-center gap-2 text-[11px] text-ink-500 mt-0.5">
+                        <span>Wholesale: <MoneyText paise={item.est_unit_price_paise} size="sm" /></span>
+                        <span>·</span>
+                        <span className="text-ink-400">MRP: ₹{Math.round(item.mrp_paise / 100)}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Quantity Stepper and Line Total */}
-                  <div className="flex items-center gap-4 shrink-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0">
                     <Stepper
                       value={item.quantity}
-                      onChange={(q) => {
-                        if (q === 0) {
-                          setPreviewItems((prev) => prev.filter((p) => p.id !== item.id));
-                        } else {
-                          setPreviewItems((prev) =>
-                            prev.map((p) => (p.id === item.id ? { ...p, quantity: q } : p))
-                          );
-                        }
-                      }}
                       min={0}
-                      max={99}
+                      max={20}
+                      onChange={(newQty) => handleUpdatePreviewQty(item.variant_id, newQty)}
                     />
-
                     <div className="text-right min-w-[70px]">
-                      <span className="font-bold text-sm text-ink-800 block">
-                        ₹{Math.round((item.est_unit_price_paise * item.quantity) / 100)}
-                      </span>
-                      <span className="text-[11px] text-ink-400">
-                        MRP ₹{Math.round((item.mrp_paise * item.quantity) / 100)}
-                      </span>
+                      <div className="font-bold text-xs sm:text-sm text-ink-800">
+                        <MoneyText paise={item.est_unit_price_paise * item.quantity} size="sm" />
+                      </div>
                     </div>
-
                     <button
                       type="button"
-                      onClick={() => setPreviewItems((prev) => prev.filter((p) => p.id !== item.id))}
-                      className="p-1.5 text-ink-400 hover:text-danger-600 transition-colors"
+                      onClick={() => handleUpdatePreviewQty(item.variant_id, 0)}
+                      className="text-ink-400 hover:text-danger-600 p-1 rounded transition-colors cursor-pointer"
                       title="Remove item"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -457,91 +658,59 @@ export default function CustomerSpeakPage() {
               ))}
             </div>
 
-            {/* Total Calculations */}
-            <div className="border-t border-ice-100 pt-4 space-y-2 text-xs">
-              <div className="flex justify-between text-ink-600">
-                <span>Standard Market MRP Total</span>
-                <span className="line-through">₹{Math.round(totalMrpPaise / 100)}</span>
+            {/* Estimated Subtotal & Confirm CTA */}
+            <div className="border-t border-ice-100 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <span className="text-xs text-ink-500 block">Estimated Wholesale Total</span>
+                <div className="font-display text-xl sm:text-2xl font-extrabold text-ink-800">
+                  <MoneyText paise={totalEstPaise} />
+                </div>
+                <span className="text-[11px] text-teal-700 font-medium block">
+                  Est. MRP: ₹{Math.round(totalMrpPaise / 100)} · You save ~₹{Math.round((totalMrpPaise - totalEstPaise) / 100)}
+                </span>
               </div>
-              <div className="flex justify-between text-teal-700 font-bold text-sm">
-                <span>Wholesale Collective Rate</span>
-                <span>₹{Math.round(totalEstPaise / 100)}</span>
-              </div>
-              <div className="flex justify-between text-xs text-teal-700 font-semibold bg-teal-50 p-2 rounded-ctl">
-                <span>Total Wholesale Savings</span>
-                <span>Save ₹{Math.round((totalMrpPaise - totalEstPaise) / 100)}</span>
-              </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="pt-2 flex flex-col sm:flex-row gap-3">
               <Button
                 variant="primary"
-                fullWidth
                 size="default"
+                isLoading={isPending}
                 icon={<ShoppingCart className="w-4 h-4" />}
                 onClick={handleConfirmAndAddToCart}
-                isLoading={isPending}
               >
-                Confirm & Add {previewItems.length} Items to Cart
-              </Button>
-              <Button
-                variant="secondary"
-                size="default"
-                onClick={() => {
-                  setPreviewItems([]);
-                  setTranscript("");
-                  setNotFoundItems([]);
-                }}
-              >
-                Clear Preview
+                Confirm & Add All ({previewItems.length}) to Cart
               </Button>
             </div>
-          </Card>
-        ) : (
-          /* Empty Preview State */
-          <Card className="p-6 text-center space-y-2 bg-white border-ice-200">
-            <Package className="w-8 h-8 text-ink-400 mx-auto" />
-            <h3 className="font-semibold text-sm text-ink-800">No items in preview</h3>
-            <p className="text-xs text-ink-500 max-w-sm mx-auto">
-              Tap the microphone above and speak what you need, or click any sample phrase below to test speech recognition.
-            </p>
           </Card>
         )}
 
-        {/* Quick Test Sample Commands */}
-        <Card className="p-5 space-y-3 bg-ice-100 border-ice-300">
-          <div className="flex items-center gap-2">
-            <Volume2 className="w-4 h-4 text-teal-700" />
-            <h3 className="font-bold text-xs text-ink-800">Quick-Test Sample Commands</h3>
-          </div>
-          <p className="text-xs text-ink-600">
-            Click any sample voice command to test instant recognition and unavailable item detection:
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-            {SAMPLE_COMMANDS.map((cmd, idx) => (
+        {/* Quick Sample Phrases */}
+        <div className="space-y-3 w-full">
+          <h3 className="font-bold text-xs uppercase tracking-wider text-ink-500">
+            Or Click a Multi-Product Example to Test
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {SAMPLE_COMMANDS.map((sample, idx) => (
               <button
                 key={idx}
                 type="button"
-                onClick={() => handleSelectSample(cmd)}
-                className="p-3 bg-white rounded-ctl border border-ice-200 text-left hover:border-teal-700 hover:bg-ice-50 transition-colors flex items-center justify-between text-xs cursor-pointer group"
+                onClick={() => handleSelectSample(sample)}
+                className="p-3 text-left bg-white hover:bg-ice-100 border border-ice-300 rounded-ctl text-xs text-ink-700 transition-colors flex items-center justify-between gap-2 group cursor-pointer shadow-2xs"
               >
-                <span className="font-medium text-ink-800 group-hover:text-teal-700">
-                  &ldquo;{cmd}&rdquo;
-                </span>
-                <Check className="w-3.5 h-3.5 text-teal-700 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
+                <span className="italic group-hover:text-teal-800 break-words">&ldquo;{sample}&rdquo;</span>
+                <ArrowRight className="w-3.5 h-3.5 text-ink-400 group-hover:text-teal-700 shrink-0" />
               </button>
             ))}
           </div>
-        </Card>
+        </div>
+      </div>
 
+      {toastMessage && (
         <Toast
           isOpen={!!toastMessage}
-          message={toastMessage || ""}
+          message={toastMessage}
           onClose={() => setToastMessage(null)}
         />
-      </div>
+      )}
     </CustomerLayout>
   );
 }

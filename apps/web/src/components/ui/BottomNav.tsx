@@ -45,10 +45,10 @@ export function BottomNav({ cartItemCount = 0, hasUnpaidBill = false }: BottomNa
 
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-ice-300 shadow-[var(--shadow-float)] sm:max-w-[480px] sm:mx-auto select-none md:hidden"
+      className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-ice-300 shadow-[var(--shadow-float)] w-full select-none md:hidden"
       aria-label="Customer Navigation"
     >
-      <div className="grid grid-cols-4 h-16 px-1">
+      <div className="grid grid-cols-4 h-16 max-w-lg mx-auto px-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (

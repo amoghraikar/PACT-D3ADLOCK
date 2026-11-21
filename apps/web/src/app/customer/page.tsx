@@ -52,7 +52,7 @@ export default function CustomerHomePage() {
 
   return (
     <CustomerLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 w-full max-w-full overflow-x-hidden">
         {/* Greeting in Serif per U8 */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="space-y-1">

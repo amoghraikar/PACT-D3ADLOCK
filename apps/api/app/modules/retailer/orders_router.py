@@ -542,7 +542,11 @@ def _execute_split_for_order(order_id: str, retailer_id: str) -> dict:
             "items": [
                 {
                     "variant_id": item.variant_id,
+                    "product_name": get_product_variant_meta(item.variant_id)["product_name"],
+                    "variant_label": get_product_variant_meta(item.variant_id)["variant_label"],
+                    "requested_qty": item.packed_qty,
                     "packed_qty": item.packed_qty,
+                    "unit_price_paise": item.final_unit_price_paise,
                     "final_unit_price_paise": item.final_unit_price_paise,
                     "gross_paise": item.gross_paise,
                     "line_discount_paise": item.line_discount_paise,

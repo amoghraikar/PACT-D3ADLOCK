@@ -29,7 +29,7 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <ProtectedRoute allowedRoles={["customer"]}>
-      <div className="min-h-screen bg-ice-50 flex flex-col md:flex-row">
+      <div className="min-h-screen bg-ice-50 flex flex-col md:flex-row w-full max-w-full overflow-x-hidden">
         {/* Left Sidebar for Desktop (Navigation is on the left) */}
         <Sidebar
           items={customerNav}
@@ -41,9 +41,9 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
           {/* Top Header inside main view */}
-          <header className="h-16 px-4 sm:px-8 border-b border-ice-200 bg-white/80 backdrop-blur-xs flex items-center justify-between gap-4 sticky top-0 z-20">
+          <header className="h-16 px-3 sm:px-6 md:px-8 border-b border-ice-200 bg-white/80 backdrop-blur-xs flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-20 w-full">
             <div className="flex items-center gap-2">
               <div className="flex md:hidden">
                 <Logo size="sm" href="/customer" />
@@ -56,12 +56,12 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 sm:gap-2.5">
               {/* Order Mode Switch: Type vs Speak */}
               <Link
                 href={orderMode === "speak" ? "/customer/shop" : "/customer/speak"}
                 onClick={() => setOrderMode(orderMode === "type" ? "speak" : "type")}
-                className="flex items-center gap-1.5 h-9 px-3 rounded-full bg-ice-100 border border-ice-300 text-xs font-semibold text-ink-800 hover:bg-ice-200 transition-colors"
+                className="flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-full bg-ice-100 border border-ice-300 text-xs font-semibold text-ink-800 hover:bg-ice-200 transition-colors"
                 title="Switch ordering mode"
               >
                 {orderMode === "speak" ? (
@@ -85,7 +85,7 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   onClick={() => setPersonaOpen(!personaOpen)}
-                  className="flex items-center gap-2 h-9 px-2.5 sm:px-3 rounded-full bg-white border border-ice-300 text-xs font-semibold text-ink-800 hover:bg-ice-100 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 sm:gap-2 h-9 px-2 sm:px-3 rounded-full bg-white border border-ice-300 text-xs font-semibold text-ink-800 hover:bg-ice-100 transition-colors cursor-pointer"
                   title="Switch Demo Role"
                 >
                   <div className="w-5 h-5 rounded-full bg-ice-200 text-ink-800 text-[10px] font-bold flex items-center justify-center">
@@ -150,8 +150,8 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          {/* Main content container */}
-          <main className="w-full max-w-5xl mx-auto flex-1 px-4 sm:px-8 py-6 pb-24 md:pb-8 space-y-6">
+          {/* Main content container with screen-fit responsive bounds */}
+          <main className="w-full max-w-5xl mx-auto flex-1 px-3 sm:px-6 md:px-8 py-4 sm:py-6 pb-24 md:pb-8 space-y-6 min-w-0">
             {children}
           </main>
         </div>

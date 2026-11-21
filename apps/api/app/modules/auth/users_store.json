@@ -121,5 +121,14 @@
     "store_status": "active",
     "address": "J.P.nagar 5th Phase",
     "gstin": null
+  },
+  "+916361900829": {
+    "id": "usr-595092",
+    "phone": "+916361900829",
+    "name": "meghana",
+    "role": "customer",
+    "language": "en",
+    "community_id": "comm-lake-1",
+    "unit_label": "A-305"
   }
 }

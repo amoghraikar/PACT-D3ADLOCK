@@ -133,7 +133,7 @@ export default function CustomerShopPage() {
 
   return (
     <CustomerLayout>
-      <div className="space-y-4">
+      <div className="space-y-4 w-full max-w-full overflow-x-hidden">
         {/* Search Bar with Mic shortcut */}
         <div className="relative">
           <TextField

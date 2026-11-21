@@ -70,23 +70,25 @@ export default function CustomerListPage() {
 
   return (
     <CustomerLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 w-full max-w-full overflow-x-hidden">
         {/* Title */}
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0">
             <h1 className="font-display text-2xl sm:text-3xl text-ink-800 flex items-center gap-2">
-              <ShoppingCart className="w-7 h-7 text-teal-700" />
-              <span>Cart ({myItems.length} items)</span>
+              <ShoppingCart className="w-7 h-7 text-teal-700 shrink-0" />
+              <span className="truncate">Cart ({myItems.length} items)</span>
             </h1>
-            <p className="text-xs text-ink-600">
+            <p className="text-xs text-ink-600 mt-0.5">
               Your household contribution to the November community bulk order
             </p>
           </div>
-          <Link href="/customer/shop">
-            <Button variant="secondary" size="sm" icon={<ShoppingBag className="w-3.5 h-3.5" />}>
-              + Add staples
-            </Button>
-          </Link>
+          <div className="shrink-0">
+            <Link href="/customer/shop">
+              <Button variant="secondary" size="sm" icon={<ShoppingBag className="w-3.5 h-3.5" />}>
+                + Add staples
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Closing Date Banner */}
