@@ -225,6 +225,20 @@ class RetailerOnboardingIn(BaseModel):
     gstin: str | None = None
 
 
+ID_ALIASES = {
+    "usr-c1-asha": "usr-asha-1",
+    "usr-c2-bharat": "usr-bharat-2",
+    "usr-c3-chitra": "usr-chitra-3",
+    "usr-c4-dev": "usr-dev-4",
+    "usr-c5-esha": "usr-esha-5",
+    "usr-r1-ravi": "usr-ravi-21",
+    "usr-ret-ravi": "usr-ravi-21",
+    "usr-a1-meera": "usr-meera-11",
+    "usr-adm-meera": "usr-meera-11",
+    "usr-p1-priya": "usr-priya-99",
+}
+
+
 def get_user_from_token(token: str | None) -> dict | None:
     if not token:
         return None
@@ -235,7 +249,93 @@ def get_user_from_token(token: str | None) -> dict | None:
     for user in USERS.values():
         if user["id"] == user_id:
             return user
+    if user_id in ID_ALIASES:
+        aliased = ID_ALIASES[user_id]
+        for user in USERS.values():
+            if user["id"] == aliased:
+                return user
     return None
+
+
+class SwitchPersonaIn(BaseModel):
+    persona: str | None = None
+    user_id: str | None = None
+
+
+@router.post("/switch-persona")
+def switch_persona(body: SwitchPersonaIn, response: Response):
+    """
+    Switch active session persona (asha, ravi, meera, priya or explicit user_id).
+    Issues signed session cookie so all backend modules recognize this persona.
+    """
+    PERSONA_TO_ID = {
+        "asha": "usr-asha-1",
+        "ravi": "usr-ravi-21",
+        "meera": "usr-meera-11",
+        "priya": "usr-priya-99",
+        "usr-c1-asha": "usr-asha-1",
+        "usr-r1-ravi": "usr-ravi-21",
+        "usr-ret-ravi": "usr-ravi-21",
+        "usr-a1-meera": "usr-meera-11",
+        "usr-adm-meera": "usr-meera-11",
+        "usr-p1-priya": "usr-priya-99",
+    }
+    target_id = None
+    if body.persona:
+        target_id = PERSONA_TO_ID.get(body.persona.lower(), body.persona)
+    elif body.user_id:
+        target_id = PERSONA_TO_ID.get(body.user_id, body.user_id)
+
+    target_user = None
+    if target_id:
+        for u in USERS.values():
+            if u.get("id") == target_id:
+                target_user = u
+                break
+    if not target_user:
+        target_user = list(USERS.values())[0]
+
+    token = create_session_token(target_user["id"])
+    response.set_cookie(
+        key=settings.SESSION_COOKIE_NAME,
+        value=token,
+        max_age=settings.SESSION_MAX_AGE_DAYS * 24 * 3600,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        path="/",
+    )
+    membership = None
+    if target_user.get("community_id"):
+        community = COMMUNITIES.get(target_user["community_id"])
+        if community:
+            membership = {
+                "community": community,
+                "unit_label": target_user.get("unit_label", ""),
+                "role": target_user.get("role", "member"),
+            }
+
+    retailer = None
+    if target_user.get("store_id") or target_user.get("role") == "retailer":
+        retailer = {
+            "id": target_user.get("store_id", f"ret-{target_user['id']}"),
+            "store_name": target_user.get("store_name", target_user.get("name", "Local Store")),
+            "status": target_user.get("store_status", "active"),
+        }
+
+    return {
+        "ok": True,
+        "token": token,
+        "user": {
+            "id": target_user["id"],
+            "phone": target_user["phone"],
+            "name": target_user.get("name", ""),
+            "role": target_user.get("role"),
+            "language": target_user.get("language", "en"),
+        },
+        "membership": membership,
+        "retailer": retailer,
+    }
 
 
 @router.post("/otp/request")

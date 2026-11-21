@@ -148,9 +148,9 @@ export default function AdminOverviewPage() {
     setIsLoading(true);
     try {
       const [ovRes, pRes, uRes] = await Promise.all([
-        fetch("/api/v1/admin/overview"),
-        fetch("/api/v1/admin/invoices?section=paid"),
-        fetch("/api/v1/admin/invoices?section=unpaid"),
+        fetch("/api/v1/admin/overview", { credentials: "include" }),
+        fetch("/api/v1/admin/invoices?section=paid", { credentials: "include" }),
+        fetch("/api/v1/admin/invoices?section=unpaid", { credentials: "include" }),
       ]);
 
       if (ovRes.ok) {
@@ -202,6 +202,7 @@ export default function AdminOverviewPage() {
       const res = await fetch(`/api/v1/admin/deliveries/${invoiceId}/advance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ to: nextState }),
       });
 
@@ -225,7 +226,7 @@ export default function AdminOverviewPage() {
   // View Handover List
   const handleOpenHandover = async (inv: AdminInvoiceRow) => {
     try {
-      const res = await fetch(`/api/v1/admin/invoices/${inv.id}/handover`);
+      const res = await fetch(`/api/v1/admin/invoices/${inv.id}/handover`, { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setSelectedHandover(data);
@@ -262,6 +263,7 @@ export default function AdminOverviewPage() {
       const res = await fetch("/api/v1/admin/reminders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ invoice_ids: [invoiceId] }),
       });
       if (res.ok) {
@@ -292,6 +294,7 @@ export default function AdminOverviewPage() {
       const res = await fetch("/api/v1/admin/reminders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ all_unpaid: true }),
       });
       if (res.ok) {

@@ -64,7 +64,6 @@ function CustomerBillContent() {
   const [invoice, setInvoice] = useState<InvoiceData | null>(null);
   const [isRetailerBilled, setIsRetailerBilled] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGeneratingBill, setIsGeneratingBill] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
@@ -77,7 +76,7 @@ function CustomerBillContent() {
       let url = "/api/v1/invoices";
       if (requestedInvoiceId) {
         url = `/api/v1/invoices/${requestedInvoiceId}`;
-        const res = await fetch(url);
+        const res = await fetch(url, { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           if (data.invoice) {
@@ -90,7 +89,7 @@ function CustomerBillContent() {
       }
 
       // Check user's invoices
-      const res = await fetch("/api/v1/invoices");
+      const res = await fetch("/api/v1/invoices", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         if (data.invoices && data.invoices.length > 0) {
@@ -206,28 +205,6 @@ function CustomerBillContent() {
     ? Math.round((totalSavedPaise / totalEstimatedMrpPaise) * 100)
     : 15;
 
-  // On-demand Retailer Bill Generation trigger
-  const handleGenerateRetailerBill = async () => {
-    setIsGeneratingBill(true);
-    try {
-      const res = await fetch("/api/v1/invoices/generate-retailer-bill", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.invoice) {
-          setInvoice(data.invoice);
-        }
-      }
-    } catch {
-      // offline simulation
-    } finally {
-      setIsRetailerBilled(true);
-      setIsGeneratingBill(false);
-    }
-  };
-
   // Initiate Payment
   const handleInitiatePay = async () => {
     const invId = invoice?.id || "inv-ord-comm-green-2026-11-user";
@@ -238,6 +215,7 @@ function CustomerBillContent() {
       const res = await fetch(`/api/v1/invoices/${invId}/pay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ gateway: "mock" }),
       });
 
@@ -269,22 +247,25 @@ function CustomerBillContent() {
     setIsVerifying(true);
     setPaymentError(null);
 
-    try {
-      await fetch("/api/v1/dev/mock-checkout/trigger", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action,
-          invoice_id: invId,
-          order_id: activePaymentOrder?.gateway_order_id || "order_mock_demo_1",
-          amount_paise: actualTotalPaise,
-        }),
-      });
-    } catch {
-      // Offline fallback
-    }
-
     if (action === "success") {
+      try {
+        const verifyRes = await fetch(`/api/v1/invoices/${invId}/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+        if (verifyRes.ok) {
+          const verifyData = await verifyRes.json();
+          if (verifyData.invoice) {
+            setInvoice(verifyData.invoice);
+            setIsVerifying(false);
+            return;
+          }
+        }
+      } catch {
+        // Fall back to local update
+      }
+
       setTimeout(() => {
         setInvoice((prev) =>
           prev
@@ -453,25 +434,25 @@ function CustomerBillContent() {
           </div>
           <div className="space-y-1.5 max-w-md mx-auto">
             <h3 className="font-display text-lg text-ink-800">
-              2. Actual Bill: Awaiting Retailer Billing
+              2. Actual Bill: Waiting for Retailer to Send Bill
             </h3>
             <p className="text-xs text-ink-600 leading-relaxed">
-              Retailer <b>Sri Lakshmi Stores</b> is reviewing the collective neighborhood order, verifying warehouse stock, and deciding on collective volume discounts.
+              Retailer <b>Sri Lakshmi Stores</b> is reviewing the collective neighborhood order, verifying warehouse stock, and preparing fair-share wholesale volume discounts.
             </p>
-            <p className="text-[11px] text-ink-500">
-              Your discounted actual wholesale bill will appear right here as soon as the retailer finalizes the bill.
+            <p className="text-xs text-ink-500">
+              Your final bill is prepared and sent directly by the retailer according to your specific order. Once the retailer sends your bill, it will unlock here automatically along with payment options.
             </p>
           </div>
 
           <div className="pt-2 flex justify-center">
             <Button
-              variant="primary"
+              variant="secondary"
               size="default"
-              isLoading={isGeneratingBill}
-              icon={<Store className="w-4 h-4" />}
-              onClick={handleGenerateRetailerBill}
+              isLoading={isLoading}
+              icon={<RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />}
+              onClick={fetchInvoice}
             >
-              Generate Retailer Bill Now
+              Check for Sent Bill (Refresh)
             </Button>
           </div>
         </Card>

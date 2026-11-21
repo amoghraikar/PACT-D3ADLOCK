@@ -26,6 +26,8 @@ import {
   Clock,
   PackageCheck,
   Truck,
+  Send,
+  RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -258,7 +260,7 @@ export default function RetailerOrdersPage() {
   useEffect(() => {
     async function loadBackendOrder() {
       try {
-        const res = await fetch("/api/v1/retailer/orders/ord-comm-green-2026-11");
+        const res = await fetch("/api/v1/retailer/orders/ord-comm-green-2026-11", { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           if (data.order && data.order.status) {
@@ -276,7 +278,7 @@ export default function RetailerOrdersPage() {
       }
 
       try {
-        const cRes = await fetch("/api/v1/retailer/orders/ord-comm-green-2026-11/collections");
+        const cRes = await fetch("/api/v1/retailer/orders/ord-comm-green-2026-11/collections", { credentials: "include" });
         if (cRes.ok) {
           const cData = await cRes.json();
           if (cData.customers && cData.customers.length > 0) {
@@ -410,6 +412,7 @@ export default function RetailerOrdersPage() {
     try {
       await fetch("/api/v1/retailer/orders/ord-comm-green-2026-11/accept", {
         method: "POST",
+        credentials: "include",
       });
     } catch {
       // offline fallback
@@ -465,6 +468,7 @@ export default function RetailerOrdersPage() {
       await fetch("/api/v1/retailer/orders/ord-comm-green-2026-11/draft-bill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           lines: draftLines,
           overall_discount_paise: overallDiscountPaise,
@@ -472,20 +476,37 @@ export default function RetailerOrdersPage() {
         }),
       });
 
-      // 2. Finalise on backend to create real customer invoices
-      await fetch("/api/v1/retailer/orders/ord-comm-green-2026-11/finalise", {
+      // 2. Send bills on backend to create real customer invoices
+      await fetch("/api/v1/retailer/orders/ord-comm-green-2026-11/send-bill", {
         method: "POST",
+        credentials: "include",
       });
 
       updateStatus("billed");
       setFinaliseOpen(false);
-      setToastMsg(`Final bill locked at ₹${billTotalPaise / 100}! Invoices issued to residents.`);
+      setToastMsg(`🎉 Final bills sent to all customers individually totaling ₹${billTotalPaise / 100}!`);
     } catch {
       updateStatus("billed");
       setFinaliseOpen(false);
-      setToastMsg(`Final bill locked at ₹${billTotalPaise / 100}! Invoices issued to residents.`);
+      setToastMsg(`🎉 Final bills sent to all customers individually totaling ₹${billTotalPaise / 100}!`);
     } finally {
       setIsFinalising(false);
+    }
+  };
+
+  const handleResetOrder = async () => {
+    try {
+      await fetch("/api/v1/retailer/orders/ord-comm-green-2026-11/reset", {
+        method: "POST",
+        credentials: "include",
+      });
+      updateStatus("packing");
+      setLifecycleTab("to_pack");
+      setPackingStep("bill");
+      setToastMsg("Order reset to unbilled state. Invoices removed so you can test sending again.");
+    } catch {
+      updateStatus("packing");
+      setLifecycleTab("to_pack");
     }
   };
 
@@ -505,13 +526,26 @@ export default function RetailerOrdersPage() {
     <RetailerLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl text-ink-800">
-            Wholesale Community Orders
-          </h1>
-          <p className="text-xs sm:text-sm text-ink-600">
-            Batch order processing, itemised packing, percentage discounts, and final bill splitting.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="font-display text-2xl sm:text-3xl text-ink-800">
+              Wholesale Community Orders
+            </h1>
+            <p className="text-xs sm:text-sm text-ink-600">
+              Batch order processing, itemised packing, percentage discounts, and final bill delivery.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="quiet"
+              size="sm"
+              icon={<RotateCcw className="w-3.5 h-3.5" />}
+              onClick={handleResetOrder}
+              title="Reset order state to unbilled packing for testing"
+            >
+              Reset to Unbilled State
+            </Button>
+          </div>
         </div>
 
         {/* 3 HIGH-LEVEL LIFECYCLE SECTIONS (Req 3) */}
@@ -896,10 +930,10 @@ export default function RetailerOrdersPage() {
                         </Button>
                         <Button
                           variant="primary"
-                          icon={<CheckCircle2 className="w-4 h-4" />}
+                          icon={<Send className="w-4 h-4" />}
                           onClick={() => setFinaliseOpen(true)}
                         >
-                          Finalise Bill (₹{billTotalPaise / 100})
+                          Send Bill to Customers (₹{billTotalPaise / 100})
                         </Button>
                       </div>
                     </div>
@@ -1168,13 +1202,13 @@ export default function RetailerOrdersPage() {
           </Card>
         )}
 
-        {/* Finalise Confirmation Dialog */}
+        {/* Finalise & Send Bill Confirmation Dialog */}
         <Dialog
           isOpen={finaliseOpen}
           onClose={() => setFinaliseOpen(false)}
-          title="Finalise this month's bill?"
-          description={`This locks amounts and issues 4 individual invoices totaling ₹${billTotalPaise / 100} with ${overallDiscountPct}% wholesale volume discount (₹${overallDiscountPaise / 100}). Finalised bills cannot be modified.`}
-          confirmLabel="Finalise bill"
+          title="Send Final Individual Bills to Customers?"
+          description={`This locks order calculations and automatically sends individual fair-share bills totaling ₹${billTotalPaise / 100} with ${overallDiscountPct}% wholesale volume discount (₹${overallDiscountPaise / 100}) directly to all 4 households (Asha Rao, Bharat Patel, Chitra Nair, Dev Sharma). Each customer will receive their exact invoice and payment options. Once sent, amounts cannot be modified.`}
+          confirmLabel="Send Bills to Customers"
           cancelLabel="Go back"
           onConfirm={handleFinaliseConfirm}
           isConfirmLoading={isFinalising}

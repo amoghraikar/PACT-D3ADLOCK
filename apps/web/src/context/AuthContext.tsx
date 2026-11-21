@@ -184,6 +184,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (p.retailer) sessionStorage.setItem("pact_session_retailer", JSON.stringify(p.retailer));
         else sessionStorage.removeItem("pact_session_retailer");
       }
+      // Inform backend so pact_session cookie matches this persona immediately!
+      fetch("/api/v1/auth/switch-persona", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ persona, user_id: p.user.id }),
+      }).catch(() => {});
     }
   }, []);
 
@@ -191,6 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await fetch("/api/v1/auth/me", {
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -207,7 +215,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const savedUser = sessionStorage.getItem("pact_session_user");
       if (savedUser) {
         try {
-          setUser(JSON.parse(savedUser));
+          const parsed = JSON.parse(savedUser);
+          setUser(parsed);
           const savedMem = sessionStorage.getItem("pact_session_membership");
           if (savedMem) setMembership(JSON.parse(savedMem));
           const savedRet = sessionStorage.getItem("pact_session_retailer");
@@ -226,6 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const res = await fetch("/api/v1/auth/me", {
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
         });
         if (active) {
           if (res.ok) {
@@ -243,9 +253,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (active && typeof window !== "undefined") {
         const savedUser = sessionStorage.getItem("pact_session_user");
+        let initialPersona: "asha" | "ravi" | "meera" | "priya" = "asha";
         if (savedUser) {
           try {
-            setUser(JSON.parse(savedUser));
+            const parsed = JSON.parse(savedUser);
+            setUser(parsed);
+            if (parsed.role === "retailer") initialPersona = "ravi";
+            else if (parsed.role === "community_admin") initialPersona = "meera";
+            else if (parsed.role === "platform_admin") initialPersona = "priya";
             const savedMem = sessionStorage.getItem("pact_session_membership");
             if (savedMem) setMembership(JSON.parse(savedMem));
             const savedRet = sessionStorage.getItem("pact_session_retailer");
@@ -258,6 +273,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setMembership(null);
           setRetailer(null);
         }
+
+        // Establish session cookie for active persona
+        fetch("/api/v1/auth/switch-persona", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ persona: initialPersona }),
+        }).catch(() => {});
+
         setIsLoading(false);
       }
     };
