@@ -19,6 +19,7 @@ export interface SidebarProps {
   userName?: string;
   userRole?: string;
   onLogout?: () => void;
+  extraHeaderAction?: React.ReactNode;
 }
 
 export function Sidebar({
@@ -27,6 +28,7 @@ export function Sidebar({
   userName,
   userRole,
   onLogout,
+  extraHeaderAction,
 }: SidebarProps) {
   const pathname = usePathname();
 
@@ -35,11 +37,14 @@ export function Sidebar({
       {/* Desktop Sidebar (>= 768px) */}
       <aside className="hidden md:flex flex-col w-60 shrink-0 min-h-screen bg-ice-200 border-r border-ice-300 p-4 select-none">
         {/* Brand Lockup */}
-        <div className="py-2 mb-6">
-          <Logo size="md" />
-          <p className="text-xs font-semibold text-teal-700 mt-1 uppercase tracking-wider">
-            {workspaceTitle}
-          </p>
+        <div className="py-2 mb-6 flex items-center justify-between">
+          <div>
+            <Logo size="md" />
+            <p className="text-xs font-semibold text-teal-700 mt-1 uppercase tracking-wider">
+              {workspaceTitle}
+            </p>
+          </div>
+          {extraHeaderAction && <div>{extraHeaderAction}</div>}
         </div>
 
         {/* Navigation Items */}

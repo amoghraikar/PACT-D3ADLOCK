@@ -109,5 +109,17 @@
     "store_status": "active",
     "address": "Main Market, Bangalore",
     "gstin": null
+  },
+  "+919482366157": {
+    "id": "usr-ret-401906",
+    "phone": "+919482366157",
+    "name": "katta",
+    "role": "retailer",
+    "language": "en",
+    "store_id": "ret-17570",
+    "store_name": "vgp",
+    "store_status": "active",
+    "address": "J.P.nagar 5th Phase",
+    "gstin": null
   }
 }

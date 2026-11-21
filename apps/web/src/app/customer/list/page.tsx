@@ -16,7 +16,7 @@ import {
 } from "@/components/ui";
 import { useCart, CartItem } from "@/context/CartContext";
 import { copy } from "@/lib/copy/en";
-import { ListOrdered, ChevronDown, ChevronUp, Users, Info, ArrowRight, ShoppingBag } from "lucide-react";
+import { ShoppingCart, ChevronDown, ChevronUp, Users, Info, ArrowRight, ShoppingBag } from "lucide-react";
 
 export default function CustomerListPage() {
   const router = useRouter();
@@ -30,6 +30,11 @@ export default function CustomerListPage() {
     removeItem,
     restoreItem,
   } = useCart();
+
+  const totalMrpPaise = myItems.reduce(
+    (sum, item) => sum + (item.mrp_paise || Math.round(item.est_unit_price_paise * 1.15)) * item.quantity,
+    0
+  );
 
   const [removedItem, setRemovedItem] = useState<CartItem | null>(null);
   const [showToast, setShowToast] = useState(false);
@@ -69,8 +74,9 @@ export default function CustomerListPage() {
         {/* Title */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-display text-2xl sm:text-3xl text-ink-800">
-              {copy.customer.list.title}
+            <h1 className="font-display text-2xl sm:text-3xl text-ink-800 flex items-center gap-2">
+              <ShoppingCart className="w-7 h-7 text-teal-700" />
+              <span>Cart ({myItems.length} items)</span>
             </h1>
             <p className="text-xs text-ink-600">
               Your household contribution to the November community bulk order
@@ -95,10 +101,10 @@ export default function CustomerListPage() {
 
         {myItems.length === 0 ? (
           <EmptyState
-            icon={<ListOrdered className="w-8 h-8" />}
-            title={copy.customer.list.emptyTitle}
-            description={copy.customer.list.emptyBody}
-            actionLabel={copy.customer.list.addGroceriesButton}
+            icon={<ShoppingCart className="w-8 h-8 text-ink-400" />}
+            title="Your Cart is empty"
+            description="Add staple groceries from the catalogue or dictate them with voice ordering."
+            actionLabel="Browse Groceries"
             onAction={() => router.push("/customer/shop")}
           />
         ) : (
@@ -176,22 +182,33 @@ export default function CustomerListPage() {
             <div className="space-y-4">
               {/* Estimated Total Card */}
               <Card className="p-5 space-y-4 bg-ice-100 border-ice-300">
-                <div className="space-y-1">
-                  <span className="text-xs font-semibold text-ink-600 uppercase tracking-wider">
-                    {copy.customer.list.estimatedTotal}
+                <div className="space-y-2">
+                  <span className="text-xs font-semibold text-ink-600 uppercase tracking-wider block">
+                    Estimated Cart Summary
                   </span>
-                  <div className="font-display text-3xl text-ink-800">
-                    <MoneyText paise={myEstTotalPaise} approx size="xl" />
+                  
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between text-ink-600">
+                      <span>Standard MRP Total:</span>
+                      <span className="font-semibold line-through">
+                        ₹{Math.round(totalMrpPaise / 100)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-ink-800 font-bold text-sm">
+                      <span>Estimated Wholesale Total:</span>
+                      <MoneyText paise={myEstTotalPaise} approx size="base" />
+                    </div>
+                    <div className="flex justify-between text-teal-700 font-bold bg-teal-50 p-2 rounded-ctl mt-1">
+                      <span>Wholesale Savings:</span>
+                      <span>Save ₹{Math.max(0, Math.round((totalMrpPaise - myEstTotalPaise) / 100))}</span>
+                    </div>
                   </div>
-                  <span className="text-xs text-teal-700 font-medium">
-                    Includes estimated 10% wholesale volume rebate
-                  </span>
                 </div>
 
                 <div className="pt-2 border-t border-ice-200">
                   <Link href="/customer/bill" className="block w-full">
                     <Button variant="primary" fullWidth icon={<ArrowRight className="w-4 h-4" />}>
-                      View Split Bill Preview
+                      View Estimated & Actual Bill
                     </Button>
                   </Link>
                 </div>

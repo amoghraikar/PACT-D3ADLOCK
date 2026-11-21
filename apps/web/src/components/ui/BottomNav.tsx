@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ShoppingBag, ListOrdered, Receipt } from "lucide-react";
+import { Home, ShoppingBag, ShoppingCart, Receipt } from "lucide-react";
 
 export interface BottomNavProps {
   cartItemCount?: number;
@@ -28,8 +28,8 @@ export function BottomNav({ cartItemCount = 0, hasUnpaidBill = false }: BottomNa
     },
     {
       href: "/customer/list",
-      label: "My list",
-      icon: ListOrdered,
+      label: "Cart",
+      icon: ShoppingCart,
       badge: cartItemCount > 0 ? `${cartItemCount}` : undefined,
       isActive: pathname === "/customer/list",
     },

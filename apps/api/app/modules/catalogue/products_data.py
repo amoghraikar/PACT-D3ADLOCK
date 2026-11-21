@@ -15,7 +15,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Rice & Grains",
         "name": "Sona Masoori Rice",
         "brand": "Standard Groceries",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&auto=format&fit=crop&q=80",
         "aliases": ["rice", "chawal", "चावल", "sona masoori", "raw rice"],
         "variants": [
             {"id": "var-rice-sona-1kg", "label": "1 kg", "pack_size": 1, "pack_unit": "kg", "base_qty": 1000, "base_unit": "g"},
@@ -28,7 +28,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Rice & Grains",
         "name": "Royal Basmati Rice",
         "brand": "Heritage",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400&auto=format&fit=crop&q=80",
         "aliases": ["rice", "chawal", "चावल", "basmati", "biryani rice"],
         "variants": [
             {"id": "var-rice-basmati-1kg", "label": "1 kg", "pack_size": 1, "pack_unit": "kg", "base_qty": 1000, "base_unit": "g"},
@@ -41,7 +41,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Rice & Grains",
         "name": "Wada Kolam Rice",
         "brand": "Daily Kitchen",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1596797882870-8c33deeac224?w=400&auto=format&fit=crop&q=80",
         "aliases": ["kolam rice", "kolam", "wada kolam"],
         "variants": [
             {"id": "var-rice-kolam-5kg", "label": "5 kg", "pack_size": 5, "pack_unit": "kg", "base_qty": 5000, "base_unit": "g"},
@@ -53,7 +53,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Rice & Grains",
         "name": "Thick Poha (Flattened Rice)",
         "brand": "Pure Harvest",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1613292443284-8d10ef9383fe?w=400&auto=format&fit=crop&q=80",
         "aliases": ["poha", "avalakki", "chivda", "पोहा"],
         "variants": [
             {"id": "var-poha-1kg", "label": "1 kg", "pack_size": 1, "pack_unit": "kg", "base_qty": 1000, "base_unit": "g"},
@@ -65,7 +65,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Rice & Grains",
         "name": "Wheat Dalia (Cracked Wheat)",
         "brand": "Nature Best",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1574316071802-0d684efa7cd5?w=400&auto=format&fit=crop&q=80",
         "aliases": ["dalia", "broken wheat", "दलिया"],
         "variants": [
             {"id": "var-dalia-500g", "label": "500 g", "pack_size": 500, "pack_unit": "g", "base_qty": 500, "base_unit": "g"},
@@ -77,7 +77,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Rice & Grains",
         "name": "Parboiled Idli Rice",
         "brand": "Standard Groceries",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1516684732162-798a0062be99?w=400&auto=format&fit=crop&q=80",
         "aliases": ["idli rice", "parboiled rice", "dosa rice"],
         "variants": [
             {"id": "var-idli-rice-5kg", "label": "5 kg", "pack_size": 5, "pack_unit": "kg", "base_qty": 5000, "base_unit": "g"},
@@ -93,7 +93,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Flours & Atta",
         "name": "Whole Wheat Chakki Atta",
         "brand": "Harvest Gold",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&auto=format&fit=crop&q=80",
         "aliases": ["atta", "flour", "gehu", "आटा", "wheat flour"],
         "variants": [
             {"id": "var-atta-5kg", "label": "5 kg", "pack_size": 5, "pack_unit": "kg", "base_qty": 5000, "base_unit": "g"},
@@ -106,7 +106,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Flours & Atta",
         "name": "Refined Wheat Maida",
         "brand": "Harvest Gold",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1627485937980-221c88ac04f9?w=400&auto=format&fit=crop&q=80",
         "aliases": ["maida", "all purpose flour", "मैदा"],
         "variants": [
             {"id": "var-maida-1kg", "label": "1 kg", "pack_size": 1, "pack_unit": "kg", "base_qty": 1000, "base_unit": "g"},
@@ -118,7 +118,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Flours & Atta",
         "name": "Pure Gram Besan",
         "brand": "Golden Harvest",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400&auto=format&fit=crop&q=80",
         "aliases": ["besan", "gram flour", "chana flour", "बेसन"],
         "variants": [
             {"id": "var-besan-500g", "label": "500 g", "pack_size": 500, "pack_unit": "g", "base_qty": 500, "base_unit": "g"},
@@ -131,7 +131,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Flours & Atta",
         "name": "Roasted Sooji / Rava",
         "brand": "Daily Kitchen",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&auto=format&fit=crop&q=80",
         "aliases": ["sooji", "suji", "rava", "semolina", "सूजी"],
         "variants": [
             {"id": "var-sooji-1kg", "label": "1 kg", "pack_size": 1, "pack_unit": "kg", "base_qty": 1000, "base_unit": "g"},
@@ -143,7 +143,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Flours & Atta",
         "name": "Organic Ragi Flour",
         "brand": "Pure Harvest",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1606851094655-b2593a9af63f?w=400&auto=format&fit=crop&q=80",
         "aliases": ["ragi flour", "finger millet flour", "nachni flour", "रागी"],
         "variants": [
             {"id": "var-ragi-1kg", "label": "1 kg", "pack_size": 1, "pack_unit": "kg", "base_qty": 1000, "base_unit": "g"},
@@ -159,7 +159,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Dal (Lentils) & Pulses",
         "name": "Toor Dal",
         "brand": "Golden Pulses",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1585994192701-f1a505c8574a?w=400&auto=format&fit=crop&q=80",
         "aliases": ["toor dal", "arhar", "दाल", "dal", "tuvar dal"],
         "variants": [
             {"id": "var-dal-toor-500g", "label": "500 g", "pack_size": 500, "pack_unit": "g", "base_qty": 500, "base_unit": "g"},
@@ -172,7 +172,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Dal (Lentils) & Pulses",
         "name": "Moong Dal Yellow Split",
         "brand": "Golden Pulses",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&auto=format&fit=crop&q=80",
         "aliases": ["moong dal", "yellow dal", "धुली मूंग दाल"],
         "variants": [
             {"id": "var-moong-yellow-500g", "label": "500 g", "pack_size": 500, "pack_unit": "g", "base_qty": 500, "base_unit": "g"},
@@ -185,7 +185,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Dal (Lentils) & Pulses",
         "name": "Chana Dal",
         "brand": "Golden Pulses",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1515543237350-b3eea1ec8082?w=400&auto=format&fit=crop&q=80",
         "aliases": ["chana dal", "bengal gram dal", "चना दाल"],
         "variants": [
             {"id": "var-chana-dal-1kg", "label": "1 kg", "pack_size": 1, "pack_unit": "kg", "base_qty": 1000, "base_unit": "g"},
@@ -197,7 +197,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Dal (Lentils) & Pulses",
         "name": "Urad Dal Gota (Whole White)",
         "brand": "Heritage",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1585994192701-f1a505c8574a?w=400&auto=format&fit=crop&q=80",
         "aliases": ["urad dal", "white urad", "idli dal", "उड़द दाल"],
         "variants": [
             {"id": "var-urad-white-1kg", "label": "1 kg", "pack_size": 1, "pack_unit": "kg", "base_qty": 1000, "base_unit": "g"},
@@ -209,7 +209,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Dal (Lentils) & Pulses",
         "name": "Kashmiri Red Rajma",
         "brand": "Nature Best",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1585994192701-f1a505c8574a?w=400&auto=format&fit=crop&q=80",
         "aliases": ["rajma", "kidney beans", "राजमा"],
         "variants": [
             {"id": "var-rajma-1kg", "label": "1 kg", "pack_size": 1, "pack_unit": "kg", "base_qty": 1000, "base_unit": "g"},
@@ -221,7 +221,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Dal (Lentils) & Pulses",
         "name": "Kabuli Chana (White Chickpeas)",
         "brand": "Nature Best",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1515543237350-b3eea1ec8082?w=400&auto=format&fit=crop&q=80",
         "aliases": ["chole", "kabuli chana", "chickpeas", "छोले"],
         "variants": [
             {"id": "var-kabuli-chana-1kg", "label": "1 kg", "pack_size": 1, "pack_unit": "kg", "base_qty": 1000, "base_unit": "g"},
@@ -237,7 +237,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Spices",
         "name": "Pure Turmeric Powder (Haldi)",
         "brand": "Spice Craft",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400&auto=format&fit=crop&q=80",
         "aliases": ["haldi", "turmeric", "हल्दी"],
         "variants": [
             {"id": "var-turmeric-200g", "label": "200 g", "pack_size": 200, "pack_unit": "g", "base_qty": 200, "base_unit": "g"},
@@ -250,7 +250,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Spices",
         "name": "Kashmiri Red Chilli Powder",
         "brand": "Spice Craft",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400&auto=format&fit=crop&q=80",
         "aliases": ["mirchi", "chilli powder", "लाल मिर्च"],
         "variants": [
             {"id": "var-chilli-200g", "label": "200 g", "pack_size": 200, "pack_unit": "g", "base_qty": 200, "base_unit": "g"},
@@ -263,7 +263,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Spices",
         "name": "Dhania (Coriander) Powder",
         "brand": "Spice Craft",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400&auto=format&fit=crop&q=80",
         "aliases": ["dhania", "coriander powder", "धनिया पाउडर"],
         "variants": [
             {"id": "var-dhania-500g", "label": "500 g", "pack_size": 500, "pack_unit": "g", "base_qty": 500, "base_unit": "g"},
@@ -275,7 +275,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Spices",
         "name": "Cumin Seeds (Jeera)",
         "brand": "Spice Craft",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400&auto=format&fit=crop&q=80",
         "aliases": ["jeera", "cumin", "जीरा"],
         "variants": [
             {"id": "var-jeera-200g", "label": "200 g", "pack_size": 200, "pack_unit": "g", "base_qty": 200, "base_unit": "g"},
@@ -287,7 +287,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Spices",
         "name": "Small Black Mustard Seeds (Rai)",
         "brand": "Daily Kitchen",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400&auto=format&fit=crop&q=80",
         "aliases": ["rai", "sarson", "mustard seeds", "राई"],
         "variants": [
             {"id": "var-mustard-200g", "label": "200 g", "pack_size": 200, "pack_unit": "g", "base_qty": 200, "base_unit": "g"},
@@ -299,7 +299,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Spices",
         "name": "Shahi Garam Masala",
         "brand": "Spice Craft",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400&auto=format&fit=crop&q=80",
         "aliases": ["garam masala", "shahi masala", "गरम मसाला"],
         "variants": [
             {"id": "var-garam-masala-100g", "label": "100 g", "pack_size": 100, "pack_unit": "g", "base_qty": 100, "base_unit": "g"},
@@ -328,7 +328,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Sugar & Jaggery",
         "name": "Organic Kolhapuri Jaggery Block",
         "brand": "Nature Best",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1605666807892-8c11d023b12f?w=400&auto=format&fit=crop&q=80",
         "aliases": ["gur", "gud", "jaggery", "गुड़"],
         "variants": [
             {"id": "var-jaggery-1kg", "label": "1 kg", "pack_size": 1, "pack_unit": "kg", "base_qty": 1000, "base_unit": "g"},
@@ -340,7 +340,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Sugar & Jaggery",
         "name": "Natural Desi Jaggery Powder",
         "brand": "Nature Best",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1605666807892-8c11d023b12f?w=400&auto=format&fit=crop&q=80",
         "aliases": ["jaggery powder", "gur powder", "shakkar powder"],
         "variants": [
             {"id": "var-jaggery-powder-500g", "label": "500 g", "pack_size": 500, "pack_unit": "g", "base_qty": 500, "base_unit": "g"},
@@ -356,7 +356,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Cooking Oils & Ghee",
         "name": "Sunflower Oil",
         "brand": "Sun Gold",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400&auto=format&fit=crop&q=80",
         "aliases": ["oil", "sunflower oil", "tel", "तेल"],
         "variants": [
             {"id": "var-oil-sunflower-1l", "label": "1 L", "pack_size": 1, "pack_unit": "l", "base_qty": 1000, "base_unit": "ml"},
@@ -369,7 +369,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Cooking Oils & Ghee",
         "name": "Filtered Groundnut (Peanut) Oil",
         "brand": "Heritage",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400&auto=format&fit=crop&q=80",
         "aliases": ["groundnut oil", "peanut oil", "moongfali tel"],
         "variants": [
             {"id": "var-oil-groundnut-1l", "label": "1 L", "pack_size": 1, "pack_unit": "l", "base_qty": 1000, "base_unit": "ml"},
@@ -382,7 +382,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Cooking Oils & Ghee",
         "name": "Kachi Ghani Pure Mustard Oil",
         "brand": "Sun Gold",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400&auto=format&fit=crop&q=80",
         "aliases": ["mustard oil", "sarson tel", "सरसों का तेल"],
         "variants": [
             {"id": "var-oil-mustard-1l", "label": "1 L", "pack_size": 1, "pack_unit": "l", "base_qty": 1000, "base_unit": "ml"},
@@ -394,7 +394,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Cooking Oils & Ghee",
         "name": "A2 Pure Desi Cow Ghee",
         "brand": "Golden Dairy",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1631451095765-2c91616fc9e6?w=400&auto=format&fit=crop&q=80",
         "aliases": ["ghee", "cow ghee", "desi ghee", "घी"],
         "variants": [
             {"id": "var-ghee-cow-500ml", "label": "500 ml", "pack_size": 500, "pack_unit": "ml", "base_qty": 500, "base_unit": "ml"},
@@ -411,7 +411,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Sauces, Pickles & Spreads",
         "name": "Avakaya Mango Pickle",
         "brand": "Mother's Recipe",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&auto=format&fit=crop&q=80",
         "aliases": ["mango pickle", "aam ka achaar", "आम का अचार"],
         "variants": [
             {"id": "var-pickle-mango-500g", "label": "500 g", "pack_size": 500, "pack_unit": "g", "base_qty": 500, "base_unit": "g"},
@@ -423,7 +423,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Sauces, Pickles & Spreads",
         "name": "Rich Tomato Ketchup",
         "brand": "Daily Kitchen",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1607305387299-a3d9611cd469?w=400&auto=format&fit=crop&q=80",
         "aliases": ["ketchup", "tomato sauce", "सॉस"],
         "variants": [
             {"id": "var-ketchup-950g", "label": "950 g", "pack_size": 950, "pack_unit": "g", "base_qty": 950, "base_unit": "g"},
@@ -526,7 +526,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Snacks",
         "name": "Salted Crunchy Roasted Peanuts",
         "brand": "Daily Kitchen",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400&auto=format&fit=crop&q=80",
         "aliases": ["peanuts", "roasted peanuts", "मूंगफली"],
         "variants": [
             {"id": "var-peanuts-200g", "label": "200 g", "pack_size": 200, "pack_unit": "g", "base_qty": 200, "base_unit": "g"},
@@ -538,7 +538,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Snacks",
         "name": "Jumbo Phool Makhana (Fox Nuts)",
         "brand": "Nutri Feast",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400&auto=format&fit=crop&q=80",
         "aliases": ["makhana", "fox nuts", "मखाना"],
         "variants": [
             {"id": "var-makhana-250g", "label": "250 g", "pack_size": 250, "pack_unit": "g", "base_qty": 250, "base_unit": "g"},
@@ -554,7 +554,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Breakfast & Cereals",
         "name": "100% Whole Grain Rolled Oats",
         "brand": "Pure Harvest",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1517673400267-0251440c45dc?w=400&auto=format&fit=crop&q=80",
         "aliases": ["oats", "rolled oats", "ओट्स"],
         "variants": [
             {"id": "var-oats-1kg", "label": "1 kg", "pack_size": 1, "pack_unit": "kg", "base_qty": 1000, "base_unit": "g"},
@@ -566,7 +566,7 @@ EXPANDED_PRODUCTS: list[dict[str, Any]] = [
         "category_name": "Breakfast & Cereals",
         "name": "Crispy Golden Corn Flakes",
         "brand": "Pure Harvest",
-        "image_url": "/brand/pact-mark.png",
+        "image_url": "https://images.unsplash.com/photo-1521483451569-e33803c0330c?w=400&auto=format&fit=crop&q=80",
         "aliases": ["corn flakes", "cornflakes"],
         "variants": [
             {"id": "var-cornflakes-500g", "label": "500 g", "pack_size": 500, "pack_unit": "g", "base_qty": 500, "base_unit": "g"},

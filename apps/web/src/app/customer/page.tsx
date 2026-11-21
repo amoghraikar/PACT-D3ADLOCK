@@ -7,7 +7,7 @@ import { Card, Button, MonthTimeline, Banner, Skeleton, Stepper, MoneyText, Stat
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { copy } from "@/lib/copy/en";
-import { ShoppingBag, ListOrdered, Users, Lock, Mic, ArrowRight, Sparkles, Receipt, CheckCircle2, PackageCheck } from "lucide-react";
+import { ShoppingBag, ShoppingCart, Users, Lock, Mic, ArrowRight, Sparkles, Receipt, CheckCircle2, PackageCheck, Keyboard } from "lucide-react";
 
 export default function CustomerHomePage() {
   const { user, membership } = useAuth();
@@ -95,6 +95,40 @@ export default function CustomerHomePage() {
                   message={copy.customer.home.orderClosingBanner(6)}
                 />
 
+                {/* "How would you like to order?" Mode Selection Card */}
+                <Card className="p-5 space-y-3 bg-white border-ice-300">
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-bold text-teal-700 uppercase tracking-wider">Fast Ordering</span>
+                    <h2 className="font-display text-xl text-ink-800">How would you like to order?</h2>
+                    <p className="text-xs text-ink-600">Choose between typing from catalogue or speaking directly with voice.</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <Link href="/customer/shop" className="block">
+                      <div className="p-3.5 rounded-ctl border border-ice-200 hover:border-teal-700 bg-ice-50/50 hover:bg-ice-100 transition-colors flex items-center gap-3 cursor-pointer group">
+                        <div className="w-10 h-10 rounded-full bg-white border border-ice-300 flex items-center justify-center text-ink-700 group-hover:text-teal-700 shrink-0">
+                          <Keyboard className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <b className="block text-xs text-ink-800 group-hover:text-teal-700">Type & Browse</b>
+                          <span className="text-[11px] text-ink-500">Search 60+ staples</span>
+                        </div>
+                      </div>
+                    </Link>
+
+                    <Link href="/customer/speak" className="block">
+                      <div className="p-3.5 rounded-ctl border border-teal-700/40 bg-teal-50/30 hover:bg-teal-50 hover:border-teal-700 transition-colors flex items-center gap-3 cursor-pointer group">
+                        <div className="w-10 h-10 rounded-full bg-teal-700 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                          <Mic className="w-5 h-5 animate-pulse" />
+                        </div>
+                        <div>
+                          <b className="block text-xs text-ink-800 group-hover:text-teal-700">Speak (Voice Order)</b>
+                          <span className="text-[11px] text-teal-700 font-medium">Instant mic order</span>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </Card>
+
                 <Card className="p-6 sm:p-8 space-y-4 bg-ice-100 border-ice-300">
                   <div className="space-y-1.5">
                     <h2 className="font-display text-xl sm:text-2xl text-ink-800">
@@ -112,8 +146,8 @@ export default function CustomerHomePage() {
                       </Button>
                     </Link>
                     <Link href="/customer/list" className="flex-1">
-                      <Button variant="secondary" fullWidth icon={<ListOrdered className="w-4 h-4" />}>
-                        {copy.customer.home.viewList}
+                      <Button variant="secondary" fullWidth icon={<ShoppingCart className="w-4 h-4" />}>
+                        View Cart ({getItemQuantity("var-rice-sona-5kg") > 0 ? "Items Added" : "0 Items"})
                       </Button>
                     </Link>
                   </div>
@@ -242,8 +276,8 @@ export default function CustomerHomePage() {
                 </div>
 
                 <Link href="/customer/list" className="block pt-2">
-                  <Button variant="secondary" fullWidth icon={<ListOrdered className="w-4 h-4" />}>
-                    View my submitted list
+                  <Button variant="secondary" fullWidth icon={<ShoppingCart className="w-4 h-4" />}>
+                    View Cart
                   </Button>
                 </Link>
               </Card>

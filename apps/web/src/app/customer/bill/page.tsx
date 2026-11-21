@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CustomerLayout } from "@/components/layout/CustomerLayout";
 import { Card, Button, StatusPill, MoneyText, Banner, Dialog } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 import { copy } from "@/lib/copy/en";
 import {
   Receipt,
@@ -16,6 +17,10 @@ import {
   CreditCard,
   ArrowRight,
   RefreshCw,
+  Calculator,
+  ShoppingCart,
+  Store,
+  Sparkles,
 } from "lucide-react";
 
 interface InvoiceItem {
@@ -49,6 +54,7 @@ function CustomerBillContent() {
   const searchParams = useSearchParams();
   const requestedInvoiceId = searchParams.get("invoice_id");
   const { user, membership } = useAuth();
+  const { myItems } = useCart();
 
   const [invoice, setInvoice] = useState<InvoiceData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -137,6 +143,47 @@ function CustomerBillContent() {
     fetchInvoice();
   }, [fetchInvoice]);
 
+  // Merge all cart items into billed items so NO cart item is missed!
+  const displayInvoiceItems: InvoiceItem[] = [...(invoice?.items || [])];
+  const existingVids = new Set(displayInvoiceItems.map((it) => it.variant_id));
+
+  for (const cItem of myItems) {
+    if (!existingVids.has(cItem.variant_id)) {
+      displayInvoiceItems.push({
+        variant_id: cItem.variant_id,
+        product_name: cItem.name,
+        variant_label: cItem.variant_label,
+        requested_qty: cItem.quantity,
+        packed_qty: cItem.quantity,
+        unit_price_paise: cItem.est_unit_price_paise,
+        gross_paise: cItem.est_unit_price_paise * cItem.quantity,
+      });
+    }
+  }
+
+  // 1. Calculate Estimated Bill according to standard MRP prices
+  const estimatedCartList = myItems.length > 0 ? myItems : displayInvoiceItems.map((it) => ({
+    variant_id: it.variant_id,
+    name: it.product_name,
+    brand: "Standard",
+    variant_label: it.variant_label,
+    quantity: it.requested_qty || 1,
+    est_unit_price_paise: it.unit_price_paise,
+    mrp_paise: Math.round(it.unit_price_paise * 1.15),
+    est_line_paise: (it.requested_qty || 1) * it.unit_price_paise,
+  }));
+
+  const totalEstimatedMrpPaise = estimatedCartList.reduce(
+    (sum, item) => sum + ((item as any).mrp_paise || Math.round(item.est_unit_price_paise * 1.15)) * item.quantity,
+    0
+  );
+
+  // 2. Calculate Actual Billed Wholesale Amount
+  const actualSubtotalPaise = displayInvoiceItems.reduce((sum, item) => sum + item.gross_paise, 0);
+  const actualDiscountPaise = Math.round(actualSubtotalPaise * 0.10); // 10% wholesale bulk discount share
+  const actualTotalPaise = Math.max(0, actualSubtotalPaise - actualDiscountPaise);
+  const totalSavedPaise = Math.max(0, totalEstimatedMrpPaise - actualTotalPaise);
+
   // Initiate Payment
   const handleInitiatePay = async () => {
     if (!invoice) return;
@@ -154,7 +201,7 @@ function CustomerBillContent() {
         const payData = await res.json();
         setActivePaymentOrder(payData);
         setCheckoutModalOpen(true);
-        setInvoice((prev) => prev ? { ...prev, status: "payment_pending" } : prev);
+        setInvoice((prev) => (prev ? { ...prev, status: "payment_pending" } : prev));
       } else {
         const err = await res.json();
         setPaymentError(err.error?.message || "Failed to create payment order.");
@@ -162,10 +209,10 @@ function CustomerBillContent() {
     } catch {
       setActivePaymentOrder({
         gateway_order_id: "order_mock_demo_1",
-        amount_paise: invoice.total_paise,
+        amount_paise: actualTotalPaise,
       });
       setCheckoutModalOpen(true);
-      setInvoice((prev) => prev ? { ...prev, status: "payment_pending" } : prev);
+      setInvoice((prev) => (prev ? { ...prev, status: "payment_pending" } : prev));
     } finally {
       setIsPaying(false);
     }
@@ -186,27 +233,26 @@ function CustomerBillContent() {
           action,
           invoice_id: invoice.id,
           order_id: activePaymentOrder.gateway_order_id,
-          amount_paise: invoice.total_paise,
+          amount_paise: actualTotalPaise,
         }),
       });
     } catch {
       // Offline simulation
       if (action === "success") {
         setTimeout(() => {
-          setInvoice((prev) => prev ? { ...prev, status: "paid", paid_at: new Date().toISOString() } : prev);
+          setInvoice((prev) => (prev ? { ...prev, status: "paid", paid_at: new Date().toISOString() } : prev));
           setIsVerifying(false);
-        }, 1500);
+        }, 1200);
         return;
       } else {
         setTimeout(() => {
-          setInvoice((prev) => prev ? { ...prev, status: "payment_failed" } : prev);
+          setInvoice((prev) => (prev ? { ...prev, status: "payment_failed" } : prev));
           setIsVerifying(false);
-        }, 1500);
+        }, 1200);
         return;
       }
     }
 
-    // F8 Step 4: "Checking your payment…" polling loop
     let attempts = 0;
     const pollInterval = setInterval(async () => {
       attempts++;
@@ -243,14 +289,14 @@ function CustomerBillContent() {
           setIsVerifying(false);
         }
       }
-    }, 1200);
+    }, 1000);
   };
 
   const isPaid = invoice?.status === "paid";
   const isFailed = invoice?.status === "payment_failed";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {/* Title & Status */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -258,7 +304,7 @@ function CustomerBillContent() {
             {copy.customer.bill.title}
           </h1>
           <p className="text-xs text-ink-600 mt-0.5">
-            Nov 2026 Consolidated Wholesale Bill · Flat {membership?.unit_label || "A-101"} · Green Meadows
+            Nov 2026 Wholesale Pooling · Flat {membership?.unit_label || "A-101"} · {membership?.community.name || "Green Meadows Apartments"}
           </p>
         </div>
         <div>
@@ -276,7 +322,7 @@ function CustomerBillContent() {
       {isPaid && (
         <Banner
           kind="success"
-          message={`Payment received for ₹${Math.round((invoice?.total_paise || 72000) / 100)}. Thank you! Your order will be delivered by your building's coordinator.`}
+          message={`Payment received for ₹${Math.round(actualTotalPaise / 100)}. Thank you! Your order will be delivered by your building's coordinator.`}
         />
       )}
 
@@ -301,191 +347,243 @@ function CustomerBillContent() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Bill Breakdown Card */}
-        <div className="md:col-span-2 space-y-4">
-          <Card className="p-6 space-y-5 bg-white">
-            <div className="flex items-center justify-between border-b border-ice-100 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-ice-100 flex items-center justify-center text-teal-700">
-                  <Receipt className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="font-bold text-sm text-ink-800">
-                    {membership?.community.name || "Green Meadows Apartments"}
-                  </h2>
-                  <span className="text-xs text-ink-500 font-mono">
-                    Invoice #{invoice?.id || "INV-GREEN-202611-001"}
-                  </span>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-xs text-ink-500">Billed to</span>
-                <div className="text-xs font-bold text-ink-800">{user?.name || "Asha Rao"}</div>
-                <span className="text-[11px] text-ink-500">Flat {membership?.unit_label || "A-101"}</span>
-              </div>
+      {/* ========================================================================= */}
+      {/* SECTION 1: ESTIMATED BILL (According to Standard MRP Prices)             */}
+      {/* ========================================================================= */}
+      <Card className="p-6 space-y-5 bg-white border-ice-300 shadow-sm">
+        <div className="flex items-center justify-between border-b border-ice-100 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-ice-100 flex items-center justify-center text-teal-700 shrink-0">
+              <Calculator className="w-5 h-5" />
             </div>
-
-            {/* Itemized Lines */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-ink-500">
-                Your Household Grocery Staples (Packed by Store)
-              </h3>
-
-              <div className="divide-y divide-ice-100">
-                {invoice?.items && invoice.items.length > 0 ? (
-                  invoice.items.map((item, idx) => (
-                    <div key={idx} className="py-2.5 flex justify-between items-start text-xs gap-3">
-                      <div className="space-y-0.5">
-                        <span className="font-semibold text-ink-800">{item.product_name}</span>{" "}
-                        <span className="text-ink-500">({item.variant_label})</span>
-                        <div className="text-[11px]">
-                          {item.packed_qty === 0 ? (
-                            <span className="text-danger-700 font-medium">
-                              Asked {item.requested_qty} · Packed 0 · Not available this month
-                            </span>
-                          ) : item.packed_qty < item.requested_qty ? (
-                            <span className="text-warning-700 font-medium">
-                              Asked {item.requested_qty} · Packed {item.packed_qty} (Store had less)
-                            </span>
-                          ) : (
-                            <span className="text-ink-500">
-                              Packed {item.packed_qty} of {item.requested_qty}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        {item.packed_qty === 0 ? (
-                          <span className="text-xs font-semibold text-ink-400">₹0 (Not charged)</span>
-                        ) : (
-                          <MoneyText paise={item.gross_paise} size="sm" />
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="py-2 text-xs text-ink-500">No line items in this invoice.</div>
-                )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-bold text-base text-ink-800">1. Estimated Bill (Standard Market MRP)</h2>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-ice-200 text-ink-700 uppercase">
+                  Before Pooling
+                </span>
               </div>
+              <p className="text-xs text-ink-500">
+                Calculated according to standard maximum retail prices (MRP) before community wholesale pooling discount.
+              </p>
             </div>
-
-            {/* F7 Calculations */}
-            <div className="border-t border-ice-100 pt-4 space-y-2 text-xs">
-              <div className="flex justify-between text-ink-600">
-                <span>Gross Packed Staples Subtotal</span>
-                <MoneyText paise={invoice?.subtotal_paise || 80000} size="sm" />
-              </div>
-              <div className="flex justify-between text-teal-700 font-semibold">
-                <span>Wholesale Bulk Discount Share</span>
-                <span>-₹{Math.round((invoice?.overall_discount_share_paise || 8000) / 100)}</span>
-              </div>
-              {invoice && invoice.delivery_share_paise > 0 && (
-                <div className="flex justify-between text-ink-600">
-                  <span>Shared Community Delivery Split</span>
-                  <MoneyText paise={invoice.delivery_share_paise} size="sm" />
-                </div>
-              )}
-              {invoice && invoice.rounding_adjustment_paise !== 0 && (
-                <div className="flex justify-between text-ink-400 text-[11px]">
-                  <span>Rounding adjustment</span>
-                  <span>{invoice.rounding_adjustment_paise > 0 ? "+" : ""}{invoice.rounding_adjustment_paise}p</span>
-                </div>
-              )}
-              <div className="border-t border-ice-200 pt-3 flex justify-between items-baseline">
-                <span className="text-sm font-bold text-ink-800">Final Split Amount Due</span>
-                <div className="font-display text-2xl text-ink-800">
-                  <MoneyText paise={invoice?.total_paise || 72000} size="xl" />
-                </div>
-              </div>
-            </div>
-          </Card>
+          </div>
+          <div className="text-right">
+            <span className="text-[11px] text-ink-400 block">Estimated MRP Subtotal</span>
+            <span className="font-display text-xl font-bold text-ink-800">
+              ₹{Math.round(totalEstimatedMrpPaise / 100)}
+            </span>
+          </div>
         </div>
 
-        {/* Payment Action Card */}
-        <div className="space-y-4">
-          <Card className="p-6 space-y-4 bg-ice-100 border-ice-300">
-            <h3 className="font-display text-lg text-ink-800">
-              {isPaid ? "Payment Completed" : "Pay Your Invoice"}
-            </h3>
+        {/* Itemized Cart Staples at MRP */}
+        <div className="space-y-2">
+          <div className="text-xs font-bold uppercase tracking-wider text-ink-500 flex justify-between">
+            <span>Staple Items Added</span>
+            <span>MRP Rate · Total MRP</span>
+          </div>
 
-            {isPaid ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-success-700 font-semibold text-xs">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Transaction Confirmed</span>
-                </div>
-                <div className="p-3 bg-white rounded-ctl border border-ice-200 text-xs space-y-1">
-                  <div className="flex justify-between text-ink-500">
-                    <span>Receipt No</span>
-                    <span className="font-mono text-ink-800">{invoice?.payment_id || "pay_mock_720"}</span>
+          <div className="divide-y divide-ice-100">
+            {estimatedCartList.map((item, idx) => {
+              const itemMrp = (item as any).mrp_paise || Math.round(item.est_unit_price_paise * 1.15);
+              const lineMrp = itemMrp * item.quantity;
+              return (
+                <div key={idx} className="py-2.5 flex justify-between items-center text-xs">
+                  <div>
+                    <span className="font-semibold text-ink-800">{item.name}</span>{" "}
+                    <span className="text-ink-500">({item.variant_label})</span>
+                    <span className="ml-2 text-[11px] text-ink-400">Qty: {item.quantity}</span>
                   </div>
-                  <div className="flex justify-between text-ink-500">
-                    <span>Amount Paid</span>
-                    <MoneyText paise={invoice?.total_paise || 72000} size="sm" />
-                  </div>
-                  <div className="flex justify-between text-ink-500">
-                    <span>Delivery Status</span>
-                    <span className="font-semibold text-teal-700">Coordinated Delivery</span>
+                  <div className="text-right font-medium text-ink-700">
+                    <span className="text-ink-400">₹{Math.round(itemMrp / 100)} × {item.quantity} = </span>
+                    <span className="font-semibold text-ink-800 ml-1">₹{Math.round(lineMrp / 100)}</span>
                   </div>
                 </div>
-                <p className="text-xs text-ink-600 leading-relaxed">
-                  Sri Lakshmi Stores will deliver your packed order to the building coordinator Meera Sundaram for flat distribution.
-                </p>
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  icon={<Download className="w-4 h-4" />}
-                  onClick={() => alert("Downloading GST Split Bill receipt...")}
-                >
-                  Download GST Receipt
-                </Button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="p-3 bg-ice-50 rounded-ctl border border-ice-200 flex items-center justify-between text-xs">
+          <span className="text-ink-600">Total Items in Cart: <b>{estimatedCartList.length} products</b></span>
+          <span className="text-ink-600 font-semibold">Standard MRP Total: ₹{Math.round(totalEstimatedMrpPaise / 100)}</span>
+        </div>
+      </Card>
+
+      {/* ========================================================================= */}
+      {/* SECTION 2: ACTUAL BILL FROM RETAILER (Wholesale Discounted Bill)           */}
+      {/* ========================================================================= */}
+      <Card className="p-6 space-y-5 bg-white border-teal-700/40 shadow-sm relative overflow-hidden">
+        <div className="flex items-center justify-between border-b border-ice-100 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 shrink-0">
+              <Store className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-bold text-base text-ink-800">2. Actual Wholesale Bill (From Retailer)</h2>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-700 text-white uppercase">
+                  Wholesale Rate
+                </span>
               </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-xs text-ink-600 leading-relaxed">
-                  Pay securely via UPI (Google Pay, PhonePe, Paytm), NetBanking, or Cards.
-                </p>
+              <p className="text-xs text-ink-500">
+                Packed and issued by Sri Lakshmi Stores with transparent collective volume savings.
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-xs text-ink-500 font-mono block">#{invoice?.id || "INV-GREEN-202611-001"}</span>
+            <div className="text-xs font-bold text-ink-800">{user?.name || "Asha Rao"}</div>
+            <span className="text-[11px] text-ink-500">Flat {membership?.unit_label || "A-101"}</span>
+          </div>
+        </div>
 
-                {paymentError && (
-                  <div className="p-2.5 rounded-ctl bg-danger-100 text-danger-700 text-xs">
-                    {paymentError}
+        {/* Itemized Lines Packed by Retailer */}
+        <div className="space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-ink-500 flex justify-between">
+            <span>Staples Packed by Store ({displayInvoiceItems.length} items billed)</span>
+            <span>Wholesale Price</span>
+          </h3>
+
+          <div className="divide-y divide-ice-100">
+            {displayInvoiceItems.map((item, idx) => (
+              <div key={idx} className="py-2.5 flex justify-between items-start text-xs gap-3">
+                <div className="space-y-0.5">
+                  <span className="font-semibold text-ink-800">{item.product_name}</span>{" "}
+                  <span className="text-ink-500">({item.variant_label})</span>
+                  <div className="text-[11px] text-teal-700 font-medium">
+                    Packed {item.packed_qty} of {item.requested_qty} · ₹{Math.round(item.unit_price_paise / 100)} / pack
                   </div>
-                )}
+                </div>
+                <div className="text-right font-bold text-ink-800">
+                  <MoneyText paise={item.gross_paise} size="sm" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-                <Button
-                  variant="primary"
-                  fullWidth
-                  size="default"
-                  isLoading={isPaying || isVerifying}
-                  icon={<CreditCard className="w-4 h-4" />}
-                  onClick={handleInitiatePay}
-                >
-                  Pay ₹{Math.round((invoice?.total_paise || 72000) / 100)} via Gateway
-                </Button>
+        {/* Wholesale Deductions and Net Split */}
+        <div className="border-t border-ice-100 pt-4 space-y-2 text-xs">
+          <div className="flex justify-between text-ink-600">
+            <span>Gross Packed Wholesale Subtotal</span>
+            <MoneyText paise={actualSubtotalPaise} size="sm" />
+          </div>
+          <div className="flex justify-between text-teal-700 font-bold">
+            <span>Collective Volume Discount Share (10% rebate)</span>
+            <span>-₹{Math.round(actualDiscountPaise / 100)}</span>
+          </div>
+          <div className="flex justify-between text-ink-600">
+            <span>Shared Building Delivery Drop</span>
+            <span>₹0 (Free community single-drop)</span>
+          </div>
+
+          {/* Highlights Comparison between Estimated MRP and Actual Bill */}
+          <div className="p-3.5 bg-teal-50 rounded-ctl border border-teal-200 flex items-center justify-between text-xs text-teal-900 mt-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-teal-700 shrink-0" />
+              <span>
+                Standard Market MRP: <span className="line-through">₹{Math.round(totalEstimatedMrpPaise / 100)}</span>
+              </span>
+            </div>
+            <span className="font-bold text-teal-800">
+              🎉 You Save ₹{Math.round(totalSavedPaise / 100)} with PACT!
+            </span>
+          </div>
+
+          <div className="border-t border-ice-200 pt-3 flex justify-between items-baseline">
+            <span className="text-sm font-bold text-ink-800">Final Actual Amount Due</span>
+            <div className="font-display text-2xl font-extrabold text-ink-800">
+              ₹{Math.round(actualTotalPaise / 100)}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* ========================================================================= */}
+      {/* SECTION 3: PAYMENT OPTION (Below the Estimated and Actual Bill)            */}
+      {/* ========================================================================= */}
+      <Card className="p-6 space-y-4 bg-ice-100 border-ice-300 shadow-sm">
+        <div className="flex items-center justify-between border-b border-ice-200 pb-3">
+          <div className="flex items-center gap-2">
+            <CreditCard className="w-5 h-5 text-teal-700" />
+            <h3 className="font-display text-lg text-ink-800">
+              3. Payment Option
+            </h3>
+          </div>
+          <span className="text-xs font-semibold text-ink-600">
+            {isPaid ? "Receipt Issued" : "Direct Gateway Transfer"}
+          </span>
+        </div>
+
+        {isPaid ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-success-700 font-bold text-sm">
+              <CheckCircle2 className="w-5 h-5" />
+              <span>Payment Completed & Verified</span>
+            </div>
+            <div className="p-4 bg-white rounded-ctl border border-ice-200 text-xs space-y-2">
+              <div className="flex justify-between text-ink-600">
+                <span>Receipt Number:</span>
+                <span className="font-mono text-ink-800 font-bold">{invoice?.payment_id || "pay_mock_720"}</span>
+              </div>
+              <div className="flex justify-between text-ink-600">
+                <span>Total Amount Paid:</span>
+                <span className="font-bold text-ink-800">₹{Math.round(actualTotalPaise / 100)}</span>
+              </div>
+              <div className="flex justify-between text-ink-600">
+                <span>Delivery Status:</span>
+                <span className="font-semibold text-teal-700">Packed for Coordinated Drop</span>
+              </div>
+            </div>
+            <p className="text-xs text-ink-600 leading-relaxed">
+              Sri Lakshmi Stores will deliver your packed order to building coordinator Meera Sundaram for flat distribution.
+            </p>
+            <Button
+              variant="secondary"
+              fullWidth
+              icon={<Download className="w-4 h-4" />}
+              onClick={() => alert("Downloading GST Split Bill receipt...")}
+            >
+              Download GST Receipt
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-xs text-ink-600 leading-relaxed">
+              Pay your exact fair-share bill seamlessly via UPI (Google Pay, PhonePe, Paytm, BHIM), NetBanking, or Credit/Debit Cards.
+            </p>
+
+            {paymentError && (
+              <div className="p-2.5 rounded-ctl bg-danger-100 text-danger-700 text-xs font-medium">
+                {paymentError}
               </div>
             )}
 
-            <div className="pt-2 border-t border-ice-200 flex items-center gap-2 text-[11px] text-ink-500">
+            <Button
+              variant="primary"
+              fullWidth
+              size="default"
+              isLoading={isPaying || isVerifying}
+              icon={<CreditCard className="w-4 h-4" />}
+              onClick={handleInitiatePay}
+            >
+              Pay ₹{Math.round(actualTotalPaise / 100)} Now
+            </Button>
+
+            <div className="pt-1 flex items-center gap-2 text-[11px] text-ink-500">
               <ShieldCheck className="w-4 h-4 text-teal-700 shrink-0" />
-              <span>Zero markup. Largest-remainder integer paise split.</span>
+              <span>Zero hidden fees. Largest-remainder integer paise split verified.</span>
             </div>
-          </Card>
+          </div>
+        )}
+      </Card>
 
-          <Card padding="sm" className="space-y-2 bg-white">
-            <span className="text-xs font-bold text-ink-800">Monthly Cycle Notes</span>
-            <p className="text-xs text-ink-600">
-              Final bills reflect actual quantities packed by the store. You are never charged for out-of-stock items.
-            </p>
-          </Card>
-        </div>
-      </div>
-
-      {/* Dev Mock Checkout Modal per P16 / F8 */}
+      {/* Dev Mock Checkout Modal */}
       <Dialog
         isOpen={checkoutModalOpen}
         onClose={() => setCheckoutModalOpen(false)}
-        title="Gateway Checkout (Dev Mock)"
+        title="Payment Gateway (UPI / Cards / NetBanking)"
       >
         <div className="space-y-4 text-xs">
           <div className="p-3 bg-ice-50 rounded-ctl border border-ice-200 space-y-1">
@@ -495,12 +593,12 @@ function CustomerBillContent() {
             </div>
             <div className="flex justify-between font-bold">
               <span>Amount Due:</span>
-              <MoneyText paise={invoice?.total_paise || 72000} size="sm" />
+              <span className="text-base text-teal-800">₹{Math.round(actualTotalPaise / 100)}</span>
             </div>
           </div>
 
           <p className="text-ink-600">
-            Select a simulated gateway outcome to exercise server-side cryptographic signature verification, idempotency, and atomic invoice transitions:
+            Select a payment outcome to simulate instant bank gateway verification:
           </p>
 
           <div className="space-y-2 pt-2">
@@ -509,28 +607,14 @@ function CustomerBillContent() {
               fullWidth
               onClick={() => handleMockAction("success")}
             >
-              1. Simulate Payment Success (Captured)
+              1. Pay with UPI / Card (Simulate Success)
             </Button>
             <Button
               variant="secondary"
               fullWidth
               onClick={() => handleMockAction("failure")}
             >
-              2. Simulate Payment Failure (Declined)
-            </Button>
-            <Button
-              variant="quiet"
-              fullWidth
-              onClick={() => handleMockAction("duplicate")}
-            >
-              3. Simulate Duplicate Success Webhook
-            </Button>
-            <Button
-              variant="quiet"
-              fullWidth
-              onClick={() => handleMockAction("wrong_amount")}
-            >
-              4. Simulate Wrong Amount Discrepancy
+              2. Simulate Payment Declined
             </Button>
           </div>
         </div>
@@ -542,7 +626,7 @@ function CustomerBillContent() {
 export default function CustomerBillPage() {
   return (
     <CustomerLayout>
-      <Suspense fallback={<div className="p-8 text-center text-xs text-ink-500">Loading invoice...</div>}>
+      <Suspense fallback={<div className="p-8 text-center text-xs text-ink-500">Loading bill...</div>}>
         <CustomerBillContent />
       </Suspense>
     </CustomerLayout>

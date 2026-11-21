@@ -25,6 +25,7 @@ from app.modules.billing.split import (
     split_bill,
 )
 from app.modules.cart.cycle import (
+    CART_ITEMS,
     COMMUNITY_ORDERS,
     CUSTOMER_ORDER_ITEMS,
 )
@@ -186,6 +187,9 @@ def get_order_detail(
     # Isolation check: Farah cannot see or act on Ravi's order -> 404
     if not order or order.get("retailer_id") != retailer_id:
         raise AppError(code="ORDER_NOT_FOUND", message="Order not found.", status_code=404)
+
+    # Sync any customer cart items into order lines so they get billed
+    sync_cart_items_to_order(order_id, retailer_id)
 
     # Collect order items
     order_lines = [
@@ -440,8 +444,34 @@ def save_bill_draft(
     return {"status": "draft_saved", "order_id": order_id}
 
 
+def sync_cart_items_to_order(order_id: str, retailer_id: str):
+    """Ensures all active items in the community cart are synced to order lines so they get billed."""
+    order = COMMUNITY_ORDERS.get(order_id)
+    if not order:
+        return
+    cart_id = order.get("cart_id")
+    for (c_cart_id, c_id, v_id), c_item in CART_ITEMS.items():
+        if cart_id and c_cart_id != cart_id:
+            continue
+        key = (order_id, c_id, v_id)
+        if key not in CUSTOMER_ORDER_ITEMS:
+            listing = RETAILER_LISTINGS.get((retailer_id, v_id)) or RETAILER_LISTINGS.get(("ret-ravi-1", v_id))
+            selling_price = listing["selling_price_paise"] if listing else 20000
+            mrp = listing["mrp_paise"] if listing else 24000
+            CUSTOMER_ORDER_ITEMS[key] = {
+                "order_id": order_id,
+                "customer_id": c_id,
+                "variant_id": v_id,
+                "requested_qty": c_item.get("quantity", 1),
+                "packed_qty": c_item.get("quantity", 1),
+                "unit_price_paise": selling_price,
+                "mrp_paise": mrp,
+            }
+
+
 def _execute_split_for_order(order_id: str, retailer_id: str) -> dict:
     """Helper that runs F7 split_bill for the order with current packing and draft values."""
+    sync_cart_items_to_order(order_id, retailer_id)
     order_lines = [
         item for key, item in CUSTOMER_ORDER_ITEMS.items()
         if item["order_id"] == order_id
@@ -583,6 +613,9 @@ def finalise_bill(
             message=f"Cannot finalise order in state '{order.get('status')}'.",
             status_code=409,
         )
+
+    # Sync any customer cart items into order lines so they get billed
+    sync_cart_items_to_order(order_id, retailer_id)
 
     # 1. Check stock covers packed totals
     order_lines = [

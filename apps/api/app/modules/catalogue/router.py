@@ -85,6 +85,10 @@ def get_products(
 
         for v in prod["variants"]:
             listing = RETAILER_LISTINGS.get((assigned_retailer_id, v["id"]))
+            if not listing or listing.get("availability") != "active":
+                # Fallback to general retailer inventory listing
+                listing = RETAILER_LISTINGS.get(("ret-ravi-1", v["id"])) or RETAILER_LISTINGS.get(("ret-farah-2", v["id"]))
+
             if listing and listing.get("availability") == "active":
                 v_copy = {
                     **v,
