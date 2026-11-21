@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PACT</string>
+    <string name="title_activity_main">PACT</string>
+    <string name="package_name">com.pact.app</string>
+    <string name="custom_url_scheme">com.pact.app</string>
+</resources>

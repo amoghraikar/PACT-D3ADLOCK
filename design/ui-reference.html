@@ -1,0 +1,3019 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PACT · UI reference · Blue, Butter, Chocopie</title>
+  <!--
+  Static picture of the intended look. NOT production code.
+  Source of truth: README.md, section U (tokens, kit, rules) and section G (the numbers shown here).
+  If this page and the README disagree, the README wins.
+-->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Serif+Display&family=Noto+Sans+Devanagari:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --ink-900: #2E201F;
+      --ink-800: #432F2E;
+      --ink-600: #6A5452;
+      --ink-500: #7A6462;
+      --ink-400: #948180;
+      /* Chocopie */
+      --ice-50: #F3F8FB;
+      --ice-100: #E4EEF5;
+      --ice-200: #C4DAE8;
+      --ice-300: #B3CEDE;
+      --white: #FFFFFF;
+      /* Blue */
+      --butter-100: #FFF7DB;
+      --butter-200: #FEEFB8;
+      --butter-300: #EFDB93;
+      /* Butter */
+      --accent-700: #2A5C79;
+      --success-700: #1B6B45;
+      --success-100: #E3F4EA;
+      --warning-700: #8A3A00;
+      --warning-100: #FFE3C4;
+      --danger-700: #A3241C;
+      --danger-100: #FCE8E6;
+      --font-display: "DM Serif Display", Georgia, serif;
+      --font-ui: "DM Sans", "Noto Sans Devanagari", system-ui, sans-serif;
+      --r-card: 16px;
+      --r-ctl: 12px;
+      --shadow-float: 0 8px 24px rgb(67 47 46 / .14);
+      --stripes: repeating-linear-gradient(to bottom, var(--ice-300) 0 2px, transparent 2px 8px);
+      --stripes-butter: repeating-linear-gradient(to bottom, var(--butter-300) 0 2px, transparent 2px 8px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--ice-50);
+      color: var(--ink-800);
+      font: 400 16px/24px var(--font-ui);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .logo {
+      display: block;
+      aspect-ratio: 632 / 330;
+      background: var(--logo) center / contain no-repeat;
+      flex: none;
+    }
+
+    a {
+      color: var(--accent-700);
+    }
+
+    .ico {
+      width: 24px;
+      height: 24px;
+      flex: none;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .ico.sm {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2;
+    }
+
+    .ico.lg {
+      width: 32px;
+      height: 32px;
+    }
+
+    .grow {
+      flex: 1;
+    }
+
+    .num {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hi {
+      font-family: "Noto Sans Devanagari", var(--font-ui);
+    }
+
+    /* ───────── page chrome (not part of the product) ───────── */
+    .page-head {
+      background: var(--ice-200);
+      position: relative;
+      padding: 40px 24px 56px;
+    }
+
+    .page-head::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 24px;
+      background: var(--stripes);
+      opacity: .9;
+    }
+
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+
+    .page-head .wrap {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .page-head .logo {
+      width: 260px;
+    }
+
+    .page-head h1 {
+      font: 400 40px/46px var(--font-display);
+    }
+
+    .page-head p {
+      max-width: 60ch;
+      color: var(--ink-600);
+      margin-top: 8px;
+    }
+
+    .page-nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--white);
+      border-bottom: 1px solid var(--ice-300);
+    }
+
+    .page-nav .wrap {
+      display: flex;
+      gap: 4px;
+      padding: 0 16px;
+      overflow-x: auto;
+    }
+
+    .page-nav a {
+      padding: 14px 12px;
+      font-weight: 500;
+      color: var(--ink-800);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .page-nav a:hover {
+      color: var(--accent-700);
+    }
+
+    main {
+      padding: 8px 24px 96px;
+    }
+
+    section {
+      padding-top: 56px;
+    }
+
+    section>h2 {
+      font: 400 30px/36px var(--font-display);
+    }
+
+    section>.lede {
+      color: var(--ink-600);
+      max-width: 72ch;
+      margin: 6px 0 28px;
+    }
+
+    h3.sub {
+      font: 700 14px/20px var(--font-ui);
+      color: var(--ink-600);
+      margin: 32px 0 12px;
+      letter-spacing: .02em;
+    }
+
+    .spec {
+      display: grid;
+      gap: 16px;
+    }
+
+    .spec.c2 {
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+
+    .spec.c3 {
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .note {
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--ink-500);
+    }
+
+    figure {
+      margin: 0;
+      min-width: 0;
+    }
+
+    figcaption {
+      margin-bottom: 12px;
+    }
+
+    figcaption b {
+      display: block;
+      font-weight: 700;
+    }
+
+    figcaption span {
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--ink-500);
+    }
+
+    .phones {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 48px 24px;
+    }
+
+    .phones figure {
+      width: 380px;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    .desk-scroll {
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 48px;
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* ───────── swatches and specimens ───────── */
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .sw {
+      background: var(--white);
+      border: 1px solid var(--ice-300);
+      border-radius: var(--r-card);
+      overflow: hidden;
+    }
+
+    .sw i {
+      display: block;
+      height: 64px;
+      border-bottom: 1px solid var(--ice-300);
+    }
+
+    .sw div {
+      padding: 10px 12px 12px;
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--ink-600);
+    }
+
+    .sw b {
+      display: block;
+      color: var(--ink-800);
+      font-size: 14px;
+    }
+
+    .trio {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-radius: var(--r-card);
+      overflow: hidden;
+      border: 1px solid var(--ice-300);
+    }
+
+    .trio div {
+      padding: 32px 20px 28px;
+      text-align: center;
+    }
+
+    .trio b {
+      display: block;
+      font: 400 34px/40px var(--font-display);
+    }
+
+    .trio span {
+      font-size: 15px;
+    }
+
+    @media (max-width:640px) {
+      .trio {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sw code {
+      font: 500 12px/18px ui-monospace, Menlo, monospace;
+    }
+
+    .type-row {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 16px;
+      align-items: baseline;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--ice-100);
+    }
+
+    .type-row:last-child {
+      border-bottom: 0;
+    }
+
+    .type-row code {
+      font: 500 12px/18px ui-monospace, Menlo, monospace;
+      color: var(--ink-500);
+    }
+
+    /* ───────── kit: the real component styles ───────── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--ice-300);
+      border-radius: var(--r-card);
+      padding: 16px;
+    }
+
+    .card.flush {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 52px;
+      padding: 0 20px;
+      border-radius: var(--r-ctl);
+      border: 1px solid transparent;
+      font: 500 16px/22px var(--font-ui);
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn.md {
+      height: 44px;
+      padding: 0 16px;
+      font-size: 14px;
+    }
+
+    .btn.block {
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: var(--ink-800);
+      color: var(--butter-200);
+    }
+
+    .btn-primary:hover {
+      background: var(--ink-900);
+    }
+
+    .btn-secondary {
+      background: var(--white);
+      color: var(--ink-800);
+      border-color: var(--ink-800);
+    }
+
+    .btn-quiet {
+      background: transparent;
+      color: var(--accent-700);
+      padding: 0 8px;
+    }
+
+    .btn-danger {
+      background: var(--danger-700);
+      color: var(--white);
+    }
+
+    .btn.is-disabled {
+      background: var(--ice-100);
+      color: var(--ink-400);
+      cursor: not-allowed;
+    }
+
+    .btn.is-focus {
+      outline: 2px solid var(--accent-700);
+      outline-offset: 2px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      padding: 0 12px 0 8px;
+      border-radius: 999px;
+      font: 500 14px/20px var(--font-ui);
+      white-space: nowrap;
+    }
+
+    .pill-neutral {
+      background: var(--ice-100);
+      color: var(--ink-800);
+    }
+
+    .pill-info {
+      background: var(--ice-200);
+      color: var(--accent-700);
+    }
+
+    .pill-success {
+      background: var(--success-100);
+      color: var(--success-700);
+    }
+
+    .pill-warning {
+      background: var(--warning-100);
+      color: var(--warning-700);
+    }
+
+    .pill-danger {
+      background: var(--danger-100);
+      color: var(--danger-700);
+    }
+
+    .stepper {
+      display: inline-flex;
+      align-items: center;
+      height: 48px;
+      background: var(--white);
+      border: 1px solid var(--ink-400);
+      border-radius: var(--r-ctl);
+    }
+
+    .stepper button {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      background: none;
+      border: 0;
+      color: var(--ink-800);
+      cursor: pointer;
+    }
+
+    .stepper span {
+      min-width: 26px;
+      text-align: center;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid var(--ice-300);
+      background: var(--white);
+      font: 500 15px/20px var(--font-ui);
+      white-space: nowrap;
+    }
+
+    .chip.on {
+      background: var(--ink-800);
+      border-color: var(--ink-800);
+      color: var(--butter-200);
+    }
+
+    .chip.sm {
+      height: 32px;
+      padding: 0 12px;
+      font-size: 14px;
+    }
+
+    .field label {
+      display: block;
+      font: 500 16px/22px var(--font-ui);
+      margin-bottom: 6px;
+    }
+
+    .input {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 52px;
+      padding: 0 14px;
+      background: var(--white);
+      border: 1px solid var(--ink-400);
+      border-radius: var(--r-ctl);
+      font-size: 18px;
+    }
+
+    .input .pre {
+      color: var(--ink-600);
+      padding-right: 10px;
+      border-right: 1px solid var(--ice-300);
+    }
+
+    .input .ph {
+      color: var(--ink-500);
+    }
+
+    .help {
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--ink-500);
+      margin-top: 6px;
+    }
+
+    .otp {
+      display: flex;
+      gap: 8px;
+    }
+
+    .otp span {
+      width: 46px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      background: var(--white);
+      border: 1px solid var(--ink-400);
+      border-radius: var(--r-ctl);
+      font: 700 22px/1 var(--font-ui);
+    }
+
+    .otp span.cur {
+      border: 2px solid var(--accent-700);
+    }
+
+    .seg {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      padding: 4px;
+      background: var(--white);
+      border: 1px solid var(--ice-300);
+      border-radius: var(--r-ctl);
+    }
+
+    .seg span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 44px;
+      border-radius: 9px;
+      font-weight: 500;
+    }
+
+    .seg span.on {
+      background: var(--ink-800);
+      color: var(--butter-200);
+    }
+
+    .progress {
+      height: 12px;
+      background: var(--ice-100);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress i {
+      display: block;
+      height: 100%;
+      background: var(--accent-700);
+      border-radius: 999px;
+    }
+
+    .banner {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px 14px;
+      border-radius: var(--r-ctl);
+      font-size: 16px;
+      line-height: 22px;
+    }
+
+    .banner.warning {
+      background: var(--warning-100);
+      color: var(--warning-700);
+    }
+
+    .banner.info {
+      background: var(--ice-200);
+      color: var(--ink-800);
+    }
+
+    .banner.danger {
+      background: var(--danger-100);
+      color: var(--danger-700);
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 8px 12px 16px;
+      background: var(--ink-800);
+      color: var(--white);
+      border-radius: var(--r-ctl);
+      box-shadow: var(--shadow-float);
+      font-size: 16px;
+    }
+
+    .toast b {
+      color: var(--butter-200);
+      padding: 6px 10px;
+    }
+
+    .dialog {
+      background: var(--white);
+      border-radius: var(--r-card);
+      box-shadow: var(--shadow-float);
+      padding: 24px;
+      max-width: 420px;
+    }
+
+    .dialog h4 {
+      font: 400 22px/28px var(--font-display);
+      margin-bottom: 8px;
+    }
+
+    .dialog p {
+      color: var(--ink-600);
+    }
+
+    .dialog .row {
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 0 20px 24px;
+    }
+
+    .empty .art {
+      height: 96px;
+      margin: 0 -20px 16px;
+      background: var(--stripes);
+      display: grid;
+      place-items: center;
+    }
+
+    .empty .art span {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 1px solid var(--ice-300);
+      display: grid;
+      place-items: center;
+    }
+
+    .empty h4 {
+      font: 400 22px/28px var(--font-display);
+    }
+
+    .empty p {
+      color: var(--ink-600);
+      margin: 4px 0 16px;
+    }
+
+    .mic {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--ink-800);
+      color: var(--butter-200);
+      border: 0;
+    }
+
+    .mic.live {
+      background: var(--accent-700);
+      color: var(--white);
+      box-shadow: 0 0 0 10px rgb(42 92 121 / .18), 0 0 0 22px rgb(42 92 121 / .08);
+    }
+
+    .mic.err {
+      background: var(--white);
+      color: var(--danger-700);
+      border: 2px solid var(--danger-700);
+    }
+
+    .mic-demo {
+      display: grid;
+      justify-items: center;
+      gap: 28px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+    }
+
+    .timeline .st {
+      position: relative;
+      text-align: center;
+      font: 500 14px/18px var(--font-ui);
+      color: var(--ink-500);
+    }
+
+    .timeline .st::before {
+      content: "";
+      position: absolute;
+      top: 13px;
+      left: -50%;
+      width: 100%;
+      height: 2px;
+      background: var(--ice-300);
+    }
+
+    .timeline .st:first-child::before {
+      display: none;
+    }
+
+    .timeline .dot {
+      position: relative;
+      z-index: 1;
+      width: 28px;
+      height: 28px;
+      margin: 0 auto 6px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--white);
+      border: 2px solid var(--ice-300);
+      color: var(--white);
+    }
+
+    .timeline .done .dot {
+      background: var(--success-700);
+      border-color: var(--success-700);
+    }
+
+    .timeline .done::before,
+    .timeline .now::before {
+      background: var(--success-700);
+    }
+
+    .timeline .now .dot {
+      background: var(--accent-700);
+      border-color: var(--accent-700);
+    }
+
+    .timeline .now {
+      color: var(--ink-800);
+      font-weight: 700;
+    }
+
+    .money-xl {
+      font: 700 40px/44px var(--font-ui);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pimg {
+      aspect-ratio: 1;
+      width: 100%;
+      border-radius: var(--r-ctl);
+      background: var(--white);
+      border: 1px solid var(--ice-300);
+      display: grid;
+      place-items: center;
+      color: var(--ink-600);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pimg::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 26%;
+      background: var(--stripes-butter);
+      opacity: .8;
+    }
+
+    .pimg .ico {
+      width: 44%;
+      height: 44%;
+      stroke-width: 1.25;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pimg.thumb {
+      width: 48px;
+      flex: none;
+      border-radius: 10px;
+    }
+
+    /* ───────── phone frame and resident screens ───────── */
+    .phone {
+      width: 380px;
+      max-width: 100%;
+      height: 760px;
+      border: 10px solid var(--ink-800);
+      border-radius: 40px;
+      overflow: hidden;
+      background: var(--ice-50);
+      display: flex;
+      flex-direction: column;
+      font-size: 18px;
+      line-height: 28px;
+      box-shadow: var(--shadow-float);
+    }
+
+    .phone .top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 56px;
+      padding: 0 8px 0 12px;
+      background: var(--ice-200);
+      flex: none;
+    }
+
+    .phone .top .logo {
+      height: 42px;
+    }
+
+    .phone .top b {
+      font-size: 18px;
+    }
+
+    .iconbtn {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--ink-800);
+    }
+
+    .iconbtn .dot {
+      position: absolute;
+      top: 11px;
+      right: 12px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--danger-700);
+      border: 2px solid var(--ice-200);
+    }
+
+    .phone .body {
+      flex: 1;
+      padding: 20px 16px 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .phone .body>* {
+      flex-shrink: 0;
+    }
+
+    .phone .sticky {
+      flex: none;
+      padding: 12px 16px;
+      background: var(--white);
+      border-top: 1px solid var(--ice-300);
+    }
+
+    .h-display {
+      font: 400 30px/36px var(--font-display);
+    }
+
+    .h-title {
+      font: 400 22px/28px var(--font-display);
+    }
+
+    .muted {
+      color: var(--ink-600);
+    }
+
+    .small {
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--ink-500);
+    }
+
+    .label {
+      font: 500 16px/22px var(--font-ui);
+    }
+
+    .bnav {
+      flex: none;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 6px 8px 10px;
+      background: var(--white);
+      border-top: 1px solid var(--ice-300);
+    }
+
+    .bnav span {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-height: 52px;
+      justify-content: center;
+      font: 500 14px/18px var(--font-ui);
+      color: var(--ink-600);
+    }
+
+    .bnav span i {
+      display: grid;
+      place-items: center;
+      width: 56px;
+      height: 28px;
+      border-radius: 999px;
+    }
+
+    .bnav span.on {
+      color: var(--ink-800);
+      font-weight: 700;
+    }
+
+    .bnav span.on i {
+      background: var(--butter-200);
+    }
+
+    .hero {
+      background: var(--butter-200);
+      border-radius: var(--r-card);
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 16px;
+      background: var(--stripes-butter);
+      opacity: .9;
+    }
+
+    .hero .pill-warning {
+      background: var(--white);
+    }
+
+    .hero.pad-b {
+      padding-bottom: 30px;
+    }
+
+    .choice {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding: 20px 16px;
+    }
+
+    .choice .glyph {
+      width: 64px;
+      height: 64px;
+      flex: none;
+      border-radius: 50%;
+      background: var(--butter-200);
+      display: grid;
+      place-items: center;
+    }
+
+    .choice b {
+      display: block;
+      font-size: 20px;
+      line-height: 26px;
+    }
+
+    .choice span {
+      font-size: 16px;
+      line-height: 22px;
+      color: var(--ink-600);
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      overflow: hidden;
+      margin: 0 -16px;
+      padding: 0 16px;
+      flex: none;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .prod {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .prod b {
+      font-size: 16px;
+      line-height: 20px;
+      min-height: 40px;
+    }
+
+    .prod .price {
+      font-size: 16px;
+      line-height: 22px;
+      font-weight: 700;
+    }
+
+    .prod .price s {
+      font-weight: 400;
+      color: var(--ink-500);
+      font-size: 14px;
+      margin-left: 4px;
+    }
+
+    .prod .stepper,
+    .prod .btn {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .prod .btn {
+      justify-content: center;
+      height: 48px;
+    }
+
+    .line {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid var(--ice-100);
+    }
+
+    .line .stepper button {
+      width: 38px;
+    }
+
+    .line .txt b,
+    .line .txt span {
+      display: block;
+    }
+
+    .line .txt span {
+      white-space: nowrap;
+    }
+
+    .line:last-child {
+      border-bottom: 0;
+    }
+
+    .line .txt {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .line .txt b {
+      font-size: 16px;
+      line-height: 20px;
+    }
+
+    .line .txt span {
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--ink-600);
+    }
+
+    .line .amt {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      font-size: 16px;
+    }
+
+    .kv {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+      font-size: 16px;
+      line-height: 22px;
+    }
+
+    .kv.total {
+      border-top: 1px solid var(--ice-300);
+      margin-top: 6px;
+      padding-top: 12px;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .transcript {
+      background: var(--white);
+      border: 1px solid var(--ink-400);
+      border-radius: var(--r-ctl);
+      padding: 12px 14px;
+      font-size: 17px;
+      line-height: 25px;
+    }
+
+    .signin {
+      background: var(--ice-200);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .signin .band {
+      height: 40px;
+      background: var(--stripes);
+      flex: none;
+    }
+
+    .signin .inner {
+      flex: 1;
+      padding: 8px 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .signin .logo {
+      width: 230px;
+      margin: 0 auto;
+    }
+
+    .signin .help {
+      color: var(--ink-600);
+    }
+
+    .okmark {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: var(--success-100);
+      color: var(--success-700);
+      display: grid;
+      place-items: center;
+      margin: 8px auto 0;
+    }
+
+    /* ───────── desktop frame: store and admin ───────── */
+    .desk {
+      display: grid;
+      grid-template-columns: 224px 1fr;
+      min-width: 1080px;
+      max-width: 1200px;
+      min-height: 600px;
+      background: var(--ice-50);
+      border: 1px solid var(--ice-300);
+      border-radius: var(--r-card);
+      overflow: hidden;
+      box-shadow: var(--shadow-float);
+      font-size: 16px;
+      line-height: 24px;
+    }
+
+    .side {
+      background: var(--ice-200);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .side .logo {
+      width: 150px;
+      margin: 0 0 12px 2px;
+    }
+
+    .side a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 44px;
+      padding: 0 12px;
+      border-radius: var(--r-ctl);
+      color: var(--ink-800);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    .side a.on {
+      background: var(--butter-200);
+      font-weight: 700;
+    }
+
+    .side a em {
+      margin-left: auto;
+      font-style: normal;
+      font-size: 13px;
+      background: var(--white);
+      border-radius: 999px;
+      padding: 0 8px;
+      line-height: 22px;
+    }
+
+    .side a.on em {
+      background: var(--white);
+    }
+
+    .side .who {
+      margin-top: auto;
+      padding: 12px;
+      border-top: 1px solid var(--ice-300);
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--ink-600);
+    }
+
+    .side .who b {
+      display: block;
+      color: var(--ink-800);
+    }
+
+    .dmain {
+      padding: 28px 32px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-width: 0;
+    }
+
+    .dmain h4.title {
+      font: 400 28px/34px var(--font-display);
+    }
+
+    .dmain .crumb {
+      font-size: 14px;
+      color: var(--ink-600);
+      margin-bottom: 2px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .stat .k {
+      font: 500 14px/20px var(--font-ui);
+      color: var(--ink-600);
+    }
+
+    .stat .v {
+      font: 700 32px/40px var(--font-ui);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat .s {
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--ink-500);
+    }
+
+    .cols {
+      display: grid;
+      gap: 16px;
+    }
+
+    .cols.a {
+      grid-template-columns: 1.6fr 1fr;
+    }
+
+    .cols.b {
+      grid-template-columns: 2fr 1fr;
+      align-items: start;
+    }
+
+    .cols.c {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .card h5 {
+      font: 400 20px/26px var(--font-display);
+      margin-bottom: 8px;
+    }
+
+    .card.flush h5 {
+      padding: 16px 20px 0;
+    }
+
+    .tbl {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .tbl th {
+      text-align: left;
+      font: 500 13px/18px var(--font-ui);
+      color: var(--ink-600);
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--ice-300);
+      white-space: nowrap;
+    }
+
+    .tbl td {
+      height: 56px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--ice-100);
+      font-size: 15px;
+    }
+
+    .tbl tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .tbl .r {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tbl .nw {
+      white-space: nowrap;
+    }
+
+    .tbl .two small {
+      display: block;
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--ink-600);
+    }
+
+    .tbl td:first-child,
+    .tbl th:first-child {
+      padding-left: 20px;
+    }
+
+    .tbl td:last-child,
+    .tbl th:last-child {
+      padding-right: 20px;
+    }
+
+    .tbl .cell-in {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      height: 40px;
+      min-width: 72px;
+      padding: 0 12px;
+      border: 1px solid var(--ink-400);
+      border-radius: 10px;
+      background: var(--white);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .steps {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .steps .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font: 500 14px/20px var(--font-ui);
+      color: var(--ink-500);
+    }
+
+    .steps .n {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      border: 2px solid var(--ice-300);
+      background: var(--white);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .steps .done .n {
+      background: var(--success-700);
+      border-color: var(--success-700);
+      color: var(--white);
+    }
+
+    .steps .now {
+      color: var(--ink-800);
+      font-weight: 700;
+    }
+
+    .steps .now .n {
+      background: var(--accent-700);
+      border-color: var(--accent-700);
+      color: var(--white);
+    }
+
+    .steps .bar {
+      width: 40px;
+      height: 2px;
+      background: var(--ice-300);
+    }
+
+    .steps .bar.done {
+      background: var(--success-700);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--ice-300);
+    }
+
+    .tabs span {
+      padding: 10px 14px;
+      font-weight: 500;
+      color: var(--ink-600);
+      border-bottom: 3px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .tabs span.on {
+      color: var(--ink-800);
+      font-weight: 700;
+      border-bottom-color: var(--ink-800);
+    }
+
+    .pack h6 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font: 700 16px/22px var(--font-ui);
+      margin-bottom: 4px;
+    }
+
+    .pack h6 span {
+      font-weight: 400;
+      color: var(--ink-600);
+    }
+
+    .pack .pl {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-top: 1px solid var(--ice-100);
+      font-size: 15px;
+    }
+
+    .pack .pl .txt {
+      flex: 1;
+    }
+
+    .pack .pl .txt small {
+      display: block;
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--ink-600);
+    }
+
+    .pack .stepper {
+      height: 44px;
+    }
+
+    .pack .stepper button {
+      width: 40px;
+      height: 42px;
+    }
+
+    .split .kv {
+      font-size: 15px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--ice-100);
+    }
+
+    .split .kv span small {
+      color: var(--ink-600);
+      font-size: 13px;
+      margin-left: 6px;
+    }
+
+    .bigline {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .bigline b {
+      font: 700 32px/40px var(--font-ui);
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width:460px) {
+      main {
+        padding: 8px 12px 72px;
+      }
+
+      .page-head h1 {
+        font-size: 32px;
+        line-height: 38px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- icon sprite (stand-ins for lucide-react) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24">
+      <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />
+    </symbol>
+    <symbol id="i-shop" viewBox="0 0 24 24">
+      <path d="M6 8h12l1 12H5L6 8z" />
+      <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+    </symbol>
+    <symbol id="i-list" viewBox="0 0 24 24">
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <path d="M4 6h.01M4 12h.01M4 18h.01" />
+    </symbol>
+    <symbol id="i-bill" viewBox="0 0 24 24">
+      <path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z" />
+      <path d="M9 8h6M9 12h6" />
+    </symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24">
+      <path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4l2-2z" />
+      <path d="M10 21a2 2 0 0 0 4 0" />
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="6" />
+      <path d="m20 20-4.5-4.5" />
+    </symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24">
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24">
+      <path d="m5 12.5 4.5 4.5L19 7.5" />
+    </symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24">
+      <path d="M12 5v14M5 12h14" />
+    </symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24">
+      <path d="M5 12h14" />
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24">
+      <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24">
+      <path d="M3 6h11v10H3zM14 9h4l3 3v4h-7z" />
+      <circle cx="7" cy="18" r="2" />
+      <circle cx="17" cy="18" r="2" />
+    </symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24">
+      <path d="M12 4 2.5 20h19L12 4z" />
+      <path d="M12 10v4M12 17v.5" />
+    </symbol>
+    <symbol id="i-right" viewBox="0 0 24 24">
+      <path d="m9 6 6 6-6 6" />
+    </symbol>
+    <symbol id="i-down" viewBox="0 0 24 24">
+      <path d="m6 9 6 6 6-6" />
+    </symbol>
+    <symbol id="i-back" viewBox="0 0 24 24">
+      <path d="M19 12H5M11 6l-6 6 6 6" />
+    </symbol>
+    <symbol id="i-keys" viewBox="0 0 24 24">
+      <rect x="3" y="6" width="18" height="12" rx="2" />
+      <path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8" />
+    </symbol>
+    <symbol id="i-box" viewBox="0 0 24 24">
+      <path d="m3 8 9-5 9 5v8l-9 5-9-5V8z" />
+      <path d="m3 8 9 5 9-5M12 13v8" />
+    </symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="8" height="8" rx="1.5" />
+      <rect x="13" y="3" width="8" height="8" rx="1.5" />
+      <rect x="3" y="13" width="8" height="8" rx="1.5" />
+      <rect x="13" y="13" width="8" height="8" rx="1.5" />
+    </symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24">
+      <rect x="3" y="6" width="18" height="13" rx="2" />
+      <path d="M3 10h18M15.5 14.5h2" />
+    </symbol>
+    <symbol id="i-users" viewBox="0 0 24 24">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M21 20a6 6 0 0 0-4-5.6" />
+    </symbol>
+    <symbol id="i-info" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 8v.5" />
+    </symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24">
+      <path d="M4 20h4L19 9l-4-4L4 16v4z" />
+    </symbol>
+    <symbol id="p-sack" viewBox="0 0 24 24">
+      <path d="M8.5 4h7L14 7c3 2 4.5 5 4.5 8a5 5 0 0 1-5 5h-3a5 5 0 0 1-5-5c0-3 1.5-6 4.5-8L8.5 4z" />
+      <path d="M10 7h4" />
+    </symbol>
+    <symbol id="p-bottle" viewBox="0 0 24 24">
+      <path d="M10 3h4v3l2 3v11a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9l2-3V3z" />
+      <path d="M8 13h8" />
+    </symbol>
+    <symbol id="p-bag" viewBox="0 0 24 24">
+      <path d="M7 6h10l2 14H5L7 6z" />
+      <path d="m7 6 2-3h6l2 3M9 12h6" />
+    </symbol>
+    <symbol id="p-bowl" viewBox="0 0 24 24">
+      <path d="M3 11h18a9 9 0 0 1-18 0z" />
+      <path d="M8 7c0-1 1-1 1-2M12 7c0-1 1-1 1-2M16 7c0-1 1-1 1-2" />
+    </symbol>
+  </svg>
+
+  <header class="page-head">
+    <div class="wrap">
+      <span class="logo" role="img" aria-label="PACT"></span>
+      <div>
+        <h1>UI reference · Blue, Butter, Chocopie</h1>
+        <p>How PACT should look and feel. Static mock-ups drawn with the tokens in README section U and the numbers of
+          the golden scenario in section G. If this page and the README disagree, the README wins.</p>
+      </div>
+    </div>
+  </header>
+  <nav class="page-nav" aria-label="Sections">
+    <div class="wrap">
+      <a href="#foundations">Foundations</a>
+      <a href="#kit">UI kit</a>
+      <a href="#resident">Resident app</a>
+      <a href="#store">Store workspace</a>
+      <a href="#admin">Building admin</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="wrap">
+
+      <!-- ═════════════════════ FOUNDATIONS ═════════════════════ -->
+      <section id="foundations">
+        <h2>Foundations</h2>
+        <p class="lede">Three colours, one job each. Blue is the calm structure: top bar, sidebar, page bands. Butter is
+          the highlight: the one thing that matters most on a screen. Chocopie is the ink and the action: text, icons,
+          primary buttons.</p>
+
+        <div class="trio">
+          <div style="background:var(--ice-200)"><b>Blue</b><span>#C4DAE8 · structure</span></div>
+          <div style="background:var(--butter-200)"><b>Butter</b><span>#FEEFB8 · highlight</span></div>
+          <div style="background:var(--ink-800); color:var(--butter-200)"><b>Chocopie</b><span>#432F2E · ink and
+              action</span></div>
+        </div>
+
+        <h3 class="sub">Colour · README U2</h3>
+        <div class="swatches">
+          <div class="sw"><i style="background:var(--ink-900)"></i>
+            <div><b>ink-900</b><code>#2E201F</code><br>Pressed primary</div>
+          </div>
+          <div class="sw"><i style="background:var(--ink-800)"></i>
+            <div><b>ink-800 · Chocopie</b><code>#432F2E</code><br>Text, primary buttons</div>
+          </div>
+          <div class="sw"><i style="background:var(--ink-600)"></i>
+            <div><b>ink-600</b><code>#6A5452</code><br>Secondary text</div>
+          </div>
+          <div class="sw"><i style="background:var(--ink-500)"></i>
+            <div><b>ink-500</b><code>#7A6462</code><br>Helper text, not on Blue</div>
+          </div>
+          <div class="sw"><i style="background:var(--ink-400)"></i>
+            <div><b>ink-400</b><code>#948180</code><br>Input borders, disabled</div>
+          </div>
+          <div class="sw"><i style="background:var(--ice-50)"></i>
+            <div><b>ice-50</b><code>#F3F8FB</code><br>App background</div>
+          </div>
+          <div class="sw"><i style="background:var(--ice-100)"></i>
+            <div><b>ice-100</b><code>#E4EEF5</code><br>Hover, quiet surfaces</div>
+          </div>
+          <div class="sw"><i style="background:var(--ice-200)"></i>
+            <div><b>ice-200 · Blue</b><code>#C4DAE8</code><br>Top bar, sidebar, sign-in</div>
+          </div>
+          <div class="sw"><i style="background:var(--ice-300)"></i>
+            <div><b>ice-300</b><code>#B3CEDE</code><br>Borders, stripes on Blue</div>
+          </div>
+          <div class="sw"><i style="background:var(--butter-100)"></i>
+            <div><b>butter-100</b><code>#FFF7DB</code><br>Quiet highlight</div>
+          </div>
+          <div class="sw"><i style="background:var(--butter-200)"></i>
+            <div><b>butter-200 · Butter</b><code>#FEEFB8</code><br>Main card, current item, text on Chocopie</div>
+          </div>
+          <div class="sw"><i style="background:var(--butter-300)"></i>
+            <div><b>butter-300</b><code>#EFDB93</code><br>Borders, stripes on Butter</div>
+          </div>
+          <div class="sw"><i style="background:var(--accent-700)"></i>
+            <div><b>accent-700</b><code>#2A5C79</code><br>Links, focus, progress</div>
+          </div>
+          <div class="sw"><i
+              style="background:var(--success-100); display:grid; place-items:center; color:var(--success-700); font-style:normal; font-weight:700">Paid</i>
+            <div><b>success</b><code>#1B6B45 / #E3F4EA</code><br>Paid, packed, delivered</div>
+          </div>
+          <div class="sw"><i
+              style="background:var(--warning-100); display:grid; place-items:center; color:var(--warning-700); font-style:normal; font-weight:700">Closing
+              soon</i>
+            <div><b>warning</b><code>#8A3A00 / #FFE3C4</code><br>Apricot, never Butter</div>
+          </div>
+          <div class="sw"><i
+              style="background:var(--danger-100); display:grid; place-items:center; color:var(--danger-700); font-style:normal; font-weight:700">Failed</i>
+            <div><b>danger</b><code>#A3241C / #FCE8E6</code><br>Failed, rejected</div>
+          </div>
+        </div>
+
+        <div class="spec c2" style="margin-top:8px">
+          <div>
+            <h3 class="sub">Type · README U3</h3>
+            <div class="card">
+              <div class="type-row"><code>display<br>30 / 36</code>
+                <div style="font:400 30px/36px var(--font-display)">Good evening, Asha</div>
+              </div>
+              <div class="type-row"><code>title<br>22 / 28</code>
+                <div style="font:400 22px/28px var(--font-display)">Our building this month</div>
+              </div>
+              <div class="type-row"><code>body<br>18 / 28</code>
+                <div style="font-size:18px;line-height:28px">Ordering closes on 24 Nov at midnight.</div>
+              </div>
+              <div class="type-row"><code>label<br>16 / 22</code>
+                <div style="font:500 16px/22px var(--font-ui)">Add to my list</div>
+              </div>
+              <div class="type-row"><code>small<br>14 / 20</code>
+                <div class="small">The store confirms the final price when it packs.</div>
+              </div>
+              <div class="type-row"><code>money-xl<br>40 / 44</code>
+                <div class="money-xl">₹720</div>
+              </div>
+              <div class="type-row"><code>Hindi</code>
+                <div class="hi" style="font-size:18px;line-height:28px">पाँच किलो चावल और दो किलो चीनी</div>
+              </div>
+            </div>
+            <p class="note" style="margin-top:8px">DM Serif Display for titles only. DM Sans for everything else. Noto
+              Sans Devanagari for Hindi.</p>
+          </div>
+          <div>
+            <h3 class="sub">Shape and motif · README U4</h3>
+            <div class="card" style="display:grid; gap:16px">
+              <div class="row">
+                <div
+                  style="width:96px;height:64px;background:var(--ice-100);border:1px solid var(--ice-300);border-radius:16px;display:grid;place-items:center"
+                  class="small">card 16</div>
+                <div
+                  style="width:96px;height:52px;background:var(--ice-100);border:1px solid var(--ice-300);border-radius:12px;display:grid;place-items:center"
+                  class="small">control 12</div>
+                <div
+                  style="width:96px;height:32px;background:var(--ice-100);border:1px solid var(--ice-300);border-radius:999px;display:grid;place-items:center"
+                  class="small">pill</div>
+              </div>
+              <div style="height:56px;border-radius:12px;background:var(--ice-200);position:relative;overflow:hidden">
+                <div style="position:absolute;inset:auto 0 0 0;height:24px;background:var(--stripes)"></div>
+              </div>
+              <div
+                style="height:56px;border-radius:12px;background:var(--butter-200);position:relative;overflow:hidden">
+                <div style="position:absolute;inset:auto 0 0 0;height:24px;background:var(--stripes-butter)"></div>
+              </div>
+              <p class="note">The one decorative motif: thin horizontal stripes, borrowed from the tower floors and the
+                awning in the mark. Blue stripes on Blue, butter stripes on Butter. Used behind sign-in, the main card
+                and empty states only.</p>
+              <div class="row">
+                <div
+                  style="width:48px;height:48px;border:1px dashed var(--ink-400);border-radius:8px;display:grid;place-items:center"
+                  class="small">48</div>
+                <p class="note" style="flex:1">Every touch target is at least 48 × 48 px. Customer screens are one
+                  column, 480 px at most.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════════════════════ KIT ═════════════════════ -->
+      <section id="kit">
+        <h2>UI kit</h2>
+        <p class="lede">Screens are assembled from these parts and nothing else. Words sit beside every icon; status is
+          always a word, an icon and a colour together.</p>
+
+        <div class="spec c3">
+          <div class="card" style="display:grid; gap:12px">
+            <h3 class="sub" style="margin:0">Buttons</h3>
+            <div class="row"><span class="btn btn-primary">Pay ₹720</span><span class="btn btn-secondary">Go back</span>
+            </div>
+            <div class="row"><span class="btn btn-quiet">How is this calculated?</span><span
+                class="btn btn-danger md">Reject order</span></div>
+            <div class="row"><span class="btn btn-primary is-focus">Focus ring</span><span
+                class="btn is-disabled">Ordering closed</span></div>
+            <p class="note">One primary button per screen. Buttons are verbs.</p>
+          </div>
+
+          <div class="card" style="display:grid; gap:12px">
+            <h3 class="sub" style="margin:0">Status pills</h3>
+            <div class="row">
+              <span class="pill pill-neutral"><svg class="ico sm">
+                  <use href="#i-clock" />
+                </svg>To pay</span>
+              <span class="pill pill-success"><svg class="ico sm">
+                  <use href="#i-check" />
+                </svg>Paid</span>
+              <span class="pill pill-info"><svg class="ico sm">
+                  <use href="#i-box" />
+                </svg>Ready to deliver</span>
+            </div>
+            <div class="row">
+              <span class="pill pill-info"><svg class="ico sm">
+                  <use href="#i-truck" />
+                </svg>On the way</span>
+              <span class="pill pill-success"><svg class="ico sm">
+                  <use href="#i-check" />
+                </svg>Delivered</span>
+              <span class="pill pill-warning"><svg class="ico sm">
+                  <use href="#i-alert" />
+                </svg>Packed 1 of 2</span>
+            </div>
+            <div class="row">
+              <span class="pill pill-warning"><svg class="ico sm">
+                  <use href="#i-clock" />
+                </svg>Closes in 3 days</span>
+              <span class="pill pill-danger"><svg class="ico sm">
+                  <use href="#i-alert" />
+                </svg>Didn't go through</span>
+            </div>
+          </div>
+
+          <div class="card" style="display:grid; gap:14px">
+            <h3 class="sub" style="margin:0">Choosing and counting</h3>
+            <div class="row">
+              <span class="stepper"><button aria-label="Remove"><svg class="ico">
+                    <use href="#i-trash" />
+                  </svg></button><span>1</span><button aria-label="Add one"><svg class="ico">
+                    <use href="#i-plus" />
+                  </svg></button></span>
+              <span class="stepper"><button aria-label="Take one away"><svg class="ico">
+                    <use href="#i-minus" />
+                  </svg></button><span>2</span><button aria-label="Add one"><svg class="ico">
+                    <use href="#i-plus" />
+                  </svg></button></span>
+            </div>
+            <div class="row"><span class="chip on">Rice &amp; Grains</span><span class="chip">Flours &amp; Atta</span>
+            </div>
+            <div class="row"><span class="chip sm">1 kg</span><span class="chip sm on">5 kg</span></div>
+            <div class="seg" style="max-width:260px"><span class="on"><svg class="ico sm">
+                  <use href="#i-keys" />
+                </svg>Type</span><span><svg class="ico sm">
+                  <use href="#i-mic" />
+                </svg>Speak</span></div>
+          </div>
+
+          <div class="card" style="display:grid; gap:14px">
+            <h3 class="sub" style="margin:0">Fields</h3>
+            <div class="field"><label>Your mobile number</label>
+              <div class="input"><span class="pre">+91</span><span>99999 00001</span></div>
+              <p class="help">We'll text you a 6-digit code.</p>
+            </div>
+            <div class="field"><label>6-digit code</label>
+              <div class="otp"><span>4</span><span>8</span><span>2</span><span
+                  class="cur"></span><span></span><span></span></div>
+            </div>
+            <p class="note">The label always stays visible above the field.</p>
+          </div>
+
+          <div class="card" style="display:grid; gap:14px">
+            <h3 class="sub" style="margin:0">Month timeline</h3>
+            <div class="timeline">
+              <div class="st done">
+                <div class="dot"><svg class="ico sm">
+                    <use href="#i-check" />
+                  </svg></div>Add items
+              </div>
+              <div class="st done">
+                <div class="dot"><svg class="ico sm">
+                    <use href="#i-check" />
+                  </svg></div>Sent to store
+              </div>
+              <div class="st done">
+                <div class="dot"><svg class="ico sm">
+                    <use href="#i-check" />
+                  </svg></div>Packed
+              </div>
+              <div class="st now">
+                <div class="dot"><svg class="ico sm">
+                    <use href="#i-wallet" />
+                  </svg></div>Pay
+              </div>
+              <div class="st">
+                <div class="dot"></div>Delivered
+              </div>
+            </div>
+            <p class="muted" style="font-size:16px;line-height:22px">Your bill is ready. Pay it and your order joins the
+              next delivery round.</p>
+            <h3 class="sub" style="margin:4px 0 0">Collection progress</h3>
+            <div>
+              <div class="progress"><i style="width:84%"></i></div>
+              <p style="margin-top:6px;font-weight:500">₹1,890 of ₹2,250 received · 84%</p>
+            </div>
+          </div>
+
+          <div class="card" style="display:grid; gap:12px">
+            <h3 class="sub" style="margin:0">Messages</h3>
+            <div class="banner warning"><svg class="ico">
+                <use href="#i-clock" />
+              </svg><span>Ordering closes on 24 Nov, midnight. 3 days left.</span></div>
+            <div class="banner info"><svg class="ico">
+                <use href="#i-info" />
+              </svg><span>No internet right now. Your list is saved. We'll keep trying.</span></div>
+            <div class="banner danger"><svg class="ico">
+                <use href="#i-alert" />
+              </svg><span>Your payment did not go through. You have not been charged. <b>Try again</b></span></div>
+            <div class="toast"><span class="grow">Removed Ragi Flour 1 kg</span><b>Undo</b></div>
+          </div>
+
+          <div class="card" style="background:var(--ice-100); display:grid; place-items:center">
+            <div class="dialog">
+              <h4>Finalise this bill?</h4>
+              <p>The total is ₹2,250 after a ₹250 discount. Four residents will receive their bills now. You can't
+                change the bill afterwards.</p>
+              <div class="row"><span class="btn btn-secondary md">Go back</span><span
+                  class="btn btn-primary md">Finalise bill</span></div>
+            </div>
+          </div>
+
+          <div class="card flush">
+            <div class="empty">
+              <div class="art"><span><svg class="ico lg">
+                    <use href="#i-list" />
+                  </svg></span></div>
+              <h4>Your list is empty</h4>
+              <p>Add what you need this month. You can change it any time before 24 Nov.</p>
+              <span class="btn btn-primary">Go to the shop</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="sub" style="margin:0 0 20px">Mic button</h3>
+            <div class="row" style="justify-content:space-around; align-items:flex-start; padding-bottom:12px">
+              <div class="mic-demo"><span class="mic"><svg class="ico lg">
+                    <use href="#i-mic" />
+                  </svg></span><span class="small">Tap and speak</span></div>
+              <div class="mic-demo"><span class="mic live"><svg class="ico lg">
+                    <use href="#i-mic" />
+                  </svg></span><span class="small">Listening…<br>tap to stop</span></div>
+              <div class="mic-demo"><span class="mic err"><svg class="ico lg">
+                    <use href="#i-mic" />
+                  </svg></span><span class="small">Didn't catch that</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════════════════════ RESIDENT APP ═════════════════════ -->
+      <section id="resident">
+        <h2>Resident app</h2>
+        <p class="lede">Phone first, one column, one main action per screen. Shown here as Asha, flat A-101, Green
+          Meadows Apartments. Each frame is a different moment in the same month.</p>
+
+        <div class="phones">
+
+          <!-- 1 Sign-in -->
+          <figure>
+            <figcaption><b>1 · Sign-in</b><span>Type or speak. Phone number, then a 6-digit code.</span></figcaption>
+            <div class="phone">
+              <div class="signin">
+                <div class="band"></div>
+                <div class="inner">
+                  <span class="logo" role="img" aria-label="PACT"></span>
+                  <div style="text-align:center">
+                    <div class="h-display">Welcome</div>
+                    <p class="muted">Order groceries together with your building, once a month.</p>
+                  </div>
+                  <div class="seg"><span class="on"><svg class="ico sm">
+                        <use href="#i-keys" />
+                      </svg>Type</span><span><svg class="ico sm">
+                        <use href="#i-mic" />
+                      </svg>Speak</span></div>
+                  <div class="field"><label>Your mobile number</label>
+                    <div class="input"><span class="pre">+91</span><span>99999 00001</span></div>
+                    <p class="help">We'll text you a 6-digit code.</p>
+                  </div>
+                  <span class="grow"></span>
+                  <span class="btn btn-primary block">Send code</span>
+                </div>
+              </div>
+            </div>
+          </figure>
+
+          <!-- 2 Choose -->
+          <figure>
+            <figcaption><b>2 · Choose how to order</b><span>Asked after sign-in. Independent of how you signed
+                in.</span></figcaption>
+            <div class="phone">
+              <div class="top"><span class="logo" role="img" aria-label="PACT"></span><span class="grow"></span></div>
+              <div class="body">
+                <div class="h-display">How would you like to order?</div>
+                <div class="card choice">
+                  <span class="glyph"><svg class="ico lg">
+                      <use href="#i-keys" />
+                    </svg></span>
+                  <div><b>Type &amp; tap</b><span>Look through the shop and tap what you need.</span></div>
+                </div>
+                <div class="card choice">
+                  <span class="glyph"><svg class="ico lg">
+                      <use href="#i-mic" />
+                    </svg></span>
+                  <div><b>Speak</b><span>Say your list out loud, in English or Hindi.</span></div>
+                </div>
+                <p class="small" style="text-align:center">You can switch any time.</p>
+              </div>
+            </div>
+          </figure>
+
+          <!-- 3 Home -->
+          <figure>
+            <figcaption><b>3 · Home</b><span>Where am I in the month, and what do I do next?</span></figcaption>
+            <div class="phone">
+              <div class="top"><span class="logo" role="img" aria-label="PACT"></span><span class="grow"></span><span
+                  class="iconbtn" aria-label="Notifications"><svg class="ico">
+                    <use href="#i-bell" />
+                  </svg><i class="dot"></i></span></div>
+              <div class="body">
+                <div>
+                  <div class="h-display">Good evening, Asha</div>
+                  <p class="muted" style="font-size:16px;line-height:22px">Green Meadows Apartments</p>
+                </div>
+                <div class="card" style="display:grid; gap:12px">
+                  <div class="timeline">
+                    <div class="st now">
+                      <div class="dot"><svg class="ico sm">
+                          <use href="#i-list" />
+                        </svg></div>Add items
+                    </div>
+                    <div class="st">
+                      <div class="dot"></div>Sent to store
+                    </div>
+                    <div class="st">
+                      <div class="dot"></div>Packed
+                    </div>
+                    <div class="st">
+                      <div class="dot"></div>Pay
+                    </div>
+                    <div class="st">
+                      <div class="dot"></div>Delivered
+                    </div>
+                  </div>
+                  <p style="font-size:16px;line-height:22px" class="muted">Ordering is open. On 25 Nov your building's
+                    order goes to the store.</p>
+                </div>
+                <div class="hero pad-b" style="display:grid; gap:12px">
+                  <div class="row" style="justify-content:space-between">
+                    <div class="h-title">This month's groceries</div>
+                    <span class="pill pill-warning"><svg class="ico sm">
+                        <use href="#i-clock" />
+                      </svg>Closes in 3 days</span>
+                  </div>
+                  <span class="btn btn-primary block">Add to my list</span>
+                </div>
+                <div class="card row" style="flex-wrap:nowrap">
+                  <svg class="ico">
+                    <use href="#i-users" />
+                  </svg>
+                  <div class="grow"><b style="font-size:16px;line-height:22px;display:block">Our building this
+                      month</b><span class="small" style="color:var(--ink-600)">4 neighbours · 12 items so far</span>
+                  </div>
+                  <svg class="ico">
+                    <use href="#i-right" />
+                  </svg>
+                </div>
+              </div>
+              <div class="bnav">
+                <span class="on"><i><svg class="ico">
+                      <use href="#i-home" />
+                    </svg></i>Home</span>
+                <span><i><svg class="ico">
+                      <use href="#i-shop" />
+                    </svg></i>Shop</span>
+                <span><i><svg class="ico">
+                      <use href="#i-list" />
+                    </svg></i>My list</span>
+                <span><i><svg class="ico">
+                      <use href="#i-bill" />
+                    </svg></i>Bills</span>
+              </div>
+            </div>
+          </figure>
+
+          <!-- 4 Shop -->
+          <figure>
+            <figcaption><b>4 · Shop</b><span>One card per product. No store names. Prices say "About".</span>
+            </figcaption>
+            <div class="phone">
+              <div class="top"><span class="logo" role="img" aria-label="PACT"></span><span class="grow"></span><span
+                  class="iconbtn" aria-label="Notifications"><svg class="ico">
+                    <use href="#i-bell" />
+                  </svg></span></div>
+              <div class="body" style="padding-top:16px; gap:12px">
+                <div class="input"><svg class="ico" style="color:var(--ink-600)">
+                    <use href="#i-search" />
+                  </svg><span class="ph grow">Search rice, atta, oil…</span><svg class="ico">
+                    <use href="#i-mic" />
+                  </svg></div>
+                <div class="chips"><span class="chip on">Rice &amp; Grains</span><span class="chip">Flours &amp;
+                    Atta</span><span class="chip">Dal &amp; Pulses</span><span class="chip">Spices</span></div>
+                <div class="grid2">
+                  <div class="card prod">
+                    <div class="pimg"><svg class="ico">
+                        <use href="#p-sack" />
+                      </svg></div>
+                    <b>Sona Masoori Rice</b>
+                    <div class="row" style="gap:6px"><span class="chip sm">1 kg</span><span class="chip sm on">5
+                        kg</span></div>
+                    <div class="price">About ₹300<s>₹340</s></div>
+                    <span class="stepper"><button aria-label="Remove"><svg class="ico">
+                          <use href="#i-trash" />
+                        </svg></button><span>1</span><button aria-label="Add one"><svg class="ico">
+                          <use href="#i-plus" />
+                        </svg></button></span>
+                  </div>
+                  <div class="card prod">
+                    <div class="pimg"><svg class="ico">
+                        <use href="#p-bag" />
+                      </svg></div>
+                    <b>Poha</b>
+                    <div class="row" style="gap:6px"><span class="chip sm on">500 g</span><span class="chip sm">1
+                        kg</span></div>
+                    <div class="price">About ₹45</div>
+                    <span class="btn btn-secondary">Add</span>
+                  </div>
+                  <div class="card prod">
+                    <div class="pimg"><svg class="ico">
+                        <use href="#p-bowl" />
+                      </svg></div>
+                    <b>Rava (Sooji)</b>
+                  </div>
+                  <div class="card prod">
+                    <div class="pimg"><svg class="ico">
+                        <use href="#p-sack" />
+                      </svg></div>
+                    <b>Ragi Flour</b>
+                  </div>
+                </div>
+              </div>
+              <div class="sticky row" style="flex-wrap:nowrap">
+                <div class="grow"><b style="font-size:16px;line-height:22px;display:block">My list · 4 items</b><span
+                    class="small" style="color:var(--ink-600)">about ₹800</span></div>
+                <span class="btn btn-primary">View</span>
+              </div>
+              <div class="bnav">
+                <span><i><svg class="ico">
+                      <use href="#i-home" />
+                    </svg></i>Home</span>
+                <span class="on"><i><svg class="ico">
+                      <use href="#i-shop" />
+                    </svg></i>Shop</span>
+                <span><i><svg class="ico">
+                      <use href="#i-list" />
+                    </svg></i>My list</span>
+                <span><i><svg class="ico">
+                      <use href="#i-bill" />
+                    </svg></i>Bills</span>
+              </div>
+            </div>
+          </figure>
+
+          <!-- 5 My list -->
+          <figure>
+            <figcaption><b>5 · My list</b><span>Saves as you go. Only your own items; the building's totals are
+                anonymous.</span></figcaption>
+            <div class="phone">
+              <div class="top"><span class="logo" role="img" aria-label="PACT"></span><span class="grow"></span><span
+                  class="iconbtn" aria-label="Notifications"><svg class="ico">
+                    <use href="#i-bell" />
+                  </svg></span></div>
+              <div class="body" style="padding-top:16px; gap:12px">
+                <div class="h-display">My list</div>
+                <div class="banner warning" style="padding:10px 12px"><svg class="ico">
+                    <use href="#i-clock" />
+                  </svg><span>Ordering closes on 24 Nov, midnight.</span></div>
+                <div class="card flush">
+                  <div class="line">
+                    <div class="pimg thumb"><svg class="ico">
+                        <use href="#p-sack" />
+                      </svg></div>
+                    <div class="txt"><b>Sona Masoori Rice</b><span>5 kg · about ₹300</span></div><span
+                      class="stepper"><button aria-label="Remove"><svg class="ico">
+                          <use href="#i-trash" />
+                        </svg></button><span>1</span><button aria-label="Add one"><svg class="ico">
+                          <use href="#i-plus" />
+                        </svg></button></span>
+                  </div>
+                  <div class="line">
+                    <div class="pimg thumb"><svg class="ico">
+                        <use href="#p-bag" />
+                      </svg></div>
+                    <div class="txt"><b>Sugar</b><span>1 kg · about ₹75</span></div><span class="stepper"><button
+                        aria-label="Take one away"><svg class="ico">
+                          <use href="#i-minus" />
+                        </svg></button><span>2</span><button aria-label="Add one"><svg class="ico">
+                          <use href="#i-plus" />
+                        </svg></button></span>
+                  </div>
+                  <div class="line">
+                    <div class="pimg thumb"><svg class="ico">
+                        <use href="#p-bottle" />
+                      </svg></div>
+                    <div class="txt"><b>Sunflower Oil</b><span>1 L · about ₹250</span></div><span
+                      class="stepper"><button aria-label="Remove"><svg class="ico">
+                          <use href="#i-trash" />
+                        </svg></button><span>1</span><button aria-label="Add one"><svg class="ico">
+                          <use href="#i-plus" />
+                        </svg></button></span>
+                  </div>
+                  <div class="line">
+                    <div class="pimg thumb"><svg class="ico">
+                        <use href="#p-bowl" />
+                      </svg></div>
+                    <div class="txt"><b>Toor Dal</b><span>500 g · about ₹100</span></div><span class="stepper"><button
+                        aria-label="Remove"><svg class="ico">
+                          <use href="#i-trash" />
+                        </svg></button><span>1</span><button aria-label="Add one"><svg class="ico">
+                          <use href="#i-plus" />
+                        </svg></button></span>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="kv" style="padding:0"><span class="label">Estimated total</span><b class="num"
+                      style="font-size:22px">About ₹800</b></div>
+                  <p class="small" style="margin-top:4px">The store confirms the final price when it packs.</p>
+                </div>
+              </div>
+              <div class="bnav">
+                <span><i><svg class="ico">
+                      <use href="#i-home" />
+                    </svg></i>Home</span>
+                <span><i><svg class="ico">
+                      <use href="#i-shop" />
+                    </svg></i>Shop</span>
+                <span class="on"><i><svg class="ico">
+                      <use href="#i-list" />
+                    </svg></i>My list</span>
+                <span><i><svg class="ico">
+                      <use href="#i-bill" />
+                    </svg></i>Bills</span>
+              </div>
+            </div>
+          </figure>
+
+          <!-- 6 Speak -->
+          <figure>
+            <figcaption><b>6 · Speak</b><span>What was heard stays editable. Nothing is added until you confirm.</span>
+            </figcaption>
+            <div class="phone">
+              <div class="top"><span class="iconbtn" aria-label="Back"><svg class="ico">
+                    <use href="#i-back" />
+                  </svg></span><b>Say your list</b></div>
+              <div class="body" style="padding-top:14px; gap:10px">
+                <div class="seg"><span class="on">English</span><span class="hi">हिंदी</span></div>
+                <div>
+                  <p class="label" style="margin-bottom:6px">I heard</p>
+                  <div class="transcript">I need 5 kg rice, 2 kg sugar, one litre sunflower oil and 500 grams of toor
+                    dal</div>
+                </div>
+                <div>
+                  <p class="label" style="margin-bottom:6px">This is what I understood</p>
+                  <div class="card flush">
+                    <div class="line" style="padding:9px 14px"><svg class="ico" style="color:var(--success-700)">
+                        <use href="#i-check" />
+                      </svg>
+                      <div class="txt"><b>Sona Masoori Rice</b><span>5 kg × 1</span></div><svg class="ico"
+                        style="color:var(--ink-600)">
+                        <use href="#i-edit" />
+                      </svg>
+                    </div>
+                    <div class="line" style="padding:9px 14px"><svg class="ico" style="color:var(--success-700)">
+                        <use href="#i-check" />
+                      </svg>
+                      <div class="txt"><b>Sugar</b><span>1 kg × 2</span></div><svg class="ico"
+                        style="color:var(--ink-600)">
+                        <use href="#i-edit" />
+                      </svg>
+                    </div>
+                    <div class="line" style="padding:9px 14px"><svg class="ico" style="color:var(--success-700)">
+                        <use href="#i-check" />
+                      </svg>
+                      <div class="txt"><b>Sunflower Oil</b><span>1 L × 1</span></div><svg class="ico"
+                        style="color:var(--ink-600)">
+                        <use href="#i-edit" />
+                      </svg>
+                    </div>
+                    <div class="line" style="padding:9px 14px"><svg class="ico" style="color:var(--success-700)">
+                        <use href="#i-check" />
+                      </svg>
+                      <div class="txt"><b>Toor Dal</b><span>500 g × 1</span></div><svg class="ico"
+                        style="color:var(--ink-600)">
+                        <use href="#i-edit" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="row" style="flex-wrap:nowrap; gap:14px">
+                  <span class="mic" style="width:64px;height:64px;flex:none"><svg class="ico">
+                      <use href="#i-mic" />
+                    </svg></span>
+                  <span class="small" style="color:var(--ink-600)">Tap and speak to add more, or type in the box
+                    above.</span>
+                </div>
+              </div>
+              <div class="sticky"><span class="btn btn-primary block">Add 4 items to my list</span></div>
+            </div>
+          </figure>
+
+          <!-- 7 My bill -->
+          <figure>
+            <figcaption><b>7 · My bill</b><span>The amount is large and explained before any Pay button.</span>
+            </figcaption>
+            <div class="phone">
+              <div class="top"><span class="iconbtn" aria-label="Back"><svg class="ico">
+                    <use href="#i-back" />
+                  </svg></span><b>My bill · November</b></div>
+              <div class="body" style="padding-top:16px; gap:12px">
+                <div class="hero pad-b">
+                  <div class="row" style="justify-content:space-between"><span class="label">You pay</span><span
+                      class="pill pill-neutral" style="background:var(--white)"><svg class="ico sm">
+                        <use href="#i-clock" />
+                      </svg>To pay</span></div>
+                  <div class="money-xl" style="margin-top:4px">₹720</div>
+                </div>
+                <div class="card flush">
+                  <div class="line" style="padding:9px 16px">
+                    <div class="txt"><b>Sona Masoori Rice</b><span>5 kg × 1</span></div><span class="amt">₹300</span>
+                  </div>
+                  <div class="line" style="padding:9px 16px">
+                    <div class="txt"><b>Sugar</b><span>1 kg × 2</span></div><span class="amt">₹150</span>
+                  </div>
+                  <div class="line" style="padding:9px 16px">
+                    <div class="txt"><b>Sunflower Oil</b><span>1 L × 1</span></div><span class="amt">₹250</span>
+                  </div>
+                  <div class="line" style="padding:9px 16px">
+                    <div class="txt"><b>Toor Dal</b><span>500 g × 1</span></div><span class="amt">₹100</span>
+                  </div>
+                </div>
+                <div class="card" style="padding:10px 16px 12px">
+                  <div class="kv"><span>Your items</span><span class="num">₹800</span></div>
+                  <div class="kv"><span>Community discount</span><span class="num" style="color:var(--success-700)">−
+                      ₹80</span></div>
+                  <div class="kv total"><span>You pay</span><span class="num">₹720</span></div>
+                </div>
+                <div class="row"
+                  style="justify-content:space-between; color:var(--accent-700); font-weight:500; font-size:16px">
+                  <span>How is this calculated?</span><svg class="ico">
+                    <use href="#i-down" />
+                  </svg></div>
+              </div>
+              <div class="sticky"><span class="btn btn-primary block">Pay ₹720</span></div>
+            </div>
+          </figure>
+
+          <!-- 8 Paid -->
+          <figure>
+            <figcaption><b>8 · Payment result</b><span>Shown only after the server has verified the payment.</span>
+            </figcaption>
+            <div class="phone">
+              <div class="top"><span class="iconbtn" aria-label="Back"><svg class="ico">
+                    <use href="#i-back" />
+                  </svg></span><b>My bill · November</b></div>
+              <div class="body" style="gap:14px">
+                <div class="okmark"><svg class="ico" style="width:44px;height:44px;stroke-width:2.25">
+                    <use href="#i-check" />
+                  </svg></div>
+                <div style="text-align:center">
+                  <div class="h-display">Paid</div>
+                  <p class="muted">We received ₹720. Thank you, Asha.</p>
+                </div>
+                <div class="card" style="padding:10px 16px">
+                  <div class="kv"><span class="muted">Bill</span><span>GM-2611-001</span></div>
+                  <div class="kv"><span class="muted">Paid on</span><span>26 Nov, 10:42 am</span></div>
+                  <div class="kv"><span class="muted">Amount</span><b class="num">₹720</b></div>
+                </div>
+                <div class="card" style="display:grid; gap:8px">
+                  <span class="pill pill-info" style="justify-self:start"><svg class="ico sm">
+                      <use href="#i-box" />
+                    </svg>Ready to deliver</span>
+                  <p style="font-size:16px;line-height:22px">Your building's coordinator will bring your order to A-101.
+                    We'll tell you when it's on the way.</p>
+                </div>
+                <span class="grow"></span>
+                <span class="btn btn-secondary block">Back to home</span>
+              </div>
+            </div>
+          </figure>
+
+        </div>
+      </section>
+
+      <!-- ═════════════════════ STORE WORKSPACE ═════════════════════ -->
+      <section id="store">
+        <h2>Store workspace</h2>
+        <p class="lede">Desktop first, with packing usable on a phone. Shown as Ravi of Sri Lakshmi Stores. A store sees
+          only its own stock, orders and collections, and never a resident's phone number.</p>
+
+        <div class="stack">
+
+          <!-- S1 Dashboard -->
+          <figure>
+            <figcaption><b>9 · Dashboard</b><span>Every figure comes from real records.</span></figcaption>
+            <div class="desk-scroll">
+              <div class="desk">
+                <aside class="side">
+                  <span class="logo" role="img" aria-label="PACT"></span>
+                  <a class="on"><svg class="ico">
+                      <use href="#i-grid" />
+                    </svg>Dashboard</a>
+                  <a><svg class="ico">
+                      <use href="#i-box" />
+                    </svg>Orders<em>1</em></a>
+                  <a><svg class="ico">
+                      <use href="#i-list" />
+                    </svg>Inventory</a>
+                  <a><svg class="ico">
+                      <use href="#i-wallet" />
+                    </svg>Payments</a>
+                  <div class="who"><b>Sri Lakshmi Stores</b>Ravi</div>
+                </aside>
+                <div class="dmain">
+                  <h4 class="title">Good morning, Ravi</h4>
+                  <div class="stats">
+                    <div class="card stat">
+                      <div class="k">Sales this month</div>
+                      <div class="v">₹1,890</div>
+                      <div class="s">First month. Nothing to compare yet.</div>
+                    </div>
+                    <div class="card stat">
+                      <div class="k">New customers</div>
+                      <div class="v">4</div>
+                      <div class="s">Ordered from you for the first time</div>
+                    </div>
+                    <div class="card stat">
+                      <div class="k">Orders</div>
+                      <div class="v">1</div>
+                      <div class="s">1 being processed · 0 completed</div>
+                    </div>
+                    <div class="card stat">
+                      <div class="k">Running low</div>
+                      <div class="v">2</div>
+                      <div class="s"><span class="pill pill-warning" style="height:24px;font-size:13px"><svg
+                            class="ico sm">
+                            <use href="#i-alert" />
+                          </svg>Needs stock</span></div>
+                    </div>
+                  </div>
+                  <div class="cols a">
+                    <div class="card flush">
+                      <h5>Community orders</h5>
+                      <table class="tbl">
+                        <tr>
+                          <th>Building</th>
+                          <th class="r">Bill</th>
+                          <th>Status</th>
+                        </tr>
+                        <tr>
+                          <td class="nw two"><b>Green Meadows Apartments</b><small>Nov 2026 · 4 residents</small></td>
+                          <td class="r">₹2,250</td>
+                          <td class="nw"><span class="pill pill-info"><svg class="ico sm">
+                                <use href="#i-wallet" />
+                              </svg>Collecting payments</span></td>
+                        </tr>
+                      </table>
+                    </div>
+                    <div class="card flush">
+                      <h5>Running low</h5>
+                      <table class="tbl">
+                        <tr>
+                          <th>Product</th>
+                          <th></th>
+                        </tr>
+                        <tr>
+                          <td class="nw two"><b>Toor Dal</b> · 500 g<small>4 left · alert below 10</small></td>
+                          <td class="r"><span class="btn btn-quiet md">Add stock</span></td>
+                        </tr>
+                        <tr>
+                          <td class="nw two"><b>Sugar</b> · 1 kg<small>6 left · alert below 12</small></td>
+                          <td class="r"><span class="btn btn-quiet md">Add stock</span></td>
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </figure>
+
+          <!-- S2 Packing -->
+          <figure>
+            <figcaption><b>10 · Packing</b><span>Pre-filled with what was asked. Shown mid-packing with one unavailable
+                line, to illustrate the warning state; in the golden scenario everything is packed.</span></figcaption>
+            <div class="desk-scroll">
+              <div class="desk">
+                <aside class="side">
+                  <span class="logo" role="img" aria-label="PACT"></span>
+                  <a><svg class="ico">
+                      <use href="#i-grid" />
+                    </svg>Dashboard</a>
+                  <a class="on"><svg class="ico">
+                      <use href="#i-box" />
+                    </svg>Orders<em>1</em></a>
+                  <a><svg class="ico">
+                      <use href="#i-list" />
+                    </svg>Inventory</a>
+                  <a><svg class="ico">
+                      <use href="#i-wallet" />
+                    </svg>Payments</a>
+                  <div class="who"><b>Sri Lakshmi Stores</b>Ravi</div>
+                </aside>
+                <div class="dmain">
+                  <div>
+                    <div class="crumb">Orders / Green Meadows Apartments</div>
+                    <h4 class="title">November 2026 order</h4>
+                  </div>
+                  <div class="steps">
+                    <div class="step done"><span class="n"><svg class="ico sm">
+                          <use href="#i-check" />
+                        </svg></span>Review</div><span class="bar done"></span>
+                    <div class="step done"><span class="n"><svg class="ico sm">
+                          <use href="#i-check" />
+                        </svg></span>Accept</div><span class="bar done"></span>
+                    <div class="step now"><span class="n">3</span>Pack</div><span class="bar"></span>
+                    <div class="step"><span class="n">4</span>Bill</div>
+                    <span class="grow"></span>
+                    <span class="small">Saved just now</span>
+                    <span class="btn btn-primary md">Continue to bill</span>
+                  </div>
+                  <div class="tabs"><span>By product</span><span class="on">By customer</span></div>
+                  <div class="cols c">
+                    <div class="card pack">
+                      <h6>Asha <span>· A-101</span><span class="grow"></span><span class="pill pill-success"><svg
+                            class="ico sm">
+                            <use href="#i-check" />
+                          </svg>All packed</span></h6>
+                      <div class="pl">
+                        <div class="txt">Sona Masoori Rice · 5 kg<small>Asked 1</small></div><span
+                          class="stepper"><button aria-label="Less"><svg class="ico">
+                              <use href="#i-minus" />
+                            </svg></button><span>1</span><button aria-label="More"><svg class="ico">
+                              <use href="#i-plus" />
+                            </svg></button></span>
+                      </div>
+                      <div class="pl">
+                        <div class="txt">Sugar · 1 kg<small>Asked 2</small></div><span class="stepper"><button
+                            aria-label="Less"><svg class="ico">
+                              <use href="#i-minus" />
+                            </svg></button><span>2</span><button aria-label="More"><svg class="ico">
+                              <use href="#i-plus" />
+                            </svg></button></span>
+                      </div>
+                      <div class="pl">
+                        <div class="txt">Sunflower Oil · 1 L<small>Asked 1</small></div><span class="stepper"><button
+                            aria-label="Less"><svg class="ico">
+                              <use href="#i-minus" />
+                            </svg></button><span>1</span><button aria-label="More"><svg class="ico">
+                              <use href="#i-plus" />
+                            </svg></button></span>
+                      </div>
+                      <div class="pl">
+                        <div class="txt">Toor Dal · 500 g<small>Asked 1</small></div><span class="stepper"><button
+                            aria-label="Less"><svg class="ico">
+                              <use href="#i-minus" />
+                            </svg></button><span>1</span><button aria-label="More"><svg class="ico">
+                              <use href="#i-plus" />
+                            </svg></button></span>
+                      </div>
+                    </div>
+                    <div style="display:grid; gap:16px; align-content:start">
+                      <div class="card pack">
+                        <h6>Bharat <span>· B-204</span><span class="grow"></span><span class="pill pill-success"><svg
+                              class="ico sm">
+                              <use href="#i-check" />
+                            </svg>All packed</span></h6>
+                        <div class="pl">
+                          <div class="txt">Sona Masoori Rice · 5 kg<small>Asked 2</small></div><span
+                            class="stepper"><button aria-label="Less"><svg class="ico">
+                                <use href="#i-minus" />
+                              </svg></button><span>2</span><button aria-label="More"><svg class="ico">
+                                <use href="#i-plus" />
+                              </svg></button></span>
+                        </div>
+                      </div>
+                      <div class="card pack">
+                        <h6>Dev <span>· D-402</span><span class="grow"></span><span class="pill pill-warning"><svg
+                              class="ico sm">
+                              <use href="#i-alert" />
+                            </svg>1 line short</span></h6>
+                        <div class="pl">
+                          <div class="txt">Sona Masoori Rice · 5 kg<small>Asked 2</small></div><span
+                            class="stepper"><button aria-label="Less"><svg class="ico">
+                                <use href="#i-minus" />
+                              </svg></button><span>2</span><button aria-label="More"><svg class="ico">
+                                <use href="#i-plus" />
+                              </svg></button></span>
+                        </div>
+                        <div class="pl"
+                          style="background:var(--warning-100); margin:0 -16px -16px; padding:8px 16px; border-radius:0 0 15px 15px">
+                          <div class="txt">Toor Dal · 500 g<small
+                              style="color:var(--warning-700); font-weight:500">Asked 1 · None available</small></div>
+                          <span class="stepper"><button aria-label="Less"><svg class="ico">
+                                <use href="#i-minus" />
+                              </svg></button><span>0</span><button aria-label="More"><svg class="ico">
+                                <use href="#i-plus" />
+                              </svg></button></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </figure>
+
+          <!-- S3 Bill -->
+          <figure>
+            <figcaption><b>11 · Final bill and its split</b><span>The store sets prices and discounts on the left; PACT
+                shows how the bill divides on the right. The two always add up.</span></figcaption>
+            <div class="desk-scroll">
+              <div class="desk">
+                <aside class="side">
+                  <span class="logo" role="img" aria-label="PACT"></span>
+                  <a><svg class="ico">
+                      <use href="#i-grid" />
+                    </svg>Dashboard</a>
+                  <a class="on"><svg class="ico">
+                      <use href="#i-box" />
+                    </svg>Orders<em>1</em></a>
+                  <a><svg class="ico">
+                      <use href="#i-list" />
+                    </svg>Inventory</a>
+                  <a><svg class="ico">
+                      <use href="#i-wallet" />
+                    </svg>Payments</a>
+                  <div class="who"><b>Sri Lakshmi Stores</b>Ravi</div>
+                </aside>
+                <div class="dmain">
+                  <div>
+                    <div class="crumb">Orders / Green Meadows Apartments</div>
+                    <h4 class="title">November 2026 order</h4>
+                  </div>
+                  <div class="steps">
+                    <div class="step done"><span class="n"><svg class="ico sm">
+                          <use href="#i-check" />
+                        </svg></span>Review</div><span class="bar done"></span>
+                    <div class="step done"><span class="n"><svg class="ico sm">
+                          <use href="#i-check" />
+                        </svg></span>Accept</div><span class="bar done"></span>
+                    <div class="step done"><span class="n"><svg class="ico sm">
+                          <use href="#i-check" />
+                        </svg></span>Pack</div><span class="bar done"></span>
+                    <div class="step now"><span class="n">4</span>Bill</div>
+                  </div>
+                  <div class="cols b">
+                    <div class="card flush">
+                      <table class="tbl">
+                        <tr>
+                          <th>Product</th>
+                          <th class="r">Packed</th>
+                          <th class="r">Final price</th>
+                          <th class="r">Discount</th>
+                          <th class="r">Total</th>
+                        </tr>
+                        <tr>
+                          <td class="nw two"><b>Sona Masoori Rice</b><small>5 kg</small></td>
+                          <td class="r">6</td>
+                          <td class="r"><span class="cell-in">₹300</span></td>
+                          <td class="r"><span class="cell-in">₹0</span></td>
+                          <td class="r"><b>₹1,800</b></td>
+                        </tr>
+                        <tr>
+                          <td class="nw two"><b>Sugar</b><small>1 kg</small></td>
+                          <td class="r">2</td>
+                          <td class="r"><span class="cell-in">₹75</span></td>
+                          <td class="r"><span class="cell-in">₹0</span></td>
+                          <td class="r"><b>₹150</b></td>
+                        </tr>
+                        <tr>
+                          <td class="nw two"><b>Sunflower Oil</b><small>1 L</small></td>
+                          <td class="r">1</td>
+                          <td class="r"><span class="cell-in">₹250</span></td>
+                          <td class="r"><span class="cell-in">₹0</span></td>
+                          <td class="r"><b>₹250</b></td>
+                        </tr>
+                        <tr>
+                          <td class="nw two"><b>Toor Dal</b><small>500 g</small></td>
+                          <td class="r">3</td>
+                          <td class="r"><span class="cell-in">₹100</span></td>
+                          <td class="r"><span class="cell-in">₹0</span></td>
+                          <td class="r"><b>₹300</b></td>
+                        </tr>
+                      </table>
+                      <div
+                        style="padding:16px 20px; border-top:1px solid var(--ice-300); display:grid; grid-template-columns:1fr 1fr; gap:16px 24px; align-items:end">
+                        <div class="field"><label style="font-size:14px">Discount on the whole order</label>
+                          <div class="input" style="height:44px;font-size:16px"><span class="pre">₹</span><span
+                              class="num">250</span></div>
+                        </div>
+                        <div class="field"><label style="font-size:14px">Delivery charge</label>
+                          <div class="input" style="height:44px;font-size:16px"><span class="pre">₹</span><span
+                              class="num">0</span></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="display:grid; gap:16px">
+                      <div class="card split">
+                        <h5>How the bill divides</h5>
+                        <div class="kv"><span>Asha<small>A-101</small></span><b class="num">₹720</b></div>
+                        <div class="kv"><span>Bharat<small>B-204</small></span><b class="num">₹540</b></div>
+                        <div class="kv"><span>Chitra<small>C-305</small></span><b class="num">₹360</b></div>
+                        <div class="kv" style="border-bottom:0"><span>Dev<small>D-402</small></span><b
+                            class="num">₹630</b></div>
+                        <span class="pill pill-success" style="margin-top:4px"><svg class="ico sm">
+                            <use href="#i-check" />
+                          </svg>Adds up to ₹2,250</span>
+                      </div>
+                      <div class="card">
+                        <div class="kv"><span>Items</span><span class="num">₹2,500</span></div>
+                        <div class="kv"><span>Discount</span><span class="num" style="color:var(--success-700)">−
+                            ₹250</span></div>
+                        <div class="kv total" style="font-size:20px"><span>Bill total</span><span
+                            class="num">₹2,250</span></div>
+                        <span class="btn btn-primary block" style="margin-top:14px">Finalise bill</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </figure>
+
+          <!-- S4 Payments -->
+          <figure>
+            <figcaption><b>12 · Payment collection</b><span>A written sentence beside the bar, never a bar alone.</span>
+            </figcaption>
+            <div class="desk-scroll">
+              <div class="desk" style="min-height:0">
+                <aside class="side">
+                  <span class="logo" role="img" aria-label="PACT"></span>
+                  <a><svg class="ico">
+                      <use href="#i-grid" />
+                    </svg>Dashboard</a>
+                  <a><svg class="ico">
+                      <use href="#i-box" />
+                    </svg>Orders<em>1</em></a>
+                  <a><svg class="ico">
+                      <use href="#i-list" />
+                    </svg>Inventory</a>
+                  <a class="on"><svg class="ico">
+                      <use href="#i-wallet" />
+                    </svg>Payments</a>
+                  <div class="who"><b>Sri Lakshmi Stores</b>Ravi</div>
+                </aside>
+                <div class="dmain">
+                  <div>
+                    <div class="crumb">Payments / Green Meadows Apartments</div>
+                    <h4 class="title">November 2026</h4>
+                  </div>
+                  <div class="card" style="display:grid; gap:12px; padding:20px 24px">
+                    <div class="bigline"><b>₹1,890</b><span class="muted">of ₹2,250 received · 84%</span><span
+                        class="grow"></span><span class="pill pill-success"><svg class="ico sm">
+                          <use href="#i-check" />
+                        </svg>3 paid</span><span class="pill pill-neutral"><svg class="ico sm">
+                          <use href="#i-clock" />
+                        </svg>1 to pay · ₹360</span></div>
+                    <div class="progress"><i style="width:84%"></i></div>
+                    <p class="small">Settlement: not available in test mode.</p>
+                  </div>
+                  <div class="card flush">
+                    <table class="tbl">
+                      <tr>
+                        <th>Resident</th>
+                        <th>Flat</th>
+                        <th class="r">Amount</th>
+                        <th>Status</th>
+                        <th>Paid on</th>
+                      </tr>
+                      <tr>
+                        <td><b>Asha</b></td>
+                        <td>A-101</td>
+                        <td class="r">₹720</td>
+                        <td><span class="pill pill-success"><svg class="ico sm">
+                              <use href="#i-check" />
+                            </svg>Paid</span></td>
+                        <td>26 Nov, 10:42 am</td>
+                      </tr>
+                      <tr>
+                        <td><b>Bharat</b></td>
+                        <td>B-204</td>
+                        <td class="r">₹540</td>
+                        <td><span class="pill pill-success"><svg class="ico sm">
+                              <use href="#i-check" />
+                            </svg>Paid</span></td>
+                        <td>26 Nov, 6:15 pm</td>
+                      </tr>
+                      <tr>
+                        <td><b>Dev</b></td>
+                        <td>D-402</td>
+                        <td class="r">₹630</td>
+                        <td><span class="pill pill-success"><svg class="ico sm">
+                              <use href="#i-check" />
+                            </svg>Paid</span></td>
+                        <td>27 Nov, 9:03 am</td>
+                      </tr>
+                      <tr>
+                        <td><b>Chitra</b></td>
+                        <td>C-305</td>
+                        <td class="r">₹360</td>
+                        <td><span class="pill pill-neutral"><svg class="ico sm">
+                              <use href="#i-clock" />
+                            </svg>To pay</span></td>
+                        <td class="muted">Not yet</td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </figure>
+
+        </div>
+      </section>
+
+      <!-- ═════════════════════ ADMIN ═════════════════════ -->
+      <section id="admin">
+        <h2>Building admin</h2>
+        <p class="lede">Shown as Meera, coordinator for Green Meadows Apartments. Two lists matter: who has paid and can
+          be delivered to, and who still needs a reminder. Admins never mark anything as paid.</p>
+
+        <div class="stack">
+          <figure>
+            <figcaption><b>13 · Overview and Paid</b><span>One next-step button per row moves delivery forward, and
+                records who did it and when.</span></figcaption>
+            <div class="desk-scroll">
+              <div class="desk" style="min-height:0">
+                <aside class="side">
+                  <span class="logo" role="img" aria-label="PACT"></span>
+                  <a><svg class="ico">
+                      <use href="#i-grid" />
+                    </svg>Overview</a>
+                  <a class="on"><svg class="ico">
+                      <use href="#i-check" />
+                    </svg>Paid<em>3</em></a>
+                  <a><svg class="ico">
+                      <use href="#i-clock" />
+                    </svg>Unpaid<em>1</em></a>
+                  <div class="who"><b>Green Meadows Apartments</b>Meera</div>
+                </aside>
+                <div class="dmain">
+                  <h4 class="title">November 2026</h4>
+                  <div class="stats">
+                    <div class="card stat">
+                      <div class="k">Residents in the order</div>
+                      <div class="v">4</div>
+                      <div class="s">4 bills</div>
+                    </div>
+                    <div class="card stat">
+                      <div class="k">Total bill</div>
+                      <div class="v">₹2,250</div>
+                      <div class="s">After the store's discount</div>
+                    </div>
+                    <div class="card stat">
+                      <div class="k">Received</div>
+                      <div class="v">₹1,890</div>
+                      <div class="s">3 residents have paid</div>
+                    </div>
+                    <div class="card stat">
+                      <div class="k">Still to come</div>
+                      <div class="v">₹360</div>
+                      <div class="s">1 resident to pay</div>
+                    </div>
+                  </div>
+                  <div class="card flush">
+                    <h5>Paid · ready for delivery</h5>
+                    <table class="tbl">
+                      <tr>
+                        <th>Resident</th>
+                        <th>Flat</th>
+                        <th class="r">Paid</th>
+                        <th>Delivery</th>
+                        <th class="r">Next step</th>
+                      </tr>
+                      <tr>
+                        <td><b>Dev</b></td>
+                        <td>D-402</td>
+                        <td class="r">₹630</td>
+                        <td><span class="pill pill-info"><svg class="ico sm">
+                              <use href="#i-box" />
+                            </svg>Ready to deliver</span></td>
+                        <td class="r"><span class="btn btn-primary md">Out for delivery</span></td>
+                      </tr>
+                      <tr>
+                        <td><b>Bharat</b></td>
+                        <td>B-204</td>
+                        <td class="r">₹540</td>
+                        <td><span class="pill pill-info"><svg class="ico sm">
+                              <use href="#i-truck" />
+                            </svg>On the way</span></td>
+                        <td class="r"><span class="btn btn-primary md">Mark delivered</span></td>
+                      </tr>
+                      <tr>
+                        <td><b>Asha</b></td>
+                        <td>A-101</td>
+                        <td class="r">₹720</td>
+                        <td><span class="pill pill-success"><svg class="ico sm">
+                              <use href="#i-check" />
+                            </svg>Delivered</span></td>
+                        <td class="r small">28 Nov, 5:20 pm · by Meera</td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </figure>
+
+          <div class="phones" style="justify-items:start">
+            <figure style="margin:0">
+              <figcaption><b>14 · Unpaid, on a phone</b><span>Admins deliver door to door, so every admin screen works
+                  one-handed.</span></figcaption>
+              <div class="phone" style="height:620px">
+                <div class="top"><span class="logo" role="img" aria-label="PACT"></span><span class="grow"></span><span
+                    class="iconbtn" aria-label="Notifications"><svg class="ico">
+                      <use href="#i-bell" />
+                    </svg></span></div>
+                <div class="body" style="padding-top:12px; gap:12px">
+                  <div class="seg"><span>Overview</span><span>Paid · 3</span><span class="on">Unpaid · 1</span></div>
+                  <div class="h-display">Still to pay</div>
+                  <div class="card" style="display:grid; gap:12px">
+                    <div class="row" style="flex-wrap:nowrap; align-items:flex-start">
+                      <div class="grow"><b style="display:block">Chitra</b><span class="muted"
+                          style="font-size:16px">C-305</span></div>
+                      <div style="text-align:right"><b class="num" style="font-size:22px;display:block">₹360</b><span
+                          class="pill pill-neutral"><svg class="ico sm">
+                            <use href="#i-clock" />
+                          </svg>To pay</span></div>
+                    </div>
+                    <p class="small">Not reminded yet</p>
+                    <span class="btn btn-secondary block">Send reminder</span>
+                  </div>
+                  <span class="grow"></span>
+                </div>
+                <div class="sticky"><span class="btn btn-primary block">Remind all unpaid (1)</span></div>
+              </div>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</body>
+
+</html>
