@@ -161,14 +161,14 @@ export default function AdminOverviewPage() {
 
       if (pRes.ok) {
         const pData = await pRes.json();
-        setPaidInvoices(pData.invoices.length > 0 ? pData.invoices : fallbackPaid);
+        setPaidInvoices(pData.invoices || []);
       } else {
         setPaidInvoices(fallbackPaid);
       }
 
       if (uRes.ok) {
         const uData = await uRes.json();
-        setUnpaidInvoices(uData.invoices.length > 0 ? uData.invoices : fallbackUnpaid);
+        setUnpaidInvoices(uData.invoices || []);
       } else {
         setUnpaidInvoices(fallbackUnpaid);
       }
