@@ -66,7 +66,7 @@ export default function OnboardingPage() {
     setIsSubmitting(false);
 
     if (res.success) {
-      setRetailerPending(true);
+      router.push("/retailer");
     } else {
       setErrorMsg(res.error || "Failed to register store.");
     }

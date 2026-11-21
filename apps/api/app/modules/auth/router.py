@@ -149,6 +149,21 @@ class OtpVerifyIn(BaseModel):
     code: str
 
 
+class RegisterResidentIn(BaseModel):
+    name: str = Field(min_length=2, max_length=100)
+    phone: str = Field(min_length=10, max_length=15)
+    join_code: str = Field(default="GREEN1")
+    unit_label: str = Field(min_length=1, max_length=50)
+
+
+class RegisterRetailerIn(BaseModel):
+    name: str = Field(min_length=2, max_length=100)
+    store_name: str = Field(min_length=2, max_length=100)
+    phone: str = Field(min_length=10, max_length=15)
+    address: str = Field(min_length=5, max_length=255)
+    gstin: str | None = None
+
+
 class ResidentOnboardingIn(BaseModel):
     join_code: str
     name: str
@@ -353,6 +368,111 @@ def get_me(
         },
         "membership": membership,
         "retailer": retailer,
+    }
+
+
+@router.post("/register/resident")
+def register_resident(body: RegisterResidentIn, response: Response):
+    """Simple and effective registration for apartment residents."""
+    phone = normalize_phone(body.phone)
+    user_id = f"usr-{random.randint(100000, 999999)}"
+
+    # Check join code
+    matching_comm = None
+    for comm in COMMUNITIES.values():
+        if comm["join_code"].upper() == body.join_code.strip().upper():
+            matching_comm = comm
+            break
+    if not matching_comm:
+        matching_comm = COMMUNITIES["comm-green-1"]
+
+    user = {
+        "id": user_id,
+        "phone": phone,
+        "name": body.name.strip(),
+        "role": "customer",
+        "language": "en",
+        "community_id": matching_comm["id"],
+        "unit_label": body.unit_label.strip(),
+    }
+    USERS[phone] = user
+
+    token = create_session_token(user["id"])
+    response.set_cookie(
+        key=settings.SESSION_COOKIE_NAME,
+        value=token,
+        max_age=settings.SESSION_MAX_AGE_DAYS * 24 * 3600,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        path="/",
+    )
+
+    return {
+        "success": True,
+        "user": {
+            "id": user["id"],
+            "phone": user["phone"],
+            "name": user["name"],
+            "role": user["role"],
+            "language": user["language"],
+        },
+        "membership": {
+            "community": matching_comm,
+            "unit_label": user["unit_label"],
+            "role": "member",
+        },
+        "token": token,
+    }
+
+
+@router.post("/register/retailer")
+def register_retailer(body: RegisterRetailerIn, response: Response):
+    """Simple and effective registration for kirana stores."""
+    phone = normalize_phone(body.phone)
+    user_id = f"usr-ret-{random.randint(100000, 999999)}"
+    store_id = f"ret-{random.randint(10000, 99999)}"
+
+    user = {
+        "id": user_id,
+        "phone": phone,
+        "name": body.name.strip(),
+        "role": "retailer",
+        "language": "en",
+        "store_id": store_id,
+        "store_name": body.store_name.strip(),
+        "store_status": "active",
+    }
+    USERS[phone] = user
+
+    token = create_session_token(user["id"])
+    response.set_cookie(
+        key=settings.SESSION_COOKIE_NAME,
+        value=token,
+        max_age=settings.SESSION_MAX_AGE_DAYS * 24 * 3600,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        path="/",
+    )
+
+    return {
+        "success": True,
+        "user": {
+            "id": user["id"],
+            "phone": user["phone"],
+            "name": user["name"],
+            "role": user["role"],
+            "language": user["language"],
+        },
+        "retailer": {
+            "id": store_id,
+            "store_name": user["store_name"],
+            "address": body.address.strip(),
+            "gstin": body.gstin.strip() if body.gstin else None,
+            "status": "active",
+        },
+        "token": token,
     }
 
 

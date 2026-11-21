@@ -108,6 +108,8 @@ interface AuthContextType {
   switchPersona: (persona: "asha" | "ravi" | "meera" | "priya") => void;
   requestOtp: (phone: string) => Promise<{ success: boolean; error?: string }>;
   verifyOtp: (phone: string, code: string) => Promise<{ success: boolean; user?: User; error?: string }>;
+  registerResident: (name: string, phone: string, joinCode: string, unitLabel: string) => Promise<{ success: boolean; user?: User; error?: string }>;
+  registerRetailer: (name: string, storeName: string, phone: string, address: string, gstin?: string) => Promise<{ success: boolean; user?: User; error?: string }>;
   onboardResident: (joinCode: string, name: string, unitLabel: string) => Promise<{ success: boolean; error?: string }>;
   onboardRetailer: (storeName: string, address: string, gstin?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -220,9 +222,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // ignore
           }
         } else {
-          // Default to Asha Rao for demo / evaluation so the workspace is immediately accessible
-          setUser(GOLDEN_PERSONAS.asha.user);
-          setMembership(GOLDEN_PERSONAS.asha.membership);
+          setUser(null);
+          setMembership(null);
+          setRetailer(null);
         }
         setIsLoading(false);
       }
@@ -359,6 +361,96 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: true };
   };
 
+  const registerResident = async (name: string, phone: string, joinCode: string, unitLabel: string) => {
+    try {
+      const res = await fetch("/api/v1/auth/register/resident", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, phone, join_code: joinCode, unit_label: unitLabel }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        setMembership(data.membership);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("pact_session_user", JSON.stringify(data.user));
+          if (data.membership) sessionStorage.setItem("pact_session_membership", JSON.stringify(data.membership));
+        }
+        return { success: true, user: data.user };
+      } else {
+        const err = await res.json().catch(() => ({}));
+        return { success: false, error: err.message || err.detail || "Registration failed." };
+      }
+    } catch {
+      // Fallback local registration
+      const cleanPhone = phone.startsWith("+91") ? phone : "+91" + phone;
+      const newUser: User = {
+        id: "usr-" + Math.random().toString(36).substring(2, 8),
+        name,
+        phone: cleanPhone,
+        role: "customer",
+        language: "en",
+      };
+      const newMembership: Membership = {
+        community: GOLDEN_COMMUNITY,
+        unit_label: unitLabel,
+        role: "member",
+      };
+      setUser(newUser);
+      setMembership(newMembership);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("pact_session_user", JSON.stringify(newUser));
+        sessionStorage.setItem("pact_session_membership", JSON.stringify(newMembership));
+      }
+      return { success: true, user: newUser };
+    }
+  };
+
+  const registerRetailer = async (name: string, storeName: string, phone: string, address: string, gstin?: string) => {
+    try {
+      const res = await fetch("/api/v1/auth/register/retailer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, store_name: storeName, phone, address, gstin }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        setRetailer(data.retailer);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("pact_session_user", JSON.stringify(data.user));
+          if (data.retailer) sessionStorage.setItem("pact_session_retailer", JSON.stringify(data.retailer));
+        }
+        return { success: true, user: data.user };
+      } else {
+        const err = await res.json().catch(() => ({}));
+        return { success: false, error: err.message || err.detail || "Store registration failed." };
+      }
+    } catch {
+      // Fallback local retailer registration
+      const cleanPhone = phone.startsWith("+91") ? phone : "+91" + phone;
+      const newUser: User = {
+        id: "usr-ret-" + Math.random().toString(36).substring(2, 8),
+        name,
+        phone: cleanPhone,
+        role: "retailer",
+        language: "en",
+      };
+      const newRetailer: Retailer = {
+        id: "ret-" + Math.random().toString(36).substring(2, 8),
+        store_name: storeName,
+        status: "active",
+      };
+      setUser(newUser);
+      setRetailer(newRetailer);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("pact_session_user", JSON.stringify(newUser));
+        sessionStorage.setItem("pact_session_retailer", JSON.stringify(newRetailer));
+      }
+      return { success: true, user: newUser };
+    }
+  };
+
   const logout = async () => {
     try {
       await fetch("/api/v1/auth/logout", { method: "POST" });
@@ -371,7 +463,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sessionStorage.removeItem("pact_session_membership");
         sessionStorage.removeItem("pact_session_retailer");
       }
-      router.push("/login");
+      router.push("/");
     }
   };
 
@@ -387,6 +479,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         switchPersona,
         requestOtp,
         verifyOtp,
+        registerResident,
+        registerRetailer,
         onboardResident,
         onboardRetailer,
         logout,
