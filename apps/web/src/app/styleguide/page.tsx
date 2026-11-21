@@ -1,254 +1,397 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { HeaderNav } from "@/components/HeaderNav";
+import React, { useState } from "react";
 import {
-  Check,
-  Clock,
-  AlertTriangle,
-  Package,
-  Truck,
-  Plus,
-  Minus,
-  Trash2,
-  Mic,
-  Info,
-  KeyRound,
-  ShoppingBag,
-} from "lucide-react";
+  Logo,
+  Mark,
+  Button,
+  TextField,
+  PhoneField,
+  OtpInput,
+  Stepper,
+  Card,
+  StatusPill,
+  MoneyText,
+  ProgressBar,
+  MonthTimeline,
+  Chip,
+  DataTable,
+  Dialog,
+  Sheet,
+  Toast,
+  Banner,
+  EmptyState,
+  Skeleton,
+  MicButton,
+} from "@/components/ui";
+import { ShoppingBag } from "lucide-react";
 
-export default function Styleguide() {
+export default function StyleguidePage() {
+  const [phoneVal, setPhoneVal] = useState("9999900001");
+  const [otpVal, setOtpVal] = useState("123456");
   const [stepperVal, setStepperVal] = useState(2);
-  const [micState, setMicState] = useState<"idle" | "live" | "error">("idle");
-  const [segMode, setSegMode] = useState<"type" | "speak">("type");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isToastOpen, setIsToastOpen] = useState(false);
+  const [, setMicState] = useState<"idle" | "listening" | "error">("idle");
+
+  const sampleTableData = [
+    { id: "1", product: "Sona Masoori Rice (5 kg)", requested: "2", packed: "2", price: "₹600", status: "Packed" },
+    { id: "2", product: "Toor Dal (500 g)", requested: "1", packed: "0", price: "₹0", status: "Out of stock" },
+    { id: "3", product: "Sunflower Oil (1 L)", requested: "1", packed: "1", price: "₹250", status: "Packed" },
+  ];
+
+  const tableColumns = [
+    { key: "product", header: "Product" },
+    { key: "requested", header: "Asked", align: "center" as const },
+    { key: "packed", header: "Packed", align: "center" as const },
+    { key: "price", header: "Total", isNumeric: true },
+    {
+      key: "status",
+      header: "Status",
+      render: (item: (typeof sampleTableData)[0]) => (
+        <StatusPill
+          kind={item.status === "Packed" ? "success" : "warning"}
+          label={item.status}
+        />
+      ),
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#F3F8FB] flex flex-col">
-      <HeaderNav />
-
-      {/* Header Banner */}
-      <section className="bg-[#C4DAE8] relative py-8 px-6 border-b border-[#B3CEDE]">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#2A5C79]">
-              PACT Design System · Section U
-            </span>
-            <h1 className="text-3xl font-serif text-[#2E201F]">Blue, Butter, Chocopie</h1>
-            <p className="text-sm text-[#6A5452] mt-1 max-w-2xl">
-              Three core tokens. Blue is calm structure, Butter is highlight, Chocopie is ink and action. Every component is accessible, verb-driven, and contains zero raw hex values in code.
-            </p>
-          </div>
-          <div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/brand/pact-logo-lockup.png"
-              alt="PACT"
-              style={{ height: "40px", width: "auto" }}
-              className="h-10 w-auto object-contain"
-            />
-          </div>
+    <div className="min-h-screen bg-ice-50 py-10 px-4 sm:px-8 space-y-12">
+      {/* Header */}
+      <div className="max-w-5xl mx-auto space-y-2 border-b border-ice-300 pb-6">
+        <div className="flex items-center gap-4">
+          <Logo size="md" />
+          <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-ice-200 text-teal-700">
+            UI Kit & Tokens (U1–U9)
+          </span>
         </div>
-      </section>
+        <h1 className="font-display text-3xl sm:text-4xl text-ink-800">PACT Design System & Styleguide</h1>
+        <p className="text-sm text-ink-600">
+          Living documentation of all accessible components in every state, rendered on ice-50 and white cards.
+        </p>
+      </div>
 
-      <main className="max-w-6xl w-full mx-auto p-6 space-y-12">
-        {/* Trio Banner */}
-        <div className="grid grid-cols-1 md:grid-cols-3 rounded-[16px] overflow-hidden border border-[#B3CEDE] text-center shadow-sm">
-          <div className="p-6 bg-[#C4DAE8] text-[#432F2E]">
-            <b className="block font-serif text-2xl">Blue</b>
-            <span className="text-xs">#C4DAE8 · Top bar, structure</span>
-          </div>
-          <div className="p-6 bg-[#FEEFB8] text-[#432F2E]">
-            <b className="block font-serif text-2xl">Butter</b>
-            <span className="text-xs">#FEEFB8 · Spotlight, action highlight</span>
-          </div>
-          <div className="p-6 bg-[#432F2E] text-[#FEEFB8]">
-            <b className="block font-serif text-2xl">Chocopie</b>
-            <span className="text-xs">#432F2E · Ink, text, buttons</span>
-          </div>
-        </div>
-
-        {/* Color Palette Grid */}
+      <div className="max-w-5xl mx-auto space-y-12">
+        {/* Section 1: Brand & Logo */}
         <section className="space-y-4">
-          <h2 className="text-xl font-serif text-[#2E201F]">1. Colour Tokens (U2)</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 text-xs">
-            <div className="card p-2 text-center space-y-1">
-              <div className="h-10 rounded-[8px] bg-[#2E201F]" />
-              <b className="block">ink-900</b>
-              <span className="text-gray-400">#2E201F</span>
+          <h2 className="font-display text-2xl text-ink-800">1. Brand & Mark (U1)</h2>
+          <Card className="flex flex-wrap items-center gap-8 bg-ice-200 border-ice-300">
+            <div className="space-y-1 text-center sm:text-left">
+              <span className="text-xs font-semibold text-ink-600">Logo Lockup (Large)</span>
+              <div><Logo size="lg" /></div>
             </div>
-            <div className="card p-2 text-center space-y-1">
-              <div className="h-10 rounded-[8px] bg-[#432F2E]" />
-              <b className="block">ink-800</b>
-              <span className="text-gray-400">#432F2E</span>
+            <div className="space-y-1 text-center sm:text-left">
+              <span className="text-xs font-semibold text-ink-600">Logo Lockup (Medium)</span>
+              <div><Logo size="md" /></div>
             </div>
-            <div className="card p-2 text-center space-y-1">
-              <div className="h-10 rounded-[8px] bg-[#C4DAE8]" />
-              <b className="block">ice-200</b>
-              <span className="text-gray-400">#C4DAE8</span>
+            <div className="space-y-1 text-center sm:text-left">
+              <span className="text-xs font-semibold text-ink-600">Logo Lockup (Small)</span>
+              <div><Logo size="sm" /></div>
             </div>
-            <div className="card p-2 text-center space-y-1">
-              <div className="h-10 rounded-[8px] bg-[#FEEFB8]" />
-              <b className="block">butter-200</b>
-              <span className="text-gray-400">#FEEFB8</span>
+            <div className="space-y-1 text-center sm:text-left">
+              <span className="text-xs font-semibold text-ink-600">Mark Alone (P glyph)</span>
+              <div><Mark size={40} /></div>
             </div>
-            <div className="card p-2 text-center space-y-1">
-              <div className="h-10 rounded-[8px] bg-[#2A5C79]" />
-              <b className="block text-[#2A5C79]">accent-700</b>
-              <span className="text-gray-400">#2A5C79</span>
-            </div>
-            <div className="card p-2 text-center space-y-1">
-              <div className="h-10 rounded-[8px] bg-[#1B6B45]" />
-              <b className="block text-[#1B6B45]">success-700</b>
-              <span className="text-gray-400">#1B6B45</span>
-            </div>
-          </div>
+          </Card>
         </section>
 
-        {/* UI Kit Components Grid */}
+        {/* Section 2: Typography & Money */}
         <section className="space-y-4">
-          <h2 className="text-xl font-serif text-[#2E201F]">2. Interactive UI Kit (U5)</h2>
+          <h2 className="font-display text-2xl text-ink-800">2. Typography & Money (U3, C6)</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="space-y-3">
+              <h3 className="text-xs font-bold uppercase text-ink-500 tracking-wider">Type Stack</h3>
+              <p className="font-display text-3xl text-ink-800">DM Serif Display (30/36)</p>
+              <p className="font-display text-xl text-ink-800">Card & Section Titles (22/28)</p>
+              <p className="text-base text-ink-800">Interface body font in DM Sans (16/24). Clean and high contrast.</p>
+              <p className="text-sm text-ink-600">Secondary text and helper labels in ink-600.</p>
+              <p className="font-hindi text-base text-ink-800">हिंदी वर्णमाला (Noto Sans Devanagari fallback: चावल, दाल, आटा, तेल)</p>
+            </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Buttons Card */}
-            <div className="card p-5 space-y-3">
-              <h3 className="font-serif font-bold text-sm text-[#432F2E]">Buttons (Verbs)</h3>
-              <div className="flex flex-wrap gap-2">
-                <button className="btn btn-primary md">Primary Verb</button>
-                <button className="btn btn-secondary md">Secondary</button>
-                <button className="btn btn-quiet md">Quiet Link</button>
-                <button className="btn btn-danger md">Danger</button>
-              </div>
-              <p className="text-[11px] text-[#7A6462]">
-                One primary verb per screen. Buttons are verbs, never nouns.
-              </p>
-            </div>
-
-            {/* Status Pills */}
-            <div className="card p-5 space-y-3">
-              <h3 className="font-serif font-bold text-sm text-[#432F2E]">Status Pills</h3>
-              <div className="flex flex-wrap gap-2">
-                <span className="pill pill-neutral"><Clock className="w-3 h-3" /> To pay</span>
-                <span className="pill pill-success"><Check className="w-3 h-3" /> Paid</span>
-                <span className="pill pill-info"><Package className="w-3 h-3" /> Ready to deliver</span>
-                <span className="pill pill-info"><Truck className="w-3 h-3" /> On the way</span>
-                <span className="pill pill-warning"><AlertTriangle className="w-3 h-3" /> Closes in 3 days</span>
-                <span className="pill pill-danger"><AlertTriangle className="w-3 h-3" /> Didn&apos;t go through</span>
-              </div>
-              <p className="text-[11px] text-[#7A6462]">
-                Status is always an icon, a word, and a semantic tone together.
-              </p>
-            </div>
-
-            {/* Steppers & Chips */}
-            <div className="card p-5 space-y-3">
-              <h3 className="font-serif font-bold text-sm text-[#432F2E]">Choosing & Counting</h3>
-              <div className="flex items-center gap-3">
-                <div className="stepper">
-                  <button onClick={() => setStepperVal(Math.max(0, stepperVal - 1))}>
-                    {stepperVal <= 1 ? <Trash2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
-                  </button>
-                  <span>{stepperVal}</span>
-                  <button onClick={() => setStepperVal(stepperVal + 1)}>
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <span className="chip on text-xs">Rice & Grains</span>
-                <span className="chip text-xs">Atta</span>
-              </div>
-
-              <div className="seg">
-                <span
-                  onClick={() => setSegMode("type")}
-                  className={segMode === "type" ? "on" : ""}
-                >
-                  <KeyRound className="w-3.5 h-3.5" /> Type
-                </span>
-                <span
-                  onClick={() => setSegMode("speak")}
-                  className={segMode === "speak" ? "on" : ""}
-                >
-                  <Mic className="w-3.5 h-3.5" /> Speak
-                </span>
-              </div>
-            </div>
-
-            {/* Banners & Messages */}
-            <div className="card p-5 space-y-3 md:col-span-2">
-              <h3 className="font-serif font-bold text-sm text-[#432F2E]">Banners & Feedback</h3>
+            <Card className="space-y-3">
+              <h3 className="text-xs font-bold uppercase text-ink-500 tracking-wider">MoneyText (Paise & Tabular)</h3>
               <div className="space-y-2">
-                <div className="banner warning text-xs">
-                  <Clock className="w-4 h-4 flex-shrink-0" />
-                  <span>Ordering closes on 24 Nov at midnight. 3 days left to edit your groceries.</span>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-ink-600">Display / Headline:</span>
+                  <MoneyText paise={72000} size="display" />
                 </div>
-                <div className="banner info text-xs">
-                  <Info className="w-4 h-4 flex-shrink-0" />
-                  <span>Offline cache active. Your list is preserved locally and syncs automatically.</span>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-ink-600">Non-zero paise:</span>
+                  <MoneyText paise={71667} size="xl" />
                 </div>
-                <div className="banner danger text-xs">
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                  <span>Your payment did not go through. You have not been charged. <b>Try again</b></span>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-ink-600">Indian Grouping (Crores):</span>
+                  <MoneyText paise={1234567890} size="lg" />
                 </div>
-                <div className="toast text-xs">
-                  <span className="flex-1">Removed Ragi Flour 1 kg</span>
-                  <b>Undo</b>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-ink-600">Estimated (approx):</span>
+                  <MoneyText paise={30000} approx size="base" />
                 </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-ink-600">Struck-through MRP:</span>
+                  <MoneyText paise={34000} strikeThrough size="sm" />
+                </div>
+              </div>
+            </Card>
+          </div>
+        </section>
+
+        {/* Section 3: Buttons */}
+        <section className="space-y-4">
+          <h2 className="font-display text-2xl text-ink-800">3. Buttons (U5)</h2>
+          <Card className="space-y-6">
+            <div>
+              <h4 className="text-xs font-bold uppercase text-ink-500 mb-3">52px Primary & Secondary (Mobile Standard)</h4>
+              <div className="flex flex-wrap gap-3">
+                <Button variant="primary">Primary (ink-800)</Button>
+                <Button variant="secondary">Secondary (White)</Button>
+                <Button variant="quiet">Quiet (teal-700)</Button>
+                <Button variant="danger">Danger (danger-700)</Button>
+                <Button variant="primary" isLoading>Loading...</Button>
+                <Button variant="primary" disabled>Disabled</Button>
               </div>
             </div>
 
-            {/* Microphone Interaction */}
-            <div className="card p-5 space-y-3 text-center">
-              <h3 className="font-serif font-bold text-sm text-[#432F2E]">Mic Component</h3>
-              <div className="flex justify-center gap-4 py-2">
-                <button
-                  onClick={() => setMicState("live")}
-                  className={`mic w-14 h-14 ${micState === "live" ? "live animate-pulse" : ""}`}
-                >
-                  <Mic className="w-6 h-6" />
-                </button>
+            <div>
+              <h4 className="text-xs font-bold uppercase text-ink-500 mb-3">44px Compact Size</h4>
+              <div className="flex flex-wrap gap-3">
+                <Button variant="primary" size="sm">Primary Sm</Button>
+                <Button variant="secondary" size="sm">Secondary Sm</Button>
+                <Button variant="quiet" size="sm">Quiet Sm</Button>
+                <Button variant="danger" size="sm">Danger Sm</Button>
               </div>
-              <span className="text-xs text-[#6A5452] block">
-                {micState === "live" ? "Listening… click to stop" : "Click mic to test pulsing recording state"}
-              </span>
+            </div>
+          </Card>
+        </section>
+
+        {/* Section 4: Form Controls */}
+        <section className="space-y-4">
+          <h2 className="font-display text-2xl text-ink-800">4. Inputs & Controls (U5)</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="space-y-4">
+              <PhoneField
+                label="Mobile number (PhoneField)"
+                value={phoneVal}
+                onChange={setPhoneVal}
+                helperText="We will send a 6-digit verification code."
+              />
+
+              <TextField
+                label="Building join code (TextField)"
+                placeholder="e.g. GREEN1"
+                defaultValue="GREEN1"
+                helperText="Ask your building committee for the code."
+              />
+
+              <TextField
+                label="Error State Example"
+                defaultValue="Invalid"
+                error="GSTIN checksum did not match format."
+              />
+            </Card>
+
+            <Card className="space-y-6 flex flex-col justify-between">
+              <div>
+                <label className="text-sm font-medium text-ink-800 block mb-2">
+                  6-Digit OTP Code (OtpInput)
+                </label>
+                <OtpInput value={otpVal} onChange={setOtpVal} />
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-ice-100">
+                <span className="text-sm font-medium text-ink-800">Stepper (U5)</span>
+                <Stepper value={stepperVal} onChange={setStepperVal} min={0} max={10} />
+              </div>
+            </Card>
+          </div>
+        </section>
+
+        {/* Section 5: Status Pills & Chips */}
+        <section className="space-y-4">
+          <h2 className="font-display text-2xl text-ink-800">5. Status Pills & Chips (U5)</h2>
+          <Card className="space-y-6">
+            <div>
+              <h4 className="text-xs font-bold uppercase text-ink-500 mb-3">Status Pills (5 Kinds)</h4>
+              <div className="flex flex-wrap gap-2">
+                <StatusPill kind="neutral" label="Draft" />
+                <StatusPill kind="info" label="Sent to store" />
+                <StatusPill kind="warning" label="Closing soon" />
+                <StatusPill kind="success" label="Paid & Packed" />
+                <StatusPill kind="danger" label="Payment failed" />
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-bold uppercase text-ink-500 mb-3">Category & Variant Chips</h4>
+              <div className="flex flex-wrap gap-2">
+                <Chip selected>All Groceries</Chip>
+                <Chip>Rice & Grains</Chip>
+                <Chip>Flours & Atta</Chip>
+                <Chip>Cooking Oils & Ghee</Chip>
+                <Chip size="sm" selected>5 kg</Chip>
+                <Chip size="sm">1 kg</Chip>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* Section 6: Timeline & Progress */}
+        <section className="space-y-4">
+          <h2 className="font-display text-2xl text-ink-800">6. Timeline & Progress (U5)</h2>
+          <Card className="space-y-6">
+            <MonthTimeline currentStep={3} />
+            <div className="pt-4 border-t border-ice-100">
+              <ProgressBar
+                value={1890}
+                max={2250}
+                label="₹1,890 of ₹2,250 received"
+              />
+            </div>
+          </Card>
+        </section>
+
+        {/* Section 7: Banners & Toast */}
+        <section className="space-y-4">
+          <h2 className="font-display text-2xl text-ink-800">7. Banners & Notifications (U5)</h2>
+          <div className="space-y-3">
+            <Banner
+              kind="info"
+              message="Ordering for Nov 2026 closes on 24 Nov at midnight."
+              actionLabel="View building order"
+              onAction={() => alert("Action triggered")}
+            />
+            <Banner
+              kind="warning"
+              message="The store had less than requested: 1 of 2 bags packed."
+              actionLabel="Check bill"
+              onAction={() => alert("Action triggered")}
+            />
+            <Banner
+              kind="danger"
+              message="Your payment did not go through. You have not been charged. Try again."
+              actionLabel="Retry"
+              onAction={() => alert("Action triggered")}
+            />
+            <div className="pt-2">
+              <Button variant="secondary" onClick={() => setIsToastOpen(true)}>
+                Show Bottom Toast (5s with Undo)
+              </Button>
             </div>
           </div>
         </section>
 
-        {/* Golden Scenario Walkthrough */}
-        <section className="card p-6 bg-[#E4EEF5] border-[#B3CEDE] space-y-3">
-          <h3 className="font-serif font-bold text-lg text-[#2E201F]">The Golden Scenario (Section G)</h3>
-          <p className="text-xs text-[#6A5452]">
-            The exact figures used across all customer, store, and admin screens:
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="bg-white p-3 rounded-[8px] border border-[#B3CEDE]">
-              <span className="text-gray-400 block">Asha (A-101)</span>
-              <b className="text-base text-[#432F2E]">₹720</b>
-              <span className="text-[10px] text-green-700 block">Rice, Sugar, Oil, Dal</span>
-            </div>
-            <div className="bg-white p-3 rounded-[8px] border border-[#B3CEDE]">
-              <span className="text-gray-400 block">Bharat (B-204)</span>
-              <b className="text-base text-[#432F2E]">₹540</b>
-              <span className="text-[10px] text-green-700 block">Rice 10 kg</span>
-            </div>
-            <div className="bg-white p-3 rounded-[8px] border border-[#B3CEDE]">
-              <span className="text-gray-400 block">Chitra (C-305)</span>
-              <b className="text-base text-[#432F2E]">₹360</b>
-              <span className="text-[10px] text-[#8A3A00] block">Awaiting payment</span>
-            </div>
-            <div className="bg-white p-3 rounded-[8px] border border-[#B3CEDE]">
-              <span className="text-gray-400 block">Dev (D-402)</span>
-              <b className="text-base text-[#432F2E]">₹630</b>
-              <span className="text-[10px] text-green-700 block">Paid & delivering</span>
-            </div>
-          </div>
-          <div className="text-right text-xs font-bold text-[#432F2E] pt-1">
-            Total Community Order: ₹2,250 (Full bulk discount: ₹250)
+        {/* Section 8: DataTable */}
+        <section className="space-y-4">
+          <h2 className="font-display text-2xl text-ink-800">8. Data Table (Desktop & Mobile Stack)</h2>
+          <DataTable
+            columns={tableColumns}
+            data={sampleTableData}
+            keyExtractor={(item) => item.id}
+          />
+        </section>
+
+        {/* Section 9: Empty States & Skeletons */}
+        <section className="space-y-4">
+          <h2 className="font-display text-2xl text-ink-800">9. Empty States & Skeletons (U5, U9)</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <EmptyState
+              icon={<ShoppingBag className="w-8 h-8" />}
+              title="Your list is empty"
+              description="Add your monthly staple groceries before 24 Nov midnight."
+              actionLabel="Browse catalogue"
+              onAction={() => alert("Navigate to shop")}
+            />
+
+            <Card className="space-y-4">
+              <h4 className="text-xs font-bold uppercase text-ink-500">Skeleton Loading States</h4>
+              <div className="flex items-center gap-3">
+                <Skeleton circle width={48} height={48} />
+                <div className="space-y-2 flex-1">
+                  <Skeleton height={16} width="60%" />
+                  <Skeleton height={12} width="40%" />
+                </div>
+              </div>
+              <Skeleton height={64} className="w-full" />
+              <Skeleton height={32} width="80%" />
+            </Card>
           </div>
         </section>
-      </main>
+
+        {/* Section 10: MicButton (Voice) */}
+        <section className="space-y-4">
+          <h2 className="font-display text-2xl text-ink-800">10. Voice Mic Button (U5)</h2>
+          <Card className="flex flex-wrap items-center justify-around gap-6">
+            <div className="space-y-2 text-center">
+              <span className="text-xs font-semibold text-ink-500">Idle</span>
+              <MicButton state="idle" onClick={() => setMicState("listening")} />
+            </div>
+            <div className="space-y-2 text-center">
+              <span className="text-xs font-semibold text-ink-500">Listening (Pulse)</span>
+              <MicButton state="listening" onClick={() => setMicState("error")} />
+            </div>
+            <div className="space-y-2 text-center">
+              <span className="text-xs font-semibold text-ink-500">Error Outline</span>
+              <MicButton state="error" onClick={() => setMicState("idle")} />
+            </div>
+          </Card>
+        </section>
+
+        {/* Section 11: Modals */}
+        <section className="space-y-4">
+          <h2 className="font-display text-2xl text-ink-800">11. Dialog & Bottom Sheet (U5)</h2>
+          <Card className="flex flex-wrap gap-4">
+            <Button variant="primary" onClick={() => setIsDialogOpen(true)}>
+              Open Confirmation Dialog
+            </Button>
+            <Button variant="secondary" onClick={() => setIsSheetOpen(true)}>
+              Open Slide-out Sheet
+            </Button>
+          </Card>
+        </section>
+      </div>
+
+      {/* Interactive Modal Instances */}
+      <Dialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        title="Finalise this month's bill?"
+        description="This will lock all prices and quantities, generate 4 individual customer bills, and notify residents to pay."
+        confirmLabel="Finalise bill"
+        cancelLabel="Go back"
+        onConfirm={() => {
+          alert("Bill finalised");
+          setIsDialogOpen(false);
+        }}
+      />
+
+      <Sheet
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        title="Stock Movement History"
+      >
+        <p className="text-sm text-ink-600">
+          Recent stock movements for Sona Masoori Rice (5 kg):
+        </p>
+        <div className="mt-4 space-y-3">
+          <div className="p-3 bg-ice-50 rounded-ctl border border-ice-300 text-xs">
+            <b>+100 packs</b> replenishment on 1 Nov
+          </div>
+          <div className="p-3 bg-ice-50 rounded-ctl border border-ice-300 text-xs">
+            <b>-6 packs</b> reserved for Green Meadows
+          </div>
+        </div>
+      </Sheet>
+
+      <Toast
+        isOpen={isToastOpen}
+        onClose={() => setIsToastOpen(false)}
+        message="Item removed from your list"
+        undoLabel="Undo"
+        onUndo={() => alert("Item restored")}
+      />
     </div>
   );
 }

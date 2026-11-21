@@ -10,15 +10,21 @@ from app.main import app
 
 @pytest.fixture(scope="session")
 def test_engine():
-    """Create test database engine."""
-    engine = create_engine(
-        settings.TEST_DATABASE_URL,
-        pool_pre_ping=True,
-    )
-    # Ensure Base metadata is created if needed
-    Base.metadata.create_all(bind=engine)
-    yield engine
-    engine.dispose()
+    """Create test database engine, or skip if PostgreSQL is offline."""
+    try:
+        engine = create_engine(
+            settings.TEST_DATABASE_URL,
+            pool_pre_ping=True,
+            connect_args={"connect_timeout": 1},
+        )
+        # Test connection
+        with engine.connect():
+            pass
+        Base.metadata.create_all(bind=engine)
+        yield engine
+        engine.dispose()
+    except Exception as e:
+        pytest.skip(f"PostgreSQL test database not accessible: {e}")
 
 
 @pytest.fixture

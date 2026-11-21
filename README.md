@@ -1667,8 +1667,8 @@ Agents: tick your row and add at most two lines of notes. Humans: this is your p
 | P01 | Database schema | ☐ | |
 | P02 | Seed data and golden fixture | ☐ | |
 | P03 | Sign-in, access guards and plumbing | ☐ | |
-| P04 | Design system and UI kit | ☐ | |
-| P05 | App shells and sign-in screens | ☐ | |
+| P04 | Design system and UI kit | ☑ | U1–U9 tokens in globals.css + Tailwind theme, 22 kit components, format.ts unit tests, /styleguide, check-hex tool |
+| P05 | App shells and sign-in screens | ☑ | F1 login with OTP & resend timer, onboarding (resident/store), route guards, four workspace shells (Customer, Retailer, Admin, Platform) |
 | P06 | Store onboarding and inventory API | ☐ | |
 | P07 | Retailer inventory screens | ☐ | |
 | P08 | Customer catalogue API | ☐ | |

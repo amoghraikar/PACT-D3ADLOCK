@@ -16,6 +16,8 @@ from app.core.errors import (
     unhandled_exception_handler,
     validation_exception_handler,
 )
+from app.modules.auth.router import onboarding_router
+from app.modules.auth.router import router as auth_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -42,6 +44,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include Routers
+app.include_router(auth_router, prefix=settings.API_PREFIX)
+app.include_router(onboarding_router, prefix=settings.API_PREFIX)
 
 
 @app.get("/")
