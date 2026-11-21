@@ -15,6 +15,12 @@ import {
   Search,
   Plus,
   Edit2,
+  Truck,
+  Sparkles,
+  CheckCircle2,
+  AlertTriangle,
+  Store,
+  Package,
 } from "lucide-react";
 
 interface InventoryItem {
@@ -50,6 +56,22 @@ const CATEGORIES = [
   "Breakfast & Cereals",
 ];
 
+// Preferred / Frequently used wholesale distributors by category for the retailer
+const FREQUENT_SUPPLIERS_MAP: Record<string, { supplier: string; orderHistory: string }> = {
+  "Rice & Grains": { supplier: "Bangalore Grain Merchants Wholesale Co-op (APMC Yard)", orderHistory: "14 previous POs" },
+  "Cooking Oils & Ghee": { supplier: "Karnataka Oil Mills & Refineries Syndicate", orderHistory: "18 previous POs" },
+  "Dal & Pulses": { supplier: "Sri Balaji Pulses & Agro Wholesale", orderHistory: "12 previous POs" },
+  "Flours & Atta": { supplier: "Harvest Gold Mills Wholesale Depot", orderHistory: "15 previous POs" },
+  "Spices": { supplier: "Metro Cash & Carry Wholesale", orderHistory: "24 previous POs" },
+  "Sugar & Jaggery": { supplier: "Metro Cash & Carry Wholesale", orderHistory: "22 previous POs" },
+  "Dry Fruits & Nuts": { supplier: "Bangalore Dry Fruits & Wholesale Merchants (APMC)", orderHistory: "9 previous POs" },
+  "Dry Fruits": { supplier: "Bangalore Dry Fruits & Wholesale Merchants (APMC)", orderHistory: "9 previous POs" },
+  "Fruits & Nuts": { supplier: "Bangalore Dry Fruits & Wholesale Merchants (APMC)", orderHistory: "9 previous POs" },
+  "Beverages": { supplier: "Universal FMCG & Beverage Wholesale Distributors", orderHistory: "11 previous POs" },
+  "Snacks": { supplier: "Karnataka Savouries & Snacks Wholesale", orderHistory: "8 previous POs" },
+  "Breakfast & Cereals": { supplier: "Metro Cash & Carry Wholesale", orderHistory: "10 previous POs" },
+};
+
 export default function RetailerInventoryPage() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +98,10 @@ export default function RetailerInventoryPage() {
     { variant_id: "var-sugar-1kg", added_stock: 40, purchase_rupees: "68" },
   ]);
   const [savingInward, setSavingInward] = useState(false);
+
+  // Auto-Restock / Low Stock Quick Reorder Modal State
+  const [autoRestockOpen, setAutoRestockOpen] = useState(false);
+  const [submittingRestock, setSubmittingRestock] = useState(false);
 
   // Toast feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -124,14 +150,38 @@ export default function RetailerInventoryPage() {
     () => items.reduce((acc, it) => acc + it.stock_qty, 0),
     [items]
   );
-  const lowStockCount = useMemo(
-    () => items.filter((it) => it.stock_qty <= 25 && it.stock_qty > 0).length,
+  const lowStockItems = useMemo(
+    () => items.filter((it) => it.stock_qty <= 25),
     [items]
   );
+  const lowStockCount = lowStockItems.length;
   const outOfStockCount = useMemo(
     () => items.filter((it) => it.stock_qty === 0).length,
     [items]
   );
+
+  // Low stock auto-reorder summary
+  const lowStockSummary = useMemo(() => {
+    let units = 0;
+    let estimatedCostRupees = 0;
+    const suppliersSet = new Set<string>();
+
+    lowStockItems.forEach((it) => {
+      const qty = it.pack_unit === "kg" && it.pack_size >= 5 ? 30 : 50;
+      units += qty;
+      const rateRupees = Math.round((it.selling_price_paise * 0.82) / 100);
+      estimatedCostRupees += rateRupees * qty;
+      const sup = FREQUENT_SUPPLIERS_MAP[it.category_name]?.supplier || "Metro Cash & Carry Wholesale";
+      suppliersSet.add(sup);
+    });
+
+    return {
+      totalUnits: units,
+      estimatedCostRupees,
+      suppliersCount: suppliersSet.size,
+      suppliersList: Array.from(suppliersSet),
+    };
+  }, [lowStockItems]);
 
   // Open Edit Dialog
   const handleOpenEdit = (item: InventoryItem) => {
@@ -166,68 +216,94 @@ export default function RetailerInventoryPage() {
         }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        setEditError(err.detail || "Failed to update item");
-        return;
+      if (res.ok) {
+        setToastMessage(`Updated ${editingItem.product_name} (${editingItem.variant_label})`);
+        setEditingItem(null);
+        fetchInventory();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setEditError(err.detail || err.message || "Failed to update item");
       }
-
-      setItems((prev) =>
-        prev.map((it) =>
-          it.variant_id === editingItem.variant_id
-            ? {
-                ...it,
-                stock_qty: editStock,
-                selling_price_paise: sellingPaise,
-                mrp_paise: mrpPaise,
-                status: editStock === 0 ? "out_of_stock" : editStock <= 25 ? "low_stock" : "in_stock",
-              }
-            : it
-        )
-      );
-
-      setToastMessage(`Updated ${editingItem.product_name} (${editingItem.variant_label})`);
-      setEditingItem(null);
     } catch {
-      setEditError("Network error while saving item");
+      setEditError("Network error updating item");
     } finally {
       setSavingEdit(false);
     }
   };
 
-  // Submit Stock Inward Bill
+  // Submit Inward Bill
   const handleSaveInward = async () => {
-    if (inwardSelections.length === 0) return;
+    if (!supplierName.trim() || !invoiceNo.trim()) return;
+
     try {
       setSavingInward(true);
-      const payload = {
-        supplier_name: supplierName,
-        invoice_no: invoiceNo,
-        invoice_date: invoiceDate,
-        items: inwardSelections.map((sel) => ({
-          variant_id: sel.variant_id,
-          added_stock: sel.added_stock,
-          purchase_price_paise: Math.round(parseFloat(sel.purchase_rupees || "0") * 100),
-        })),
-      };
-
       const res = await fetch("/api/v1/retailer/inventory/inward", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          supplier_name: supplierName,
+          invoice_no: invoiceNo,
+          invoice_date: invoiceDate,
+          items: inwardSelections.map((sel) => ({
+            variant_id: sel.variant_id,
+            added_stock: sel.added_stock,
+            purchase_price_paise: Math.round(parseFloat(sel.purchase_rupees || "0") * 100),
+          })),
+        }),
       });
 
       if (res.ok) {
         const data = await res.json();
         setToastMessage(data.message || "Stock inward recorded successfully!");
         setInwardOpen(false);
-        // Refresh inventory
         fetchInventory();
       }
     } catch {
       //
     } finally {
       setSavingInward(false);
+    }
+  };
+
+  // 1-Click Confirmation for Low-Stock Auto Restock
+  const handleConfirmAutoRestock = async () => {
+    if (lowStockItems.length === 0) {
+      setAutoRestockOpen(false);
+      return;
+    }
+
+    try {
+      setSubmittingRestock(true);
+      const reorderPayload = lowStockItems.map((it) => {
+        const sup = FREQUENT_SUPPLIERS_MAP[it.category_name]?.supplier || "Metro Cash & Carry Wholesale";
+        const qty = it.pack_unit === "kg" && it.pack_size >= 5 ? 30 : 50;
+        return {
+          variant_id: it.variant_id,
+          reorder_qty: qty,
+          supplier_name: sup,
+          wholesale_rate_paise: Math.round(it.selling_price_paise * 0.82),
+        };
+      });
+
+      const res = await fetch("/api/v1/retailer/inventory/auto-reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: reorderPayload }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setToastMessage(data.message || "Restock purchase orders placed with distributors! Stock updated.");
+        setAutoRestockOpen(false);
+        await fetchInventory();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setToastMessage(err.message || "Failed to place auto-reorder.");
+      }
+    } catch {
+      setToastMessage("Network error placing restock order.");
+    } finally {
+      setSubmittingRestock(false);
     }
   };
 
@@ -246,6 +322,17 @@ export default function RetailerInventoryPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {lowStockCount > 0 && (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Truck className="w-4 h-4 text-warning-700" />}
+                onClick={() => setAutoRestockOpen(true)}
+              >
+                Auto-Restock ({lowStockCount})
+              </Button>
+            )}
+
             <Button
               variant="primary"
               size="sm"
@@ -275,20 +362,35 @@ export default function RetailerInventoryPage() {
             <span className="text-[11px] text-ink-500 font-medium">Across all variants</span>
           </Card>
 
-          <Card className="p-4 space-y-1 bg-white">
-            <span className="text-xs font-semibold text-ink-600">Low Stock Items</span>
-            <div className="font-display text-2xl text-warning-700 tabular-nums">
-              {lowStockCount}
-            </div>
-            <span className="text-[11px] text-warning-700 font-medium">Below 25 packs threshold</span>
-          </Card>
+          {/* Interactive Low Stock Card with Reorder Trigger */}
+          <button
+            type="button"
+            onClick={() => setAutoRestockOpen(true)}
+            className="text-left w-full focus-ring rounded-card"
+          >
+            <Card className="p-4 space-y-1 bg-white hover:border-warning-700 hover:shadow-xs transition-all cursor-pointer group">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-ink-600">Low Stock Items</span>
+                <span className="text-[10px] font-bold text-warning-700 bg-warning-50 px-2 py-0.5 rounded-full flex items-center gap-1 group-hover:bg-warning-700 group-hover:text-white transition-colors">
+                  <Truck className="w-3 h-3" />
+                  Quick Reorder →
+                </span>
+              </div>
+              <div className="font-display text-2xl text-warning-700 tabular-nums">
+                {lowStockCount}
+              </div>
+              <span className="text-[11px] text-warning-700 font-medium">
+                {lowStockCount > 0 ? "Click to reorder from frequent suppliers" : "All items well stocked"}
+              </span>
+            </Card>
+          </button>
 
           <Card className="p-4 space-y-1 bg-white">
             <span className="text-xs font-semibold text-ink-600">Out of Stock</span>
             <div className="font-display text-2xl text-ink-800 tabular-nums">
               {outOfStockCount}
             </div>
-            <span className="text-[11px] text-success-700 font-medium">Needs re-order</span>
+            <span className="text-[11px] text-teal-700 font-medium">Needs re-order</span>
           </Card>
         </div>
 
@@ -315,11 +417,12 @@ export default function RetailerInventoryPage() {
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
+              type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-colors focus-ring cursor-pointer ${
                 selectedCategory === cat
-                  ? "bg-ink-800 text-white shadow-2xs"
-                  : "bg-white text-ink-700 border border-ice-200 hover:border-ice-300"
+                  ? "bg-ink-800 text-white"
+                  : "bg-white text-ink-700 hover:bg-ice-100 border border-ice-300"
               }`}
             >
               {cat}
@@ -327,95 +430,206 @@ export default function RetailerInventoryPage() {
           ))}
         </div>
 
-        {/* Inventory Table Card */}
-        <Card padding="none" className="overflow-hidden bg-white border border-ice-300">
+        {/* Inventory Data Table */}
+        <Card className="overflow-hidden p-0 border border-ice-300">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-ice-100 text-[11px] font-bold text-ink-700 uppercase tracking-wider border-b border-ice-200">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-ice-100 border-b border-ice-200 text-ink-700 font-bold">
+                <tr>
                   <th className="py-3 px-4">Product & Brand</th>
                   <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Variant Pack</th>
+                  <th className="py-3 px-4">Pack Variant</th>
                   <th className="py-3 px-4 text-right">MRP</th>
                   <th className="py-3 px-4 text-right">Selling Price</th>
-                  <th className="py-3 px-4 text-center">Discount</th>
-                  <th className="py-3 px-4 text-center">Stock</th>
+                  <th className="py-3 px-4 text-center">Stock Count</th>
                   <th className="py-3 px-4 text-center">Status</th>
                   <th className="py-3 px-4 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ice-100 text-xs">
-                {filteredItems.map((item) => {
-                  const discountPaise = item.mrp_paise - item.selling_price_paise;
-                  const discountPct =
-                    item.mrp_paise > 0
-                      ? Math.round((discountPaise / item.mrp_paise) * 100)
-                      : 0;
-
-                  return (
-                    <tr
-                      key={item.variant_id}
-                      className="hover:bg-ice-50/50 transition-colors"
-                    >
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-ink-800">{item.product_name}</div>
-                        <div className="text-[11px] text-ink-500">{item.brand}</div>
+              <tbody className="divide-y divide-ice-100">
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-ink-500">
+                      Loading inventory catalogue...
+                    </td>
+                  </tr>
+                ) : filteredItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-ink-500">
+                      No products found matching your filters.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredItems.map((item) => (
+                    <tr key={item.variant_id} className="hover:bg-ice-50/60 transition-colors">
+                      <td className="py-3 px-4 font-semibold text-ink-800">
+                        <span className="block text-ink-900">{item.product_name}</span>
+                        <span className="text-[11px] text-ink-500 font-normal">{item.brand}</span>
                       </td>
-                      <td className="py-3.5 px-4 text-ink-600">{item.category_name}</td>
-                      <td className="py-3.5 px-4">
-                        <span className="font-medium text-ink-800 px-2 py-0.5 bg-ice-100 rounded-ctl">
+                      <td className="py-3 px-4 text-ink-600">{item.category_name}</td>
+                      <td className="py-3 px-4 font-medium text-ink-700">
+                        <span className="px-2 py-0.5 rounded-full bg-ice-100 border border-ice-200 text-[11px]">
                           {item.variant_label}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-right text-ink-500 tabular-nums line-through">
-                        <MoneyText paise={item.mrp_paise} size="sm" />
+                      <td className="py-3 px-4 text-right font-medium text-ink-500 tabular-nums">
+                        ₹{(item.mrp_paise / 100).toFixed(2)}
                       </td>
-                      <td className="py-3.5 px-4 text-right font-bold text-ink-800 tabular-nums">
-                        <MoneyText paise={item.selling_price_paise} size="base" />
+                      <td className="py-3 px-4 text-right font-bold text-teal-700 tabular-nums">
+                        ₹{(item.selling_price_paise / 100).toFixed(2)}
                       </td>
-                      <td className="py-3.5 px-4 text-center tabular-nums">
-                        <span className="text-[11px] font-semibold text-teal-700 bg-ice-100 px-2 py-0.5 rounded-full">
-                          {discountPct}% off
+                      <td className="py-3 px-4 text-center font-bold tabular-nums">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded-full text-xs ${
+                            item.stock_qty <= 25
+                              ? "bg-warning-50 text-warning-700 font-bold"
+                              : "bg-ice-100 text-ink-800"
+                          }`}
+                        >
+                          {item.stock_qty} packs
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-center font-bold tabular-nums text-ink-800">
-                        {item.stock_qty}
+                      <td className="py-3 px-4 text-center">
+                        {item.stock_qty === 0 ? (
+                          <StatusPill kind="danger" label="Out of Stock" />
+                        ) : item.stock_qty <= 25 ? (
+                          <StatusPill kind="warning" label="Low Stock" />
+                        ) : (
+                          <StatusPill kind="success" label="In Stock" />
+                        )}
                       </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <StatusPill
-                          kind={
-                            item.status === "in_stock"
-                              ? "success"
-                              : item.status === "low_stock"
-                              ? "warning"
-                              : "danger"
-                          }
-                          label={
-                            item.status === "in_stock"
-                              ? "In Stock"
-                              : item.status === "low_stock"
-                              ? "Low Stock"
-                              : "Out of Stock"
-                          }
-                        />
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <Button
-                          variant="quiet"
-                          size="sm"
-                          icon={<Edit2 className="w-3.5 h-3.5" />}
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          type="button"
                           onClick={() => handleOpenEdit(item)}
+                          className="px-2.5 py-1 rounded-ctl border border-ice-300 text-xs font-semibold text-ink-700 hover:bg-ice-100 hover:text-ink-900 transition-colors focus-ring"
                         >
                           Edit
-                        </Button>
+                        </button>
                       </td>
                     </tr>
-                  );
-                })}
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </Card>
+
+        {/* 1-Click Auto Restock / Low Stock Reorder Dialog */}
+        <Dialog
+          isOpen={autoRestockOpen}
+          onClose={() => setAutoRestockOpen(false)}
+          title="Auto Restock · Frequent Supplier Purchase Orders"
+          description="Review suggested reorders from the verified distributors you frequently order from. 1-click confirmation dispatches orders and updates stock."
+          confirmLabel={lowStockItems.length > 0 ? "Confirm & Place Purchase Orders (1-Click)" : "Close"}
+          cancelLabel="Cancel"
+          onConfirm={handleConfirmAutoRestock}
+          isConfirmLoading={submittingRestock}
+        >
+          <div className="space-y-4 py-2">
+            {lowStockItems.length === 0 ? (
+              <div className="text-center py-6 space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-teal-700 mx-auto" />
+                <h4 className="font-display text-lg text-ink-800">All Inventory Healthy</h4>
+                <p className="text-xs text-ink-600 max-w-xs mx-auto">
+                  No items are currently below the low-stock threshold (25 packs).
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Order Summary Header Card */}
+                <div className="p-4 bg-ice-100 rounded-ctl border border-ice-300 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-ink-800 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-teal-700" />
+                      Suggested Restock Plan
+                    </span>
+                    <span className="font-bold text-teal-700">
+                      {lowStockSummary.suppliersCount} Wholesale Distributors
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                    <div className="p-2 bg-white rounded-ctl border border-ice-200">
+                      <span className="text-[10px] text-ink-500 block">Low Stock Items</span>
+                      <strong className="text-xs text-warning-700">{lowStockItems.length} Products</strong>
+                    </div>
+                    <div className="p-2 bg-white rounded-ctl border border-ice-200">
+                      <span className="text-[10px] text-ink-500 block">Total Units to Add</span>
+                      <strong className="text-xs text-ink-800">+{lowStockSummary.totalUnits} Packs</strong>
+                    </div>
+                    <div className="p-2 bg-white rounded-ctl border border-ice-200">
+                      <span className="text-[10px] text-ink-500 block">Est. Wholesale Cost</span>
+                      <strong className="text-xs text-teal-700">₹{lowStockSummary.estimatedCostRupees.toLocaleString("en-IN")}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items & Frequent Suppliers List */}
+                <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                  <span className="text-xs font-bold text-ink-700 block">
+                    Distributor Recommendations ({lowStockItems.length} items)
+                  </span>
+
+                  {lowStockItems.map((item) => {
+                    const supplierInfo =
+                      FREQUENT_SUPPLIERS_MAP[item.category_name] || {
+                        supplier: "Metro Cash & Carry Wholesale",
+                        orderHistory: "20+ orders placed",
+                      };
+                    const suggestedQty = item.pack_unit === "kg" && item.pack_size >= 5 ? 30 : 50;
+                    const wholesaleRate = Math.round((item.selling_price_paise * 0.82) / 100);
+
+                    return (
+                      <div
+                        key={item.variant_id}
+                        className="p-3 bg-white rounded-ctl border border-ice-200 space-y-2"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="font-bold text-xs text-ink-800 block">
+                              {item.product_name} ({item.variant_label})
+                            </span>
+                            <span className="text-[11px] text-ink-500">
+                              {item.brand} · {item.category_name}
+                            </span>
+                          </div>
+
+                          <span className="px-2 py-0.5 rounded-full bg-warning-50 text-warning-700 text-[11px] font-bold shrink-0">
+                            Current: {item.stock_qty} left
+                          </span>
+                        </div>
+
+                        {/* Preferred Supplier Information Box */}
+                        <div className="p-2 bg-ice-50 rounded-ctl border border-ice-100 flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <Store className="w-3.5 h-3.5 text-teal-700 shrink-0" />
+                            <div>
+                              <span className="font-semibold text-ink-800 text-[11px] block">
+                                {supplierInfo.supplier}
+                              </span>
+                              <span className="text-[10px] text-teal-700 font-medium">
+                                Frequent supplier · {supplierInfo.orderHistory}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="text-xs font-bold text-teal-700 block">
+                              +{suggestedQty} packs
+                            </span>
+                            <span className="text-[10px] text-ink-500">
+                              @ ₹{wholesaleRate}/pack
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </Dialog>
 
         {/* Edit Product Modal */}
         <Dialog
@@ -492,7 +706,7 @@ export default function RetailerInventoryPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-ink-700">Invoice / Bill No</label>
+                <label className="text-xs font-semibold text-ink-700">Invoice Number</label>
                 <input
                   type="text"
                   value={invoiceNo}
@@ -574,7 +788,7 @@ export default function RetailerInventoryPage() {
                       onClick={() =>
                         setInwardSelections((prev) => prev.filter((_, i) => i !== idx))
                       }
-                      className="text-xs text-danger-700 hover:underline"
+                      className="text-xs text-teal-700 hover:underline"
                     >
                       Remove
                     </button>

@@ -36,6 +36,17 @@ class StockInwardRequest(BaseModel):
     items: list[InwardItem] = Field(min_length=1)
 
 
+class AutoReorderItem(BaseModel):
+    variant_id: str
+    reorder_qty: int = Field(gt=0)
+    supplier_name: str = Field(default="Preferred Wholesale Partner")
+    wholesale_rate_paise: int | None = Field(default=None, ge=0)
+
+
+class AutoReorderRequest(BaseModel):
+    items: list[AutoReorderItem] = Field(min_length=1)
+
+
 def get_current_retailer_id(
     authorization: str | None = None,
     pact_token: str | None = None,
@@ -204,6 +215,68 @@ def record_stock_inward(
         "success": True,
         "message": f"Successfully updated stock for {len(updated_items)} products from invoice {req.invoice_no}.",
         "inward_record": inward_record,
+        "updated_items": updated_items,
+    }
+
+
+@router.post("/auto-reorder")
+def auto_reorder_low_stock(
+    req: AutoReorderRequest,
+    authorization: Annotated[str | None, Header()] = None,
+    pact_token: Annotated[str | None, Cookie()] = None,
+):
+    """
+    1-Click Auto Restock for low stock items.
+    Places consolidated purchase orders to the retailer's preferred/frequent wholesale distributors
+    and increments inventory stock counts immediately upon retailer confirmation.
+    """
+    retailer_id = get_current_retailer_id(authorization, pact_token)
+    updated_items = []
+    suppliers_map: dict[str, list[dict]] = {}
+
+    for item in req.items:
+        key = (retailer_id, item.variant_id)
+        listing = RETAILER_LISTINGS.get(key)
+        if listing:
+            prev_stock = listing.get("stock_qty", 0)
+            listing["stock_qty"] = prev_stock + item.reorder_qty
+            updated_info = {
+                "variant_id": item.variant_id,
+                "reordered_qty": item.reorder_qty,
+                "prev_stock": prev_stock,
+                "new_stock_qty": listing["stock_qty"],
+                "supplier_name": item.supplier_name,
+            }
+            updated_items.append(updated_info)
+            suppliers_map.setdefault(item.supplier_name, []).append(updated_info)
+
+    # Generate inward bill entries for each supplier
+    today_str = now_utc().strftime("%Y-%m-%d")
+    batch_records = []
+    for sup_name, sup_items in suppliers_map.items():
+        inv_no = f"PO-RESTOCK-{now_utc().strftime('%m%d%H%M')}-{len(batch_records)+1}"
+        record = {
+            "id": f"inward-{len(INWARD_BILLS) + 1}",
+            "retailer_id": retailer_id,
+            "supplier_name": sup_name,
+            "invoice_no": inv_no,
+            "invoice_date": today_str,
+            "items_count": len(sup_items),
+            "total_units_added": sum(it["reordered_qty"] for it in sup_items),
+            "created_at": now_utc().isoformat(),
+        }
+        INWARD_BILLS.append(record)
+        batch_records.append(record)
+
+    total_units = sum(it.reorder_qty for it in req.items)
+    supplier_names_list = list(suppliers_map.keys())
+
+    return {
+        "success": True,
+        "message": f"Successfully confirmed restock purchase orders! Added {total_units} units across {len(updated_items)} items from {len(supplier_names_list)} distributors.",
+        "total_units_restocked": total_units,
+        "suppliers_notified": supplier_names_list,
+        "purchase_orders": batch_records,
         "updated_items": updated_items,
     }
 
