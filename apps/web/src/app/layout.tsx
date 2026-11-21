@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { PactProvider } from "@/context/PactContext";
 
 export const metadata: Metadata = {
   title: "PACT · Collective Commerce",
@@ -25,7 +26,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-[#F3F8FB] text-[#432F2E]">
+        <PactProvider>{children}</PactProvider>
+      </body>
     </html>
   );
 }
