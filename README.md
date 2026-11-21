@@ -1663,7 +1663,7 @@ Agents: tick your row and add at most two lines of notes. Humans: this is your p
 
 | # | Prompt | Done | Notes (deviations, new env vars, new commands) |
 |---|---|:---:|---|
-| P00 | Scaffold and tooling | ☐ | |
+| P00 | Scaffold and tooling | ☑ | Monorepo scaffold, PostgreSQL 16 docker, FastAPI health check with DB ping, Makefile |
 | P01 | Database schema | ☐ | |
 | P02 | Seed data and golden fixture | ☐ | |
 | P03 | Sign-in, access guards and plumbing | ☐ | |
@@ -1693,7 +1693,19 @@ Agents: tick your row and add at most two lines of notes. Humans: this is your p
 
 ### Run it
 
-*Filled in by P00.*
+```bash
+# 1. Start database in Docker (PostgreSQL 16)
+make db
+
+# 2. Run backend test suite (against real PostgreSQL test database with per-test rollback)
+make test
+
+# 3. Run linters (ruff on backend, eslint on web)
+make lint
+
+# 4. Start full development environment (Postgres, API on port 8000, Web on port 3000)
+make dev
+```
 
 ### Deploy it
 
@@ -1724,12 +1736,3 @@ For anyone holding the original *PACT Complete Project Summary & Functional Spec
 | 15 | Removed features and GSTIN scope | X, F14 | P06 |
 | 16 | Decisions still to be confirmed | D | — |
 | — | Design system ＋ | U1–U9 | P04, then every screen prompt |
-
-</USER_REQUEST>
-<ADDITIONAL_METADATA>
-The current local time is: 2026-11-21T15:34:37+05:30.
-
-The user's current state is as follows:
-Active Document: /Users/zeus/Documents/PACT/README.md (LANGUAGE_UNSPECIFIED)
-Cursor is on line: 1
-</ADDITIONAL_METADATA>

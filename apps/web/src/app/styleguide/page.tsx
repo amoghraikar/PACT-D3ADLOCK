@@ -134,7 +134,7 @@ export default function Styleguide() {
                 <span className="pill pill-info"><Package className="w-3 h-3" /> Ready to deliver</span>
                 <span className="pill pill-info"><Truck className="w-3 h-3" /> On the way</span>
                 <span className="pill pill-warning"><AlertTriangle className="w-3 h-3" /> Closes in 3 days</span>
-                <span className="pill pill-danger"><AlertTriangle className="w-3 h-3" /> Didn't go through</span>
+                <span className="pill pill-danger"><AlertTriangle className="w-3 h-3" /> Didn&apos;t go through</span>
               </div>
               <p className="text-[11px] text-[#7A6462]">
                 Status is always an icon, a word, and a semantic tone together.
