@@ -108,9 +108,12 @@ def test_cart_item_upsert_and_removal():
 
 def test_clock_cutoff_and_cart_locked_409():
     asha_cookie = _login_as("+919999900001")
+    from app.modules.cart.cycle import get_cycle_boundaries
+    from datetime import timedelta
+    _, _, locks_at = get_cycle_boundaries()
 
-    # 1. At 24th Nov 23:59:59 IST, write succeeds
-    set_clock_override(datetime(2026, 11, 24, 23, 59, 59, tzinfo=BUSINESS_TZ))
+    # 1. 1 second before cutoff in UTC, write succeeds
+    set_clock_override(locks_at - timedelta(seconds=1))
     res = client.put(
         f"{settings.API_PREFIX}/cart/items/var-sugar-1kg",
         json={"quantity": 3},
@@ -118,8 +121,8 @@ def test_clock_cutoff_and_cart_locked_409():
     )
     assert res.status_code == 200
 
-    # 2. At 25th Nov 00:00:00 IST (cutoff), write answers 409 CART_LOCKED
-    set_clock_override(datetime(2026, 11, 25, 0, 0, 0, tzinfo=BUSINESS_TZ))
+    # 2. At cutoff (or after), write answers 409 CART_LOCKED
+    set_clock_override(locks_at + timedelta(seconds=1))
     res = client.put(
         f"{settings.API_PREFIX}/cart/items/var-sugar-1kg",
         json={"quantity": 4},

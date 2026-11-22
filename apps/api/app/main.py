@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import Depends, FastAPI, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +17,14 @@ from app.core.errors import (
     http_exception_handler,
     unhandled_exception_handler,
     validation_exception_handler,
+)
+from app.core.middleware import RequestLoggingMiddleware
+
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
 )
 from app.modules.admin.dashboard_router import router as admin_dashboard_router
 from app.modules.auth.router import onboarding_router
@@ -46,13 +56,17 @@ app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
-# CORS middleware for local frontend Next.js app
+# Request logging middleware
+app.add_middleware(RequestLoggingMiddleware)
+
+# CORS — driven by environment variables
+_cors_origins = [settings.FRONTEND_URL, "http://127.0.0.1:3000"]
+if settings.EXTRA_ORIGINS:
+    _cors_origins.extend(o.strip() for o in settings.EXTRA_ORIGINS.split(",") if o.strip())
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

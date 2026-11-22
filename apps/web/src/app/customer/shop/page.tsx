@@ -12,39 +12,15 @@ import {
   MoneyText,
   Skeleton,
   EmptyState,
+  Pagination,
 } from "@/components/ui";
 import { useCart } from "@/context/CartContext";
 import { copy } from "@/lib/copy/en";
 import { FALLBACK_CATEGORIES, FALLBACK_PRODUCTS } from "@/lib/catalogue-data";
-import { Search, Mic, ShoppingBag, ArrowRight } from "lucide-react";
+import { CatalogueService, Product, Category } from "@/lib/services/catalogue.service";
+import { Search, Mic, ShoppingBag, ArrowRight, AlertCircle, RefreshCw } from "lucide-react";
 
-interface Variant {
-  id: string;
-  label: string;
-  pack_size: number;
-  pack_unit: string;
-  selling_price_paise: number;
-  mrp_paise: number;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  brand: string;
-  category_id: string;
-  category_name: string;
-  image_url: string;
-  est_unit_price_paise: number;
-  mrp_paise: number;
-  variants: Variant[];
-}
-
-interface Category {
-  id: string;
-  slug: string;
-  name: string;
-  sort_order: number;
-}
+const ITEMS_PER_PAGE = 12;
 
 export default function CustomerShopPage() {
   const { isLocked, getItemQuantity, updateQuantity, totalCount, myEstTotalPaise } = useCart();
@@ -54,64 +30,45 @@ export default function CustomerShopPage() {
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Fetch categories and products on mount
-  useEffect(() => {
-    async function loadCatalogue() {
-      try {
-        const [catRes, prodRes] = await Promise.all([
-          fetch("/api/v1/catalogue/categories", { credentials: "include" }),
-          fetch("/api/v1/catalogue/products", { credentials: "include" }),
-        ]);
+  const loadCatalogue = async () => {
+    setIsLoading(true);
+    setErrorMsg(null);
+    try {
+      const [catRes, prodRes] = await Promise.all([
+        CatalogueService.getCategories().catch(() => ({ categories: FALLBACK_CATEGORIES })),
+        CatalogueService.getProducts({ limit: 100 }).catch(() => ({ products: FALLBACK_PRODUCTS })),
+      ]);
 
-        let loadedCategories: Category[] = [];
-        let loadedProducts: Product[] = [];
+      const loadedCategories = catRes.categories?.length ? catRes.categories : FALLBACK_CATEGORIES;
+      const loadedProducts = prodRes.products?.length ? prodRes.products : FALLBACK_PRODUCTS;
 
-        if (catRes.ok) {
-          const catData = await catRes.json();
-          loadedCategories = catData.categories || [];
+      setCategories(loadedCategories);
+      setProducts(loadedProducts);
+
+      const defaults: Record<string, string> = {};
+      loadedProducts.forEach((p) => {
+        if (p.variants && p.variants.length > 0) {
+          defaults[p.id] = p.variants[0].id;
         }
-
-        if (prodRes.ok) {
-          const prodData = await prodRes.json();
-          loadedProducts = prodData.products || [];
-        }
-
-        if (loadedCategories.length === 0) {
-          loadedCategories = FALLBACK_CATEGORIES;
-        }
-        if (loadedProducts.length === 0) {
-          loadedProducts = FALLBACK_PRODUCTS;
-        }
-
-        setCategories(loadedCategories);
-        setProducts(loadedProducts);
-
-        // Default selected variant to the first variant of each product
-        const defaults: Record<string, string> = {};
-        loadedProducts.forEach((p) => {
-          if (p.variants && p.variants.length > 0) {
-            defaults[p.id] = p.variants[0].id;
-          }
-        });
-        setSelectedVariants(defaults);
-      } catch {
-        setCategories(FALLBACK_CATEGORIES);
-        setProducts(FALLBACK_PRODUCTS);
-        const defaults: Record<string, string> = {};
-        FALLBACK_PRODUCTS.forEach((p) => {
-          if (p.variants && p.variants.length > 0) {
-            defaults[p.id] = p.variants[0].id;
-          }
-        });
-        setSelectedVariants(defaults);
-      } finally {
-        setIsLoading(false);
-      }
+      });
+      setSelectedVariants(defaults);
+    } catch (err: any) {
+      console.error("Failed to load catalogue:", err);
+      setErrorMsg("Unable to load latest catalogue. Showing cached products.");
+      setCategories(FALLBACK_CATEGORIES);
+      setProducts(FALLBACK_PRODUCTS);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadCatalogue();
-    const interval = setInterval(loadCatalogue, 4000);
+    const interval = setInterval(loadCatalogue, 6000);
     return () => clearInterval(interval);
   }, []);
 
@@ -133,9 +90,38 @@ export default function CustomerShopPage() {
     });
   }, [products, activeCategory, searchQuery]);
 
+  // Reset page when search or category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory, searchQuery]);
+
+  // Paginated slice
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
+
   return (
     <CustomerLayout>
       <div className="space-y-4 w-full max-w-full overflow-x-hidden">
+        {/* Error notification banner if any */}
+        {errorMsg && (
+          <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+            <button
+              onClick={loadCatalogue}
+              className="inline-flex items-center gap-1 font-semibold text-amber-700 hover:underline"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Retry</span>
+            </button>
+          </div>
+        )}
+
         {/* Search Bar with Mic shortcut */}
         <div className="relative">
           <TextField
@@ -156,7 +142,7 @@ export default function CustomerShopPage() {
           />
         </div>
 
-        {/* 12 Category Chips (horizontal scroll per U5) */}
+        {/* 12 Category Chips */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
           <Chip
             selected={activeCategory === "All"}
@@ -175,8 +161,8 @@ export default function CustomerShopPage() {
           ))}
         </div>
 
-        {/* Product Grid (2 columns on mobile/desktop per U8) */}
-        {isLoading ? (
+        {/* Product Grid */}
+        {isLoading && products.length === 0 ? (
           <div className="grid grid-cols-2 gap-3 pt-2">
             {[1, 2, 3, 4].map((n) => (
               <Card key={n} className="p-3 space-y-2">
@@ -199,86 +185,106 @@ export default function CustomerShopPage() {
             }}
           />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pt-2">
-            {filteredProducts.map((prod) => {
-              const activeVarId = selectedVariants[prod.id] || prod.variants[0]?.id;
-              const activeVariant =
-                prod.variants.find((v) => v.id === activeVarId) || prod.variants[0];
-              const qty = activeVariant ? getItemQuantity(activeVariant.id) : 0;
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pt-2">
+              {paginatedProducts.map((prod) => {
+                const activeVarId = selectedVariants[prod.id] || prod.variants[0]?.id;
+                const activeVariant =
+                  prod.variants.find((v) => v.id === activeVarId) || prod.variants[0];
+                const qty = activeVariant ? getItemQuantity(activeVariant.id) : 0;
 
-              return (
-                <Card
-                  key={prod.id}
-                  padding="sm"
-                  className="flex flex-col justify-between space-y-3 bg-white hover:border-ice-400 transition-colors"
-                >
-                  <div className="space-y-2">
-                    {/* Placeholder image card */}
-                    <div className="w-full h-28 bg-ice-50 rounded-ctl border border-ice-100 flex items-center justify-center text-teal-700/60 p-2">
-                      <ShoppingBag className="w-10 h-10 stroke-[1.5]" />
-                    </div>
-
-                    {/* Product Name & Brand */}
-                    <div>
-                      <h3 className="font-semibold text-sm text-ink-800 line-clamp-1">
-                        {prod.name}
-                      </h3>
-                      <p className="text-[11px] text-ink-500 truncate">{prod.brand}</p>
-                    </div>
-
-                    {/* Variant Chips */}
-                    {prod.variants.length > 1 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {prod.variants.map((v) => (
-                          <Chip
-                            key={v.id}
-                            size="sm"
-                            selected={activeVariant?.id === v.id}
-                            onClick={() =>
-                              setSelectedVariants((prev) => ({
-                                ...prev,
-                                [prod.id]: v.id,
-                              }))
-                            }
-                          >
-                            {v.label}
-                          </Chip>
-                        ))}
+                return (
+                  <Card
+                    key={prod.id}
+                    padding="sm"
+                    className="flex flex-col justify-between space-y-3 bg-white hover:border-ice-400 transition-colors"
+                  >
+                    <div className="space-y-2">
+                      <div className="w-full h-28 bg-ice-50 rounded-ctl border border-ice-100 flex items-center justify-center text-teal-700/60 p-2">
+                        <ShoppingBag className="w-10 h-10 stroke-[1.5]" />
                       </div>
-                    )}
 
-                    {/* Estimated Price */}
-                    {activeVariant && (
-                      <div className="flex items-baseline gap-1.5 pt-1">
-                        <MoneyText
-                          paise={activeVariant.selling_price_paise}
-                          approx
-                          size="base"
-                        />
-                        {activeVariant.mrp_paise > activeVariant.selling_price_paise && (
+                      {/* Product Name & Brand */}
+                      <div>
+                        <h3 className="font-semibold text-sm text-ink-800 line-clamp-1">
+                          {prod.name}
+                        </h3>
+                        <p className="text-[11px] text-ink-500 truncate">{prod.brand}</p>
+                      </div>
+
+                      {/* Variant Chips */}
+                      {prod.variants.length > 1 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {prod.variants.map((v) => (
+                            <Chip
+                              key={v.id}
+                              size="sm"
+                              selected={activeVariant?.id === v.id}
+                              onClick={() =>
+                                setSelectedVariants((prev) => ({
+                                  ...prev,
+                                  [prod.id]: v.id,
+                                }))
+                              }
+                            >
+                              {v.label}
+                            </Chip>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Estimated Price */}
+                      {activeVariant && (
+                        <div className="flex items-baseline gap-1.5 pt-1">
                           <MoneyText
-                            paise={activeVariant.mrp_paise}
-                            strikeThrough
-                            size="sm"
+                            paise={activeVariant.selling_price_paise}
+                            approx
+                            size="base"
                           />
-                        )}
-                      </div>
-                    )}
-                  </div>
+                          {activeVariant.mrp_paise > activeVariant.selling_price_paise && (
+                            <MoneyText
+                              paise={activeVariant.mrp_paise}
+                              strikeThrough
+                              size="sm"
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Add Button or Stepper per U8 */}
-                  <div className="pt-2">
-                    {isLocked ? (
-                      <div className="h-10 text-center flex items-center justify-center text-xs text-ink-400 bg-ice-100 rounded-ctl">
-                        Closed
-                      </div>
-                    ) : qty > 0 ? (
-                      <div className="flex justify-center">
-                        <Stepper
-                          value={qty}
-                          onChange={(newQty) =>
+                    {/* Stepper or Add button */}
+                    <div className="pt-2">
+                      {isLocked ? (
+                        <div className="h-10 text-center flex items-center justify-center text-xs text-ink-400 bg-ice-100 rounded-ctl">
+                          Closed
+                        </div>
+                      ) : qty > 0 ? (
+                        <div className="flex justify-center">
+                          <Stepper
+                            value={qty}
+                            onChange={(newQty) =>
+                              activeVariant &&
+                              updateQuantity(activeVariant.id, newQty, {
+                                name: prod.name,
+                                brand: prod.brand,
+                                variant_label: activeVariant.label,
+                                est_unit_price_paise: activeVariant.selling_price_paise,
+                                mrp_paise: activeVariant.mrp_paise,
+                              })
+                            }
+                            min={0}
+                            max={99}
+                            className="w-full justify-between"
+                          />
+                        </div>
+                      ) : (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          fullWidth
+                          onClick={() =>
                             activeVariant &&
-                            updateQuantity(activeVariant.id, newQty, {
+                            updateQuantity(activeVariant.id, 1, {
                               name: prod.name,
                               brand: prod.brand,
                               variant_label: activeVariant.label,
@@ -286,39 +292,32 @@ export default function CustomerShopPage() {
                               mrp_paise: activeVariant.mrp_paise,
                             })
                           }
-                          min={0}
-                          max={99}
-                          className="w-full justify-between"
-                        />
-                      </div>
-                    ) : (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        fullWidth
-                        onClick={() =>
-                          activeVariant &&
-                          updateQuantity(activeVariant.id, 1, {
-                            name: prod.name,
-                            brand: prod.brand,
-                            variant_label: activeVariant.label,
-                            est_unit_price_paise: activeVariant.selling_price_paise,
-                            mrp_paise: activeVariant.mrp_paise,
-                          })
-                        }
-                      >
-                        Add
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                        >
+                          Add
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Pagination Controls */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredProducts.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
+          </>
         )}
       </div>
 
-      {/* Sticky "My list" bar per U8 */}
+      {/* Sticky "My list" bar */}
       {totalCount > 0 && (
         <div className="sticky bottom-18 inset-x-0 z-30">
           <Link

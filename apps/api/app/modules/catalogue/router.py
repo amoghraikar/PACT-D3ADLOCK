@@ -4,9 +4,10 @@ import os
 from pathlib import Path
 import re
 import uuid
-from fastapi import APIRouter, Cookie, Header, Query
+from fastapi import APIRouter, Cookie, Depends, Header, Query
 from pydantic import BaseModel, Field
 
+from app.core.deps import get_current_user
 from app.core.errors import AppError
 from app.modules.auth.router import get_user_from_token
 from app.modules.catalogue.products_data import EXPANDED_PRODUCTS, EXPANDED_RETAILER_LISTINGS
@@ -179,8 +180,10 @@ def get_categories():
 
 @router.get("/products")
 def get_products(
-    category: str | None = Query(None),
-    q: str | None = Query(None),
+    category: str | None = Query(None, description="Filter by category ID or name"),
+    q: str | None = Query(None, description="Search products by name, brand, or alias"),
+    page: int = Query(default=1, ge=1, description="Page number"),
+    limit: int = Query(default=20, ge=1, le=100, description="Items per page"),
     pact_session: str | None = Cookie(None),
     authorization: str | None = Header(None),
 ):
@@ -250,7 +253,16 @@ def get_products(
                 "variants": available_variants,
             })
 
-    return {"products": results}
+    # Pagination
+    total = len(results)
+    offset = (page - 1) * limit
+    paged = results[offset : offset + limit]
+    pages = max(1, (total + limit - 1) // limit)
+
+    return {
+        "products": paged,
+        "meta": {"total": total, "page": page, "limit": limit, "pages": pages},
+    }
 
 
 @router.get("/products/{product_id}")
@@ -258,4 +270,4 @@ def get_product(product_id: str):
     for prod in PRODUCTS:
         if prod["id"] == product_id:
             return {"product": prod}
-    return {"error": {"code": "NOT_FOUND", "message": "Product not found"}}
+    raise AppError(code="NOT_FOUND", message="Product not found", status_code=404)

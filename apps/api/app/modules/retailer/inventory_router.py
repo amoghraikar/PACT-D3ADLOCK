@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Cookie, Header, HTTPException, Query, status
+from fastapi import APIRouter, Cookie, Depends, Header, Query, status
 from pydantic import BaseModel, Field
 
-from app.modules.auth.router import get_user_from_token
+from app.core.deps import get_retailer_id
+from app.core.errors import AppError
 from app.modules.catalogue.router import (
     PRODUCTS,
     RETAILER_LISTINGS,
@@ -53,36 +54,19 @@ class AutoReorderRequest(BaseModel):
     items: list[AutoReorderItem] = Field(min_length=1)
 
 
-def get_current_retailer_id(
-    authorization: str | None = None,
-    pact_token: str | None = None,
-) -> str:
-    token = None
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization[7:]
-    elif pact_token:
-        token = pact_token
-
-    if token:
-        user = get_user_from_token(token)
-        if user and user.get("role") == "retailer":
-            return user.get("retailer_id") or "ret-ravi-1"
-
-    # Default to Sri Lakshmi Stores for dev
-    return "ret-ravi-1"
-
-
 @router.get("")
 def list_retailer_inventory(
-    q: str | None = Query(None),
-    category: str | None = Query(None),
-    authorization: Annotated[str | None, Header()] = None,
-    pact_token: Annotated[str | None, Cookie()] = None,
+    q: str | None = Query(None, description="Search by name, brand, or variant"),
+    category: str | None = Query(None, description="Filter by category ID or name"),
+    low_stock: bool = Query(False, description="Show only low-stock / out-of-stock items"),
+    page: int = Query(default=1, ge=1, description="Page number"),
+    limit: int = Query(default=50, ge=1, le=200, description="Items per page"),
+    retailer_id: str = Depends(get_retailer_id),
 ):
     """
-    Returns full list of inventory items listed by the retailer (50-100 items).
+    Returns full list of inventory items listed by the retailer.
+    Supports search, category filter, low-stock filter, and pagination.
     """
-    retailer_id = get_current_retailer_id(authorization, pact_token)
     items = []
     q_lower = q.strip().lower() if q else ""
 
@@ -118,6 +102,10 @@ def list_retailer_inventory(
             elif stock <= 25:
                 status_label = "low_stock"
 
+            # Low-stock filter
+            if low_stock and status_label == "in_stock":
+                continue
+
             items.append({
                 "variant_id": vid,
                 "product_id": prod["id"],
@@ -136,33 +124,44 @@ def list_retailer_inventory(
                 "low_stock_threshold": 25,
             })
 
-    return {"inventory": items, "total_count": len(items)}
+    total = len(items)
+    offset = (page - 1) * limit
+    paged = items[offset : offset + limit]
+    pages = max(1, (total + limit - 1) // limit)
+
+    return {
+        "inventory": paged,
+        "meta": {"total": total, "page": page, "limit": limit, "pages": pages},
+    }
 
 
 @router.patch("/{variant_id}")
 def update_inventory_item(
     variant_id: str,
     req: UpdateInventoryItemRequest,
-    authorization: Annotated[str | None, Header()] = None,
-    pact_token: Annotated[str | None, Cookie()] = None,
+    retailer_id: str = Depends(get_retailer_id),
 ):
     """
     Updates price or stock quantity for an inventory item.
     Enforces selling_price <= mrp.
     """
-    retailer_id = get_current_retailer_id(authorization, pact_token)
     key = (retailer_id, variant_id)
     listing = RETAILER_LISTINGS.get(key)
     if not listing:
-        raise HTTPException(status_code=404, detail="Inventory item not found for this store")
+        raise AppError(
+            code="NOT_FOUND",
+            message="Inventory item not found for this store",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
 
     mrp = req.mrp_paise if req.mrp_paise is not None else listing.get("mrp_paise", 0)
     selling = req.selling_price_paise if req.selling_price_paise is not None else listing.get("selling_price_paise", 0)
 
     if selling > mrp:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Selling price (₹{selling/100:.2f}) cannot exceed MRP (₹{mrp/100:.2f})",
+        raise AppError(
+            code="INVALID_PRICE",
+            message=f"Selling price (₹{selling/100:.2f}) cannot exceed MRP (₹{mrp/100:.2f})",
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
 
     if req.stock_qty is not None:
@@ -186,14 +185,12 @@ def update_inventory_item(
 @router.post("/inward")
 def record_stock_inward(
     req: StockInwardRequest,
-    authorization: Annotated[str | None, Header()] = None,
-    pact_token: Annotated[str | None, Cookie()] = None,
+    retailer_id: str = Depends(get_retailer_id),
 ):
     """
     Records a new supplier inventory bill / inward receipt.
     Increases stock_qty for each received item.
     """
-    retailer_id = get_current_retailer_id(authorization, pact_token)
     updated_items = []
 
     for item in req.items:
@@ -232,15 +229,12 @@ def record_stock_inward(
 @router.post("/auto-reorder")
 def auto_reorder_low_stock(
     req: AutoReorderRequest,
-    authorization: Annotated[str | None, Header()] = None,
-    pact_token: Annotated[str | None, Cookie()] = None,
+    retailer_id: str = Depends(get_retailer_id),
 ):
     """
     1-Click Auto Restock for low stock items.
-    Places consolidated purchase orders to the retailer's preferred/frequent wholesale distributors
-    and increments inventory stock counts immediately upon retailer confirmation.
+    Places consolidated purchase orders and increments inventory stock counts immediately.
     """
-    retailer_id = get_current_retailer_id(authorization, pact_token)
     updated_items = []
     suppliers_map: dict[str, list[dict]] = {}
 
@@ -294,20 +288,18 @@ def auto_reorder_low_stock(
 
 
 @router.get("/inward/history")
-def list_inward_history():
-    return {"inward_bills": list(reversed(INWARD_BILLS))}
+def list_inward_history(retailer_id: str = Depends(get_retailer_id)):
+    retailer_bills = [b for b in INWARD_BILLS if b.get("retailer_id") == retailer_id]
+    return {"inward_bills": list(reversed(retailer_bills))}
 
 
 @router.post("/add-product")
 def add_inventory_product(
     req: CreateProductRequest,
-    authorization: Annotated[str | None, Header()] = None,
-    pact_token: Annotated[str | None, Cookie()] = None,
+    retailer_id: str = Depends(get_retailer_id),
 ):
     """
     Retailer adds a new product to catalogue and lists it in their inventory.
     Saves to store and makes it immediately available to community customers.
     """
-    retailer_id = get_current_retailer_id(authorization, pact_token)
     return create_new_product_and_listing(req, retailer_id)
-

@@ -231,62 +231,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    const fetchAuth = async () => {
-      try {
-        const res = await fetch("/api/v1/auth/me", {
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        });
-        if (active) {
-          if (res.ok) {
-            const data = await res.json();
-            setUser(data.user);
-            setMembership(data.membership || null);
-            setRetailer(data.retailer || null);
-            setIsLoading(false);
-            return;
+
+    const checkSession = async () => {
+      // 1. Check if user already logged in in this browser session
+      if (typeof window !== "undefined") {
+        const savedUserStr = sessionStorage.getItem("pact_session_user");
+        if (savedUserStr) {
+          try {
+            const parsed = JSON.parse(savedUserStr);
+            if (parsed && parsed.id) {
+              if (active) {
+                setUser(parsed);
+                const savedMem = sessionStorage.getItem("pact_session_membership");
+                if (savedMem) setMembership(JSON.parse(savedMem));
+                const savedRet = sessionStorage.getItem("pact_session_retailer");
+                if (savedRet) setRetailer(JSON.parse(savedRet));
+              }
+
+              // Verify session with backend
+              try {
+                const res = await fetch("/api/v1/auth/me", {
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                });
+                if (active && res.ok) {
+                  const data = await res.json();
+                  setUser(data.user);
+                  setMembership(data.membership || null);
+                  setRetailer(data.retailer || null);
+                }
+              } catch {
+                // Backend call failed, keep tab session
+              }
+
+              if (active) setIsLoading(false);
+              return;
+            }
+          } catch {
+            sessionStorage.removeItem("pact_session_user");
           }
         }
-      } catch {
-        // Fall back to session storage
       }
 
-      if (active && typeof window !== "undefined") {
-        const savedUser = sessionStorage.getItem("pact_session_user");
-        let initialPersona: "asha" | "ravi" | "meera" | "priya" = "asha";
-        if (savedUser) {
-          try {
-            const parsed = JSON.parse(savedUser);
-            setUser(parsed);
-            if (parsed.role === "retailer") initialPersona = "ravi";
-            else if (parsed.role === "community_admin") initialPersona = "meera";
-            else if (parsed.role === "platform_admin") initialPersona = "priya";
-            const savedMem = sessionStorage.getItem("pact_session_membership");
-            if (savedMem) setMembership(JSON.parse(savedMem));
-            const savedRet = sessionStorage.getItem("pact_session_retailer");
-            if (savedRet) setRetailer(JSON.parse(savedRet));
-          } catch {
-            // ignore
-          }
-        } else {
-          setUser(null);
-          setMembership(null);
-          setRetailer(null);
-        }
-
-        // Establish session cookie for active persona
-        fetch("/api/v1/auth/switch-persona", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ persona: initialPersona }),
-        }).catch(() => {});
-
+      // No active session in this tab -> remain unauthenticated
+      if (active) {
+        setUser(null);
+        setMembership(null);
+        setRetailer(null);
         setIsLoading(false);
       }
     };
 
-    fetchAuth();
+    checkSession();
     return () => {
       active = false;
     };

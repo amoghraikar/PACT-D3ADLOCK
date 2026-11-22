@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, DM_Serif_Display, Noto_Sans_Devanagari } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const dmSerif = DM_Serif_Display({
   weight: "400",
@@ -24,9 +25,44 @@ const notoDevanagari = Noto_Sans_Devanagari({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  themeColor: "rgb(15, 118, 110)",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
-  title: "PACT · Collective Commerce",
-  description: "One building · one shared monthly cart · one bulk order · one bill, split fairly.",
+  title: {
+    default: "PACT · Collective Commerce",
+    template: "%s · PACT",
+  },
+  description: "One building · one shared monthly cart · one bulk order · one bill, split fairly. Buy together with your neighbors.",
+  keywords: [
+    "collective commerce",
+    "apartment grocery",
+    "group buying",
+    "kirana bulk order",
+    "bill splitting",
+    "community pantry",
+    "PACT",
+  ],
+  authors: [{ name: "PACT Team" }],
+  openGraph: {
+    title: "PACT · Collective Commerce for Communities",
+    description: "Shop together, lower prices, and split monthly grocery orders fairly with your neighborhood.",
+    type: "website",
+    siteName: "PACT",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PACT · Collective Commerce",
+    description: "One building · one shared monthly cart · one bill, split fairly.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   icons: {
     icon: "/brand/pact-mark.png",
     apple: "/brand/pact-mark.png",
@@ -44,7 +80,9 @@ export default function RootLayout({
       className={`${dmSerif.variable} ${dmSans.variable} ${notoDevanagari.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-ice-50 text-ink-800 font-sans selection:bg-ice-200">
-        <AuthProvider>{children}</AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>{children}</AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

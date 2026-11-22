@@ -80,9 +80,11 @@ def get_cycle_boundaries(target_dt: datetime | None = None) -> tuple[str, dateti
     opens_ist = datetime(year, month, 1, 0, 0, 0, tzinfo=BUSINESS_TZ)
     opens_at = opens_ist.astimezone(ZoneInfo("UTC"))
 
-    # Locks on the cutoff day (25th) at 00:00:00 IST
+    # Locks on the cutoff day, hour, and minute in IST
     cutoff_day = settings.CYCLE_CUTOFF_DAY
-    locks_ist = datetime(year, month, cutoff_day, 0, 0, 0, tzinfo=BUSINESS_TZ)
+    cutoff_hour = getattr(settings, "CYCLE_CUTOFF_HOUR", 0)
+    cutoff_minute = getattr(settings, "CYCLE_CUTOFF_MINUTE", 0)
+    locks_ist = datetime(year, month, cutoff_day, cutoff_hour, cutoff_minute, 0, tzinfo=BUSINESS_TZ)
     locks_at = locks_ist.astimezone(ZoneInfo("UTC"))
 
     return cycle_month, opens_at, locks_at
@@ -97,6 +99,7 @@ def ensure_open_cart(community_id: str, assigned_retailer_id: str) -> dict:
 
     for cart in CARTS.values():
         if cart["community_id"] == community_id and cart["cycle_month"] == cycle_month:
+            cart["locks_at"] = locks_at
             return cart
 
     cart_id = f"cart-{community_id}-{cycle_month}"
