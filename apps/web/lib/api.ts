@@ -22,11 +22,44 @@ export class ApiError extends Error {
   }
 }
 
+export const getApiBaseUrl = (): string => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "");
+  }
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host !== "localhost" && host !== "127.0.0.1") {
+      return "https://pact-d3adlock.onrender.com";
+    }
+  }
+  return "";
+};
+
+// Global client-side interceptor for relative /api/ calls in browser
+if (typeof window !== "undefined" && !(window as any).__pact_fetch_patched) {
+  (window as any).__pact_fetch_patched = true;
+  const originalFetch = window.fetch;
+  window.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
+    if (typeof input === "string" && input.startsWith("/api/")) {
+      const base = getApiBaseUrl();
+      if (base) {
+        input = `${base}${input}`;
+      }
+    }
+    return originalFetch(input, init);
+  };
+}
+
 export async function apiClient<T>(
   path: string,
   init?: RequestInit
 ): Promise<T> {
-  const url = path.startsWith("http") ? path : path.startsWith("/") ? path : `/${path}`;
+  let url = path;
+  if (!url.startsWith("http")) {
+    const base = getApiBaseUrl();
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    url = `${base}${cleanPath}`;
+  }
 
   const headers = new Headers(init?.headers);
   if (!headers.has("Content-Type") && init?.body && typeof init.body === "string") {

@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const isExport = process.env.NEXT_EXPORT === "true";
+const isExport = process.env.NEXT_EXPORT !== "false";
 
 const nextConfig: NextConfig = {
   ...(isExport ? { output: "export" } : {}),

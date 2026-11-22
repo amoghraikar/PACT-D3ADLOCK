@@ -262,6 +262,31 @@ class SwitchPersonaIn(BaseModel):
     user_id: str | None = None
 
 
+def _set_auth_cookie(response: Response, token: str) -> None:
+    """Set cross-site-safe or local-dev session cookie."""
+    is_prod = settings.ENVIRONMENT not in ("dev", "test")
+    response.set_cookie(
+        key=settings.SESSION_COOKIE_NAME,
+        value=token,
+        max_age=settings.SESSION_MAX_AGE_DAYS * 24 * 3600,
+        httponly=True,
+        samesite="none" if is_prod else "lax",
+        secure=is_prod,
+        path="/",
+    )
+
+
+def _clear_auth_cookie(response: Response) -> None:
+    """Clear session cookie."""
+    is_prod = settings.ENVIRONMENT not in ("dev", "test")
+    response.delete_cookie(
+        key=settings.SESSION_COOKIE_NAME,
+        path="/",
+        samesite="none" if is_prod else "lax",
+        secure=is_prod,
+    )
+
+
 @router.post("/switch-persona")
 def switch_persona(body: SwitchPersonaIn, response: Response):
     """
@@ -296,15 +321,7 @@ def switch_persona(body: SwitchPersonaIn, response: Response):
         target_user = list(USERS.values())[0]
 
     token = create_session_token(target_user["id"])
-    response.set_cookie(
-        key=settings.SESSION_COOKIE_NAME,
-        value=token,
-        max_age=settings.SESSION_MAX_AGE_DAYS * 24 * 3600,
-        httponly=True,
-        samesite="lax",
-        secure=False,
-        path="/",
-    )
+    _set_auth_cookie(response, token)
     membership = None
     if target_user.get("community_id"):
         community = COMMUNITIES.get(target_user["community_id"])
@@ -430,15 +447,7 @@ def verify_otp(body: OtpVerifyIn, response: Response):
 
     # Create signed session token
     token = create_session_token(user["id"])
-    response.set_cookie(
-        key=settings.SESSION_COOKIE_NAME,
-        value=token,
-        max_age=settings.SESSION_MAX_AGE_DAYS * 24 * 3600,
-        httponly=True,
-        samesite="lax",
-        secure=False,  # Set to True in production HTTPS
-        path="/",
-    )
+    _set_auth_cookie(response, token)
 
     # Prepare response envelope
     membership = None
@@ -549,15 +558,7 @@ def register_resident(body: RegisterResidentIn, response: Response):
     _persist_users()
 
     token = create_session_token(user["id"])
-    response.set_cookie(
-        key=settings.SESSION_COOKIE_NAME,
-        value=token,
-        max_age=settings.SESSION_MAX_AGE_DAYS * 24 * 3600,
-        httponly=True,
-        samesite="lax",
-        secure=False,
-        path="/",
-    )
+    _set_auth_cookie(response, token)
 
     return {
         "success": True,
@@ -600,15 +601,7 @@ def register_retailer(body: RegisterRetailerIn, response: Response):
     _persist_users()
 
     token = create_session_token(user["id"])
-    response.set_cookie(
-        key=settings.SESSION_COOKIE_NAME,
-        value=token,
-        max_age=settings.SESSION_MAX_AGE_DAYS * 24 * 3600,
-        httponly=True,
-        samesite="lax",
-        secure=False,
-        path="/",
-    )
+    _set_auth_cookie(response, token)
 
     return {
         "success": True,
@@ -632,12 +625,7 @@ def register_retailer(body: RegisterRetailerIn, response: Response):
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie(
-        key=settings.SESSION_COOKIE_NAME,
-        path="/",
-        httponly=True,
-        samesite="lax",
-    )
+    _clear_auth_cookie(response)
     return {"message": "Signed out"}
 
 
