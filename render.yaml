@@ -13,9 +13,9 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: EVENT_TRANSPORT
-        value: kafka
+        value: inline
       - key: SEARCH_BACKEND
-        value: opensearch
+        value: postgres
 
   - type: worker
     name: pact-consumer
