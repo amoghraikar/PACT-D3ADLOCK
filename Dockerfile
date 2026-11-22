@@ -1,27 +1,39 @@
-# Root Dockerfile for PACT Backend API on Render
+# Unified Full-Stack Dockerfile for PACT on Render (Frontend + Backend)
 FROM python:3.11-slim
 
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8000
+    NODE_ENV=production \
+    API_URL=http://127.0.0.1:8000
 
-# Install system dependencies
+# Install system dependencies and Node.js 20
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gcc \
     libpq-dev \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install
-COPY apps/api/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Backend Python dependencies
+COPY apps/api/requirements.txt ./apps/api/requirements.txt
+RUN pip install --no-cache-dir -r ./apps/api/requirements.txt
 
-# Copy backend application source
-COPY apps/api/ .
+# Install Frontend Node dependencies
+COPY apps/web/package.json apps/web/package-lock.json* ./apps/web/
+RUN cd apps/web && npm ci
 
-EXPOSE 8000
+# Copy full application source trees
+COPY apps/api/ ./apps/api/
+COPY apps/web/ ./apps/web/
+COPY start.sh ./start.sh
+RUN chmod +x ./start.sh
 
-# Run uvicorn on $PORT (Render sets $PORT dynamically)
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Build Next.js Production Bundle
+RUN cd apps/web && npm run build
+
+EXPOSE 3000
+
+CMD ["/app/start.sh"]
