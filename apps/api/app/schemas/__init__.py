@@ -151,6 +151,15 @@ __all__ = [
     "AuditLogItem",
     "PlatformConfigResponse",
     "UpdatePlatformConfigRequest",
+    "ClarificationOption",
+    "ConfirmVoiceCartItem",
+    "ConfirmVoiceCartRequest",
+    "ConfirmVoiceCartResponse",
+    "InterpretedItem",
+    "VoiceInterpretationSummary",
+    "VoiceInterpretRequest",
+    "VoiceInterpretResponse",
+    "VoiceVocabResponse",
 ]
 from app.schemas.apartment_admin import (
     AdminCycleOverview,
@@ -178,4 +187,15 @@ from app.schemas.platform_admin import (
     PlatformHealthMetrics,
     PlatformRetailerItem,
     UpdatePlatformConfigRequest,
+)
+from app.schemas.voice import (
+    ClarificationOption,
+    ConfirmVoiceCartItem,
+    ConfirmVoiceCartRequest,
+    ConfirmVoiceCartResponse,
+    InterpretedItem,
+    VoiceInterpretationSummary,
+    VoiceInterpretRequest,
+    VoiceInterpretResponse,
+    VoiceVocabResponse,
 )

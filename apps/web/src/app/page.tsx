@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { Logo, Card, StatusPill, Button } from "@/components/ui";
 import {
   Server,
@@ -11,6 +12,8 @@ import {
   RefreshCw,
   Terminal,
   Activity,
+  Mic,
+  Volume2,
 } from "lucide-react";
 
 interface ApiHealthState {
@@ -201,6 +204,41 @@ export default function LandingPage() {
             </div>
           </Card>
         </div>
+
+        {/* Milestone 8 Voice Ordering Engine Feature Card */}
+        <Card className="p-6 bg-gradient-to-br from-teal-900 to-teal-950 text-white border-0 shadow-lg rounded-3xl overflow-hidden relative">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-teal-800/80 border border-teal-700/60 rounded-full text-xs font-semibold text-teal-200">
+                <Volume2 className="w-3.5 h-3.5 text-teal-300" />
+                <span>Milestone 8 Feature · Multilingual Voice Ordering</span>
+              </div>
+              <h2 className="text-2xl font-display font-bold text-white tracking-tight">
+                Voice-First Collective Grocery Dictation
+              </h2>
+              <p className="text-sm text-teal-100 max-w-xl font-sans leading-relaxed">
+                Dictate grocery lists naturally in English, Hindi, or Hinglish. Deterministic quantity extraction, fraction parsing (aadha, dedh, dhai), ambiguity clarification, and zero-risk cart review.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1 text-xs text-teal-200">
+                <span className="bg-teal-800/50 px-2.5 py-0.5 rounded-lg border border-teal-700/40">English (en-IN)</span>
+                <span className="bg-teal-800/50 px-2.5 py-0.5 rounded-lg border border-teal-700/40">Hinglish (Latin)</span>
+                <span className="bg-teal-800/50 px-2.5 py-0.5 rounded-lg border border-teal-700/40">Hindi (हिन्दी hi-IN)</span>
+                <span className="bg-teal-800/50 px-2.5 py-0.5 rounded-lg border border-teal-700/40">Web Speech API + Fallback</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 shrink-0">
+              <Link href="/customer/voice">
+                <Button
+                  variant="primary"
+                  className="w-full sm:w-auto bg-white hover:bg-ice-100 text-teal-950 font-bold px-6 py-3.5 rounded-2xl shadow-md inline-flex items-center justify-center gap-2"
+                >
+                  <Mic className="w-4 h-4 text-teal-700" />
+                  <span>Launch Voice Ordering</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Card>
 
         {/* Technology Stack & Milestone Checklist */}
         <Card className="p-6 bg-white border border-ice-200 shadow-sm rounded-2xl space-y-4">

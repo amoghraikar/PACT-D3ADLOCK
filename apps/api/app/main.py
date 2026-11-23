@@ -29,6 +29,7 @@ from app.modules.dev.router import router as dev_router
 from app.modules.inventory.router import router as inventory_router
 from app.modules.platform.router import router as platform_router
 from app.modules.retailer.orders_router import router as retailer_orders_router
+from app.modules.voice.router import router as voice_router
 
 # Configure logging
 logging.basicConfig(
@@ -176,6 +177,7 @@ api_v1_router.include_router(cycles_router, prefix="/cycles", tags=["Shopping Cy
 api_v1_router.include_router(billing_router, prefix="/billing", tags=["F7 Billing Engine"])
 api_v1_router.include_router(admin_router, prefix="/admin", tags=["Apartment Administration"])
 api_v1_router.include_router(platform_router, prefix="/platform", tags=["Platform Administration"])
+api_v1_router.include_router(voice_router, tags=["Multilingual Voice Engine"])
 api_v1_router.include_router(dev_router, prefix="/dev", tags=["Development Controls"])
 
 # Mount top-level versioned router
