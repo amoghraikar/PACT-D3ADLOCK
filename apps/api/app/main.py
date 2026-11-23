@@ -1,13 +1,16 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.clock import now_utc
 from app.core.config import settings
+from app.core.db import get_db
 from app.core.errors import (
     AppError,
     app_error_handler,
@@ -15,7 +18,8 @@ from app.core.errors import (
     unhandled_exception_handler,
     validation_exception_handler,
 )
-from app.core.middleware import RequestLoggingMiddleware
+from app.middleware.request_context import RequestLoggingMiddleware
+from app.modules.auth.router import router as auth_router
 
 # Configure logging
 logging.basicConfig(
@@ -42,17 +46,24 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Exception handlers (C6 Envelope standard)
+# Exception handlers (C6 Envelope standard: code, message, details)
 app.add_exception_handler(AppError, app_error_handler)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
-# Request logging middleware
+# Request logging and tracing middleware
 app.add_middleware(RequestLoggingMiddleware)
 
-# CORS — driven by environment configuration
-_cors_origins = [settings.FRONTEND_URL, "http://127.0.0.1:3000", "http://localhost:3000"]
+# CORS configuration supporting browser web, local development, and Capacitor mobile
+_cors_origins = [
+    settings.FRONTEND_URL,
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
+    "capacitor://localhost",
+    "http://localhost",
+    "https://localhost",
+]
 if settings.EXTRA_ORIGINS:
     _cors_origins.extend(o.strip() for o in settings.EXTRA_ORIGINS.split(",") if o.strip())
 
@@ -80,13 +91,33 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    """Global system health check."""
+    """Global system health / liveness check."""
     return {
         "status": "healthy",
         "service": "pact-api",
         "environment": settings.ENVIRONMENT,
         "timestamp": now_utc().isoformat(),
     }
+
+
+@app.get("/ready")
+def readiness_check(db: Session = Depends(get_db)):
+    """Global system readiness check verifying PostgreSQL database connectivity."""
+    try:
+        db.execute(text("SELECT 1"))
+        return {
+            "status": "ready",
+            "database": "connected",
+            "environment": settings.ENVIRONMENT,
+            "timestamp": now_utc().isoformat(),
+        }
+    except Exception as exc:
+        logger.error("Readiness check failed: %s", exc)
+        return Response(
+            content='{"status": "not_ready", "database": "disconnected"}',
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            media_type="application/json",
+        )
 
 
 # Versioned /api/v1 routes
@@ -105,4 +136,29 @@ def api_v1_health():
     }
 
 
+@api_v1_router.get("/ready")
+def api_v1_ready(db: Session = Depends(get_db)):
+    """Versioned API v1 readiness check."""
+    try:
+        db.execute(text("SELECT 1"))
+        return {
+            "status": "ready",
+            "version": "v1",
+            "database": "connected",
+            "environment": settings.ENVIRONMENT,
+            "timestamp": now_utc().isoformat(),
+        }
+    except Exception as exc:
+        logger.error("API v1 readiness check failed: %s", exc)
+        return Response(
+            content='{"status": "not_ready", "version": "v1", "database": "disconnected"}',
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            media_type="application/json",
+        )
+
+
+# Mount Feature Routers
+api_v1_router.include_router(auth_router, prefix="/auth", tags=["Auth"])
+
+# Mount top-level versioned router
 app.include_router(api_v1_router)

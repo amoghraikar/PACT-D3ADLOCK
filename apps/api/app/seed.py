@@ -317,6 +317,12 @@ def seed_database(session: Session) -> None:
             "unit": "A-202",
         },
         {"phone": "+919999900021", "full_name": "Ravi Mohan", "role": "retailer", "unit": None},
+        {
+            "phone": "+919999900099",
+            "full_name": "PACT Platform Admin",
+            "role": "platform_admin",
+            "unit": None,
+        },
     ]
 
     user_map = {}

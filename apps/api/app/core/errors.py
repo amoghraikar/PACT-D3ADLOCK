@@ -41,6 +41,15 @@ class ConflictError(AppError):
         super().__init__(code=code, message=message, status_code=status.HTTP_409_CONFLICT)
 
 
+class RateLimitError(AppError):
+    def __init__(
+        self,
+        message: str = "Rate limit exceeded. Please try again later.",
+        code: str = "RATE_LIMIT_EXCEEDED",
+    ):
+        super().__init__(code=code, message=message, status_code=status.HTTP_429_TOO_MANY_REQUESTS)
+
+
 class ValidationError(AppError):
     def __init__(
         self,
@@ -56,6 +65,19 @@ class ValidationError(AppError):
         )
 
 
+def _sanitize_details(obj: Any) -> Any:
+    """Recursively sanitize error details so everything is JSON serializable."""
+    if isinstance(obj, dict):
+        return {k: _sanitize_details(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_details(item) for item in obj]
+    if isinstance(obj, Exception):
+        return str(obj)
+    if isinstance(obj, (str, int, float, bool, type(None))):
+        return obj
+    return str(obj)
+
+
 def error_response(
     code: str, message: str, status_code: int, details: Any | None = None
 ) -> JSONResponse:
@@ -63,10 +85,9 @@ def error_response(
         "error": {
             "code": code,
             "message": message,
+            "details": _sanitize_details(details) if details is not None else None,
         }
     }
-    if details is not None:
-        content["error"]["details"] = details
     return JSONResponse(status_code=status_code, content=content)
 
 

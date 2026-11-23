@@ -19,8 +19,17 @@ class Settings(BaseSettings):
     # Security & Auth
     APP_SECRET: str = "pact-super-secret-key-change-in-production"
     OTP_MODE: str = "dev"
+    DEV_OTP: str = "123456"
+    OTP_EXPIRE_SECONDS: int = 600  # 10 minutes
+    OTP_MAX_ATTEMPTS: int = 3
+    OTP_RATE_LIMIT_COOLDOWN_SECONDS: int = 60  # Minimum seconds between OTP requests per phone
+    OTP_RATE_LIMIT_MAX_PER_HOUR: int = 5
+
+    # Session & Cookie Management
     SESSION_COOKIE_NAME: str = "pact_session"
     SESSION_MAX_AGE_DAYS: int = 7
+    SESSION_COOKIE_SECURE: bool = False
+    SESSION_COOKIE_SAMESITE: str = "lax"
 
     # CORS
     FRONTEND_URL: str = "http://localhost:3000"

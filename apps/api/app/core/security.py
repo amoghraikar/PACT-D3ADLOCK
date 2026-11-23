@@ -2,6 +2,7 @@ import base64
 import hashlib
 import hmac
 import json
+import secrets
 import time
 from typing import Any
 
@@ -23,11 +24,13 @@ def create_session_token(user_id: str, extra: dict[str, Any] | None = None) -> s
     """
     Creates a tamper-proof HMAC-SHA256 signed session token.
     Valid for SESSION_MAX_AGE_DAYS.
+    Includes a cryptographically random 'jti' nonce to guarantee token uniqueness.
     """
     expires_at = int(time.time()) + (settings.SESSION_MAX_AGE_DAYS * 24 * 3600)
     payload = {
         "sub": user_id,
         "exp": expires_at,
+        "jti": secrets.token_hex(16),
         **(extra or {}),
     }
     payload_bytes = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")

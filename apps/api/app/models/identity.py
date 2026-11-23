@@ -38,13 +38,20 @@ class User(Base, TimestampMixin):
 
     role: Mapped["Role"] = relationship("Role", back_populates="users")
     sessions: Mapped[list["UserSession"]] = relationship(
-        "UserSession", back_populates="user", cascade="all, delete-orphan"
+        "UserSession", back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
     memberships: Mapped[list["CommunityMembership"]] = relationship(
-        "CommunityMembership", back_populates="user"
+        "CommunityMembership",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
     retailer_profile: Mapped[Optional["Retailer"]] = relationship(
-        "Retailer", back_populates="user", uselist=False
+        "Retailer",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
 
