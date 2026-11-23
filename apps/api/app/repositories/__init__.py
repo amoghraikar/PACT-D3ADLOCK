@@ -1,3 +1,4 @@
+from app.repositories.billing_repository import BillingRepository
 from app.repositories.cart_repository import CartRepository
 from app.repositories.catalogue_repository import CatalogueRepository
 from app.repositories.cycle_repository import CycleRepository
@@ -10,4 +11,5 @@ __all__ = [
     "InventoryRepository",
     "CycleRepository",
     "CartRepository",
+    "BillingRepository",
 ]

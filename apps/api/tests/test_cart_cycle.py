@@ -322,8 +322,17 @@ def test_idempotent_bulk_order_consolidation(db):
     green_meadows = db.scalars(select(Community).where(Community.code == "GREEN_MEADOWS")).first()
     cycle = CycleRepository.get_or_create_current_cycle(db, green_meadows.id)
 
-    # Clean up prior bulk orders for clean idempotency test
-    db.query(BulkOrder).filter(BulkOrder.cycle_id == cycle.id).delete()
+    # Clean up prior bulk orders, bills, and invoices for clean idempotency test
+    from app.models.billing import DiscountAllocation, Invoice, InvoiceItem, RetailerBill
+    existing_bos = list(db.scalars(select(BulkOrder).where(BulkOrder.cycle_id == cycle.id)).all())
+    for bo in existing_bos:
+        db.query(RetailerBill).filter(RetailerBill.bulk_order_id == bo.id).delete()
+        invs = list(db.scalars(select(Invoice).where(Invoice.bulk_order_id == bo.id)).all())
+        for inv in invs:
+            db.query(InvoiceItem).filter(InvoiceItem.invoice_id == inv.id).delete()
+            db.query(DiscountAllocation).filter(DiscountAllocation.invoice_id == inv.id).delete()
+            db.delete(inv)
+        db.delete(bo)
     db.commit()
 
     token = _get_auth_token("+919999900099", db)  # Platform Admin

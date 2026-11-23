@@ -15,10 +15,9 @@ from app.core.clock import now_utc
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.errors import ForbiddenError, UnauthorizedError
-from app.core.security import verify_session_token
+from app.core.security import compute_token_hash, verify_session_token
 from app.models.identity import User
 from app.repositories.user_repository import UserRepository
-from app.services.auth_service import compute_token_hash
 
 
 def extract_session_token(

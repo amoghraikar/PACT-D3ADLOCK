@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.clock import now_utc
 from app.core.config import settings
 from app.core.errors import ForbiddenError, RateLimitError, UnauthorizedError
-from app.core.security import create_session_token
+from app.core.security import compute_token_hash, create_session_token
 from app.models.identity import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import (
@@ -23,11 +23,6 @@ def compute_otp_hash(phone: str, otp: str) -> str:
     """Compute HMAC-SHA256 hash for phone + OTP."""
     msg = f"{phone}:{otp}".encode()
     return hmac.new(settings.APP_SECRET.encode("utf-8"), msg, hashlib.sha256).hexdigest()
-
-
-def compute_token_hash(token: str) -> str:
-    """Compute SHA-256 hash for session token storage."""
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 class AuthService:

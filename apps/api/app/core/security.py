@@ -20,6 +20,11 @@ def _b64decode(data: str) -> bytes:
     return base64.urlsafe_b64decode(data)
 
 
+def compute_token_hash(token: str) -> str:
+    """Computes a SHA-256 hash of a session token for secure database storage."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
 def create_session_token(user_id: str, extra: dict[str, Any] | None = None) -> str:
     """
     Creates a tamper-proof HMAC-SHA256 signed session token.
