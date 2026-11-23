@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">PACT</string>
     <string name="title_activity_main">PACT</string>
-    <string name="package_name">com.pact.app</string>
-    <string name="custom_url_scheme">com.pact.app</string>
+    <string name="package_name">com.pact.collective</string>
+    <string name="custom_url_scheme">com.pact.collective</string>
 </resources>

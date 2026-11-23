@@ -5,6 +5,7 @@ import "@/lib/api";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { NativeBridge } from "@/components/NativeBridge";
 
 const dmSerif = DM_Serif_Display({
   weight: "400",
@@ -72,7 +73,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col bg-background text-text font-sans selection:bg-border">
         <ErrorBoundary>
           <AuthProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              <NativeBridge />
+              {children}
+            </ToastProvider>
           </AuthProvider>
         </ErrorBoundary>
       </body>

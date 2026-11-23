@@ -48,5 +48,10 @@ android/app/build/
 android/.gradle/
 android/local.properties
 android/captures/
+apps/web/android/app/build/
+apps/web/android/.gradle/
+apps/web/android/local.properties
+*.jks
+*.keystore
 *.apk
 *.aab
