@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     # Timezone & Cycle
     BUSINESS_TZ: str = "Asia/Kolkata"
     CYCLE_CUTOFF_DAY: int = 22
-    CYCLE_CUTOFF_HOUR: int = 17       # 5 PM (24-hour format)
-    CYCLE_CUTOFF_MINUTE: int = 27     # 27 minutes
+    CYCLE_CUTOFF_HOUR: int = 17  # 5 PM (24-hour format)
+    CYCLE_CUTOFF_MINUTE: int = 27  # 27 minutes
 
     # Security & Auth
     APP_SECRET: str = "pact-super-secret-key-change-in-production"
