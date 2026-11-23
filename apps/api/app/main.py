@@ -19,6 +19,7 @@ from app.core.errors import (
     validation_exception_handler,
 )
 from app.middleware.request_context import RequestLoggingMiddleware
+from app.modules.admin.router import router as admin_router
 from app.modules.auth.router import router as auth_router
 from app.modules.billing.router import router as billing_router
 from app.modules.cart.router import router as cart_router
@@ -26,6 +27,7 @@ from app.modules.catalogue.router import router as catalogue_router
 from app.modules.cycles.router import router as cycles_router
 from app.modules.dev.router import router as dev_router
 from app.modules.inventory.router import router as inventory_router
+from app.modules.platform.router import router as platform_router
 from app.modules.retailer.orders_router import router as retailer_orders_router
 
 # Configure logging
@@ -172,6 +174,8 @@ api_v1_router.include_router(retailer_orders_router, prefix="/retailer", tags=["
 api_v1_router.include_router(cart_router, prefix="/cart", tags=["Collective Cart"])
 api_v1_router.include_router(cycles_router, prefix="/cycles", tags=["Shopping Cycles"])
 api_v1_router.include_router(billing_router, prefix="/billing", tags=["F7 Billing Engine"])
+api_v1_router.include_router(admin_router, prefix="/admin", tags=["Apartment Administration"])
+api_v1_router.include_router(platform_router, prefix="/platform", tags=["Platform Administration"])
 api_v1_router.include_router(dev_router, prefix="/dev", tags=["Development Controls"])
 
 # Mount top-level versioned router

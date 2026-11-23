@@ -67,6 +67,8 @@ class AuditLog(Base):
         DateTime(timezone=True), default=now_utc, nullable=False, index=True
     )
 
+    user: Mapped["User | None"] = relationship("User")
+
 
 class OutboxEvent(Base):
     __tablename__ = "outbox_events"

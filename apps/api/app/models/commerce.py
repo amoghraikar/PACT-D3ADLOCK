@@ -173,11 +173,13 @@ class BulkOrder(Base):
         "BulkOrderItem", back_populates="bulk_order", cascade="all, delete-orphan"
     )
     retailer_bill: Mapped[Optional["RetailerBill"]] = relationship(
-        "RetailerBill", back_populates="bulk_order", uselist=False
+        "RetailerBill", back_populates="bulk_order", uselist=False, cascade="all, delete-orphan"
     )
-    invoices: Mapped[list["Invoice"]] = relationship("Invoice", back_populates="bulk_order")
+    invoices: Mapped[list["Invoice"]] = relationship(
+        "Invoice", back_populates="bulk_order", cascade="all, delete-orphan"
+    )
     delivery: Mapped[Optional["Delivery"]] = relationship(
-        "Delivery", back_populates="bulk_order", uselist=False
+        "Delivery", back_populates="bulk_order", uselist=False, cascade="all, delete-orphan"
     )
 
 
