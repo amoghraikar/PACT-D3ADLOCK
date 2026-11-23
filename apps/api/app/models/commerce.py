@@ -215,7 +215,7 @@ class BulkOrderItem(Base):
         "ProductVariant", back_populates="bulk_order_items"
     )
     packing_records: Mapped[list["RetailerPackingItem"]] = relationship(
-        "RetailerPackingItem", back_populates="bulk_order_item"
+        "RetailerPackingItem", back_populates="bulk_order_item", cascade="all, delete-orphan"
     )
 
 

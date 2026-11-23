@@ -48,7 +48,12 @@ class BillingService:
         role_name = current_user.role.name if current_user.role else ""
         if role_name not in ("admin", "platform_admin"):
             if role_name == "retailer":
-                if not current_user.retailer_id or current_user.retailer_id != bulk_order.retailer_id:
+                ret_id = (
+                    current_user.retailer_profile.id
+                    if current_user.retailer_profile
+                    else getattr(current_user, "retailer_id", None)
+                )
+                if not ret_id or ret_id != bulk_order.retailer_id:
                     raise ForbiddenError(
                         "You do not have permission to finalize this bulk order.",
                         code="RETAILER_ACCESS_DENIED",
@@ -254,7 +259,12 @@ class BillingService:
         role_name = user.role.name if user.role else ""
         if role_name not in ("admin", "platform_admin"):
             if role_name == "retailer":
-                if not user.retailer_id or user.retailer_id != bill.retailer_id:
+                ret_id = (
+                    user.retailer_profile.id
+                    if user.retailer_profile
+                    else getattr(user, "retailer_id", None)
+                )
+                if not ret_id or ret_id != bill.retailer_id:
                     raise ForbiddenError(
                         "You do not have permission to view this retailer bill.",
                         code="RETAILER_ACCESS_DENIED",
@@ -278,7 +288,12 @@ class BillingService:
         role_name = user.role.name if user.role else ""
         if role_name not in ("admin", "platform_admin"):
             if role_name == "retailer":
-                if not user.retailer_id or user.retailer_id != bill.retailer_id:
+                ret_id = (
+                    user.retailer_profile.id
+                    if user.retailer_profile
+                    else getattr(user, "retailer_id", None)
+                )
+                if not ret_id or ret_id != bill.retailer_id:
                     raise ForbiddenError(
                         "You do not have permission to view this retailer bill.",
                         code="RETAILER_ACCESS_DENIED",

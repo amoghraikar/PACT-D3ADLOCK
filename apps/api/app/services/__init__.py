@@ -3,6 +3,7 @@ from app.services.billing_service import BillingService
 from app.services.cart_service import CartService
 from app.services.catalogue_service import CatalogueService
 from app.services.inventory_service import InventoryService
+from app.services.retailer_order_service import RetailerOrderService
 
 __all__ = [
     "AuthService",
@@ -10,4 +11,5 @@ __all__ = [
     "InventoryService",
     "CartService",
     "BillingService",
+    "RetailerOrderService",
 ]
