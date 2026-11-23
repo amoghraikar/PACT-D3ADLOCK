@@ -164,6 +164,7 @@ export interface ApiClientFunction {
   get<T>(path: string, options?: RequestOptions): Promise<T>;
   post<T>(path: string, data?: unknown, options?: RequestOptions): Promise<T>;
   put<T>(path: string, data?: unknown, options?: RequestOptions): Promise<T>;
+  patch<T>(path: string, data?: unknown, options?: RequestOptions): Promise<T>;
   delete<T>(path: string, options?: RequestOptions): Promise<T>;
 }
 
@@ -183,6 +184,11 @@ clientFn.post = <T>(path: string, data?: unknown, options?: RequestOptions): Pro
 clientFn.put = <T>(path: string, data?: unknown, options?: RequestOptions): Promise<T> => {
   const body = data !== undefined ? (typeof data === "string" ? data : JSON.stringify(data)) : undefined;
   return request<T>(path, { ...options, method: "PUT", body });
+};
+
+clientFn.patch = <T>(path: string, data?: unknown, options?: RequestOptions): Promise<T> => {
+  const body = data !== undefined ? (typeof data === "string" ? data : JSON.stringify(data)) : undefined;
+  return request<T>(path, { ...options, method: "PATCH", body });
 };
 
 clientFn.delete = <T>(path: string, options?: RequestOptions): Promise<T> => {

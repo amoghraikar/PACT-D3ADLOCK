@@ -4,8 +4,11 @@ import { Check } from "lucide-react";
 export type TimelineStep = 1 | 2 | 3 | 4 | 5;
 
 export interface MonthTimelineProps {
-  currentStep: TimelineStep;
+  currentStep?: TimelineStep;
   explanation?: string;
+  cutoffDay?: number;
+  cutoffTime?: string;
+  currentStatus?: string;
   className?: string;
 }
 
@@ -17,24 +20,43 @@ const STEPS = [
   { id: 5, label: "Delivered" },
 ];
 
-export function MonthTimeline({ currentStep, explanation, className = "" }: MonthTimelineProps) {
+export function MonthTimeline({
+  currentStep,
+  explanation,
+  cutoffDay,
+  cutoffTime,
+  currentStatus,
+  className = "",
+}: MonthTimelineProps) {
+  const resolvedStep: TimelineStep =
+    currentStep ||
+    (currentStatus === "LOCKED"
+      ? 2
+      : currentStatus === "PACKING"
+      ? 3
+      : currentStatus === "BILLED"
+      ? 4
+      : currentStatus === "COMPLETED"
+      ? 5
+      : 1);
+
   const defaultExplanations: Record<TimelineStep, string> = {
-    1: "Adding groceries closes on 24 Nov midnight. PACT will consolidate everyone's list.",
+    1: `Adding groceries closes on ${cutoffDay || 22}nd @ ${cutoffTime || "17:27"}. PACT will consolidate everyone's list.`,
     2: "The consolidated order has been sent to the store for confirmation and packing.",
     3: "The store is packing your items. Final bill will be ready shortly.",
     4: "Your bill is ready with wholesale savings. Pay to confirm your delivery.",
     5: "All payments complete. Your building coordinator is distributing packages.",
   };
 
-  const activeExplanation = explanation || defaultExplanations[currentStep];
+  const activeExplanation = explanation || defaultExplanations[resolvedStep];
 
   return (
     <div className={`w-full flex flex-col gap-4 ${className}`}>
       {/* 5-step progress track */}
       <div className="grid grid-cols-5 relative items-center">
         {STEPS.map((step, idx) => {
-          const isDone = step.id < currentStep;
-          const isCurrent = step.id === currentStep;
+          const isDone = step.id < resolvedStep;
+          const isCurrent = step.id === resolvedStep;
 
           return (
             <div key={step.id} className="flex flex-col items-center relative text-center">

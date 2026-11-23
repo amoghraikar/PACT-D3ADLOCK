@@ -13,59 +13,121 @@ import {
   Palette,
   LogOut,
   Building2,
+  Package,
+  Layers,
+  History,
+  CreditCard,
+  CheckCircle,
+  Clock,
+  Activity,
+  Users,
+  Bell,
+  User,
+  Settings,
+  ChevronRight,
 } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
-import { StatusPill } from "@/components/ui/StatusPill";
 import { useAuth } from "@/context/AuthContext";
 
 export interface NavItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  badge?: string | number;
-  roleRequired?: string;
 }
-
-const NAV_ITEMS: NavItem[] = [
-  { label: "Catalogue", href: "/", icon: Store },
-  { label: "Collective Cart", href: "/cart", icon: ShoppingBag, badge: "3" },
-  { label: "Voice Ordering", href: "/customer/voice", icon: Mic },
-  { label: "My Invoices", href: "/invoices", icon: Receipt },
-  { label: "Deliveries", href: "/deliveries", icon: Truck },
-  { label: "Apartment Admin", href: "/admin", icon: Shield, roleRequired: "admin" },
-  { label: "Design System", href: "/styleguide", icon: Palette },
-];
 
 export function ResponsiveSidebar() {
   const pathname = usePathname();
-  const { user, role, logout, isAuthenticated } = useAuth();
+  const { user, role, logout } = useAuth();
+
+  // Determine current active persona based on pathname or user role
+  const isRetailer = pathname.startsWith("/retailer");
+  const isAdmin = pathname.startsWith("/admin");
+  const isPlatform = pathname.startsWith("/platform");
+  const isCustomer = !isRetailer && !isAdmin && !isPlatform;
+
+  let navItems: NavItem[] = [];
+  let portalTitle = "Resident Portal";
+
+  if (isCustomer) {
+    portalTitle = "Resident Portal";
+    navItems = [
+      { label: "Dashboard", href: "/customer", icon: Activity },
+      { label: "Shop Catalogue", href: "/customer/shop", icon: Store },
+      { label: "Shared Cart", href: "/customer/list", icon: ShoppingBag },
+      { label: "Voice Ordering", href: "/customer/speak", icon: Mic },
+      { label: "Current Bill", href: "/customer/bill", icon: Receipt },
+      { label: "Invoice History", href: "/customer/bills", icon: History },
+      { label: "Notifications", href: "/customer/notifications", icon: Bell },
+      { label: "My Profile", href: "/customer/profile", icon: User },
+    ];
+  } else if (isRetailer) {
+    portalTitle = "Retailer Merchant";
+    navItems = [
+      { label: "Dashboard", href: "/retailer", icon: Activity },
+      { label: "Bulk Orders", href: "/retailer/orders", icon: ShoppingBag },
+      { label: "Stock Inventory", href: "/retailer/inventory", icon: Package },
+      { label: "Stock Movements", href: "/retailer/inventory/movements", icon: History },
+      { label: "Payments & Payouts", href: "/retailer/payments", icon: CreditCard },
+      { label: "Merchant Profile", href: "/retailer/profile", icon: Store },
+    ];
+  } else if (isAdmin) {
+    portalTitle = "Apartment Admin";
+    navItems = [
+      { label: "Overview", href: "/admin", icon: Activity },
+      { label: "Paid Invoices", href: "/admin/paid", icon: CheckCircle },
+      { label: "Unpaid Invoices", href: "/admin/unpaid", icon: Clock },
+      { label: "Deliveries", href: "/admin/deliveries", icon: Truck },
+      { label: "Notifications", href: "/admin/notifications", icon: Bell },
+    ];
+  } else if (isPlatform) {
+    portalTitle = "Platform Admin";
+    navItems = [
+      { label: "Global Overview", href: "/platform", icon: Activity },
+      { label: "Communities", href: "/platform/communities", icon: Building2 },
+      { label: "Retailers", href: "/platform/retailers", icon: Store },
+      { label: "Consolidated Orders", href: "/platform/orders", icon: ShoppingBag },
+      { label: "Analytics & GMV", href: "/platform/analytics", icon: Layers },
+      { label: "System Audit Logs", href: "/platform/audit-logs", icon: Shield },
+    ];
+  }
 
   return (
     <aside className="hidden md:flex flex-col w-64 shrink-0 bg-surface border-r border-border h-screen sticky top-0 overflow-y-auto z-30 select-none">
       {/* Brand Header */}
-      <div className="p-5 border-b border-border flex items-center justify-between">
+      <div className="p-4 border-b border-border flex items-center justify-between">
         <Link href="/" className="focus-ring rounded-ctl">
-          <Logo />
+          <Logo size="md" />
         </Link>
+        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-pill bg-background border border-border text-muted">
+          {portalTitle}
+        </span>
       </div>
 
-      {/* Community Badge */}
-      <div className="p-4 mx-3 my-2 bg-background border border-border rounded-ctl">
-        <div className="flex items-center gap-2 text-xs font-semibold text-text uppercase tracking-wider mb-1">
+      {/* Community or Organization Badge */}
+      <div className="p-3 mx-3 my-2 bg-background border border-border rounded-ctl">
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted uppercase tracking-wider mb-0.5">
           <Building2 className="w-3.5 h-3.5 text-primary" />
-          <span>Community</span>
+          <span>{isPlatform ? "Platform Scope" : isRetailer ? "Fulfillment Store" : "Community"}</span>
         </div>
         <p className="text-sm font-bold text-text truncate">
-          {user?.community?.name || "Green Meadows, Apts"}
+          {isPlatform
+            ? "PACT Central Platform"
+            : isRetailer
+            ? "Sharma Supermarket"
+            : user?.community?.name || "Green Glen Residency"}
         </p>
         <p className="text-xs text-muted truncate">
-          {user?.apartment_number ? `Flat ${user.apartment_number}` : "Tower A · Collective"}
+          {isPlatform
+            ? "Multi-Tenant Control"
+            : isRetailer
+            ? "Bengaluru · Bellandur"
+            : user?.apartment_number ? `Flat ${user.apartment_number}` : "Tower A · Collective"}
         </p>
       </div>
 
       {/* Navigation Links */}
       <nav className="flex-1 px-3 py-2 space-y-1">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
 
@@ -83,58 +145,73 @@ export function ResponsiveSidebar() {
                 <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-muted"}`} />
                 <span>{item.label}</span>
               </div>
-
-              {item.badge && (
-                <span
-                  className={`px-2 py-0.5 text-xs font-bold rounded-pill ${
-                    isActive ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
-                  }`}
-                >
-                  {item.badge}
-                </span>
-              )}
+              {isActive && <ChevronRight className="w-3.5 h-3.5 text-white/70" />}
             </Link>
           );
         })}
       </nav>
 
-      {/* User Profile & Role Footer */}
-      <div className="p-4 border-t border-border mt-auto bg-background/50">
-        {isAuthenticated && user ? (
-          <div className="flex items-center justify-between gap-2">
-            <div className="truncate">
-              <p className="text-sm font-semibold text-text truncate">
-                {user.full_name || "Resident Member"}
-              </p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <StatusPill kind={role === "admin" ? "warning" : "info"} size="sm">
-                  {role || "customer"}
-                </StatusPill>
-                <span className="text-[11px] text-muted truncate">{user.phone}</span>
-              </div>
-            </div>
+      {/* Switch Portals Quick Selector */}
+      <div className="p-3 mx-3 mb-2 bg-background/60 border border-border rounded-ctl space-y-1">
+        <span className="text-[10px] font-bold text-muted uppercase tracking-wider block mb-1">
+          Switch Workspace
+        </span>
+        <div className="grid grid-cols-2 gap-1 text-[11px]">
+          <Link
+            href="/customer"
+            className={`px-2 py-1 rounded text-center truncate ${
+              isCustomer ? "bg-primary text-white font-semibold" : "text-text hover:bg-background"
+            }`}
+          >
+            Customer
+          </Link>
+          <Link
+            href="/retailer"
+            className={`px-2 py-1 rounded text-center truncate ${
+              isRetailer ? "bg-primary text-white font-semibold" : "text-text hover:bg-background"
+            }`}
+          >
+            Retailer
+          </Link>
+          <Link
+            href="/admin"
+            className={`px-2 py-1 rounded text-center truncate ${
+              isAdmin ? "bg-primary text-white font-semibold" : "text-text hover:bg-background"
+            }`}
+          >
+            Admin
+          </Link>
+          <Link
+            href="/platform"
+            className={`px-2 py-1 rounded text-center truncate ${
+              isPlatform ? "bg-primary text-white font-semibold" : "text-text hover:bg-background"
+            }`}
+          >
+            Platform
+          </Link>
+        </div>
+      </div>
 
-            <button
-              type="button"
-              onClick={logout}
-              title="Sign Out"
-              aria-label="Sign out"
-              className="p-2 text-muted hover:text-danger-700 hover:bg-danger-100 rounded-ctl transition-colors focus-ring cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+      {/* User Footer with Signout */}
+      <div className="p-3 border-t border-border bg-surface">
+        <div className="flex items-center justify-between">
+          <div className="min-w-0 flex-1 pr-2">
+            <p className="text-xs font-bold text-text truncate">
+              {user?.full_name || "Signed-in User"}
+            </p>
+            <p className="text-[11px] text-muted truncate">
+              {user?.phone || "+91 99999 00001"}
+            </p>
           </div>
-        ) : (
-          <div className="text-center">
-            <p className="text-xs text-muted mb-2">Sign in to access your apartment cart</p>
-            <Link
-              href="/auth/login"
-              className="block w-full py-2 text-center text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-ctl transition-colors focus-ring"
-            >
-              Sign In
-            </Link>
-          </div>
-        )}
+          <button
+            type="button"
+            onClick={() => logout()}
+            title="Sign Out"
+            className="p-1.5 rounded-ctl text-muted hover:text-danger-700 hover:bg-background transition-colors focus-ring cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </aside>
   );

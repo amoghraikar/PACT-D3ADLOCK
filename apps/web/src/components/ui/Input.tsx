@@ -7,6 +7,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   helperText?: string;
   error?: string;
   leadingIcon?: React.ReactNode;
+  leftIcon?: React.ReactNode;
   trailingIcon?: React.ReactNode;
   fullWidth?: boolean;
 }
@@ -18,6 +19,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       helperText,
       error,
       leadingIcon,
+      leftIcon,
       trailingIcon,
       fullWidth = true,
       disabled = false,
@@ -28,6 +30,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ref
   ) => {
     const inputId = id || (label ? `input-${label.toLowerCase().replace(/\s+/g, "-")}` : undefined);
+    const resolvedLeadingIcon = leadingIcon || leftIcon;
 
     return (
       <div className={`flex flex-col gap-1.5 ${fullWidth ? "w-full" : "w-auto"}`}>
@@ -46,8 +49,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               : "border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
           } ${className}`}
         >
-          {leadingIcon && (
-            <span className="shrink-0 text-muted mr-2 flex items-center">{leadingIcon}</span>
+          {resolvedLeadingIcon && (
+            <span className="shrink-0 text-muted mr-2 flex items-center">{resolvedLeadingIcon}</span>
           )}
 
           <input

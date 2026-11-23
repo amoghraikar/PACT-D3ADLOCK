@@ -1,14 +1,18 @@
 import React from "react";
 
 export interface ProgressBarProps {
-  value: number; // Current value or percentage
+  value?: number; // Current value or percentage
   max?: number;
+  current?: number;
+  total?: number;
   label?: string;
   className?: string;
 }
 
-export function ProgressBar({ value, max = 100, label, className = "" }: ProgressBarProps) {
-  const percentage = Math.min(100, Math.max(0, Math.round((value / max) * 100)));
+export function ProgressBar({ value, max = 100, current, total, label, className = "" }: ProgressBarProps) {
+  const actualVal = current !== undefined ? current : (value ?? 0);
+  const actualMax = total !== undefined ? total : max;
+  const percentage = Math.min(100, Math.max(0, Math.round((actualVal / (actualMax || 1)) * 100)));
 
   return (
     <div className={`w-full flex flex-col gap-2 ${className}`}>

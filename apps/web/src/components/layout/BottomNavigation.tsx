@@ -3,18 +3,45 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Store, ShoppingBag, Mic, Receipt, User } from "lucide-react";
+import { Store, ShoppingBag, Mic, Receipt, Activity, Package, CheckCircle, Shield } from "lucide-react";
 
 export function BottomNavigation() {
   const pathname = usePathname();
 
-  const navItems = [
-    { label: "Shop", href: "/", icon: Store },
-    { label: "Cart", href: "/cart", icon: ShoppingBag, badge: 3 },
-    { label: "Voice", href: "/customer/voice", icon: Mic, isPrimary: true },
-    { label: "Invoices", href: "/invoices", icon: Receipt },
-    { label: "Profile", href: "/profile", icon: User },
-  ];
+  const isRetailer = pathname.startsWith("/retailer");
+  const isAdmin = pathname.startsWith("/admin");
+  const isPlatform = pathname.startsWith("/platform");
+
+  let navItems: { label: string; href: string; icon: React.ComponentType<{ className?: string }>; isPrimary?: boolean }[] = [];
+
+  if (isRetailer) {
+    navItems = [
+      { label: "Dashboard", href: "/retailer", icon: Activity },
+      { label: "Orders", href: "/retailer/orders", icon: ShoppingBag, isPrimary: true },
+      { label: "Inventory", href: "/retailer/inventory", icon: Package },
+    ];
+  } else if (isAdmin) {
+    navItems = [
+      { label: "Overview", href: "/admin", icon: Activity },
+      { label: "Deliveries", href: "/admin/deliveries", icon: CheckCircle, isPrimary: true },
+      { label: "Invoices", href: "/admin/unpaid", icon: Receipt },
+    ];
+  } else if (isPlatform) {
+    navItems = [
+      { label: "Global", href: "/platform", icon: Activity },
+      { label: "Orders", href: "/platform/orders", icon: ShoppingBag, isPrimary: true },
+      { label: "Audit", href: "/platform/audit-logs", icon: Shield },
+    ];
+  } else {
+    // Default Customer Navigation
+    navItems = [
+      { label: "Shop", href: "/customer/shop", icon: Store },
+      { label: "Cart", href: "/customer/list", icon: ShoppingBag },
+      { label: "Speak", href: "/customer/speak", icon: Mic, isPrimary: true },
+      { label: "Bill", href: "/customer/bill", icon: Receipt },
+      { label: "History", href: "/customer/bills", icon: Activity },
+    ];
+  }
 
   return (
     <nav
@@ -54,15 +81,8 @@ export function BottomNavigation() {
                 isActive ? "text-primary font-bold" : "text-muted hover:text-text"
               }`}
             >
-              <div className="relative">
-                <Icon className="w-5 h-5" />
-                {item.badge && item.badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 bg-danger-700 text-white text-[9px] font-bold rounded-pill flex items-center justify-center leading-none">
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-              <span className="text-[11px] mt-1 tracking-tight">{item.label}</span>
+              <Icon className="w-5 h-5" />
+              <span className="text-[10px] font-medium mt-1">{item.label}</span>
             </Link>
           );
         })}

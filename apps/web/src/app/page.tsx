@@ -4,16 +4,19 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo, Card, StatusPill, Button } from "@/components/ui";
 import {
+  Users,
+  Store,
+  Building,
+  Shield,
+  ArrowRight,
   Server,
-  Smartphone,
-  Layers,
-  CheckCircle2,
-  ExternalLink,
-  RefreshCw,
-  Terminal,
   Activity,
+  Sparkles,
+  ShoppingBag,
   Mic,
-  Volume2,
+  Receipt,
+  CheckCircle2,
+  Palette,
 } from "lucide-react";
 
 interface ApiHealthState {
@@ -30,7 +33,6 @@ interface ApiHealthState {
 
 export default function LandingPage() {
   const [apiHealth, setApiHealth] = useState<ApiHealthState>({ status: "loading" });
-  const [mountedTime, setMountedTime] = useState<string>("Ready");
 
   const checkApiHealth = async () => {
     setApiHealth((prev) => ({ ...prev, status: "loading" }));
@@ -62,271 +64,265 @@ export default function LandingPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setMountedTime(new Date().toLocaleTimeString());
       checkApiHealth();
     }, 0);
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <main className="min-h-screen bg-ice-50 text-ink-800 flex flex-col justify-between px-4 py-8 sm:py-12">
-      <div className="w-full max-w-4xl mx-auto space-y-8">
-        {/* Brand Header */}
-        <div className="text-center space-y-3">
-          <div className="flex justify-center">
-            <Logo size="lg" />
+    <main className="min-h-screen bg-background text-text flex flex-col justify-between px-4 py-8 sm:py-12">
+      <div className="w-full max-w-5xl mx-auto space-y-10">
+        {/* Navigation Bar */}
+        <header className="flex items-center justify-between py-2 border-b border-border">
+          <div className="flex items-center gap-3">
+            <Logo size="md" />
+            <span className="font-serif text-xl font-bold tracking-tight text-text">PACT</span>
           </div>
-          <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-ink-800 tracking-tight">
-            PACT Collective Commerce
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/styleguide"
+              className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-text px-2.5 py-1.5 rounded-pill border border-border bg-surface"
+            >
+              <Palette className="w-3.5 h-3.5 text-primary" />
+              <span>Design System</span>
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1 text-xs font-semibold px-4 py-2 rounded-pill bg-primary text-white hover:bg-primary-hover shadow-sm"
+            >
+              <span>Sign In</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </header>
+
+        {/* Hero Section */}
+        <div className="text-center space-y-4 pt-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-surface border border-border rounded-pill text-xs font-medium text-muted shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span>Pantry Collective Commerce Platform</span>
+          </div>
+          <h1 className="font-serif text-4xl sm:text-6xl font-bold text-text tracking-tight max-w-3xl mx-auto">
+            One Building. One Shared Cart. Fairly Split Bills.
           </h1>
-          <p className="text-ink-500 text-lg sm:text-xl max-w-xl mx-auto font-sans leading-relaxed">
-            One building · one shared monthly cart · one bulk order · one bill, split fairly.
+          <p className="text-muted text-base sm:text-xl max-w-2xl mx-auto font-sans leading-relaxed">
+            Apartment residents aggregate monthly grocery orders into wholesale bulk deliveries from trusted local merchants, powered by deterministic F7 fair-split billing.
           </p>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-ice-200 rounded-full text-xs font-medium text-ink-600 shadow-sm">
-            <Activity className="w-3.5 h-3.5 text-teal-700 animate-pulse" />
-            <span>Milestone 0 · Platform Initialization</span>
+          <div className="flex flex-wrap justify-center gap-4 pt-2">
+            <Link
+              href="/login"
+              className="px-6 py-3 bg-primary text-white text-sm font-semibold rounded-pill hover:bg-primary-hover shadow transition-transform active:scale-95 inline-flex items-center gap-2"
+            >
+              <span>Launch App Portal</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/onboarding"
+              className="px-6 py-3 bg-surface border border-border text-text text-sm font-semibold rounded-pill hover:bg-background transition-colors inline-flex items-center gap-2"
+            >
+              <span>Join Your Community</span>
+            </Link>
           </div>
         </div>
 
-        {/* System Health Status Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Backend API Health Card */}
-          <Card className="p-6 bg-white border border-ice-200 shadow-sm rounded-2xl flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 bg-ice-100 rounded-xl text-teal-700">
-                    <Server className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-ink-800 font-sans">
-                      FastAPI Backend API
-                    </h2>
-                    <p className="text-xs text-ink-500">REST v1 Service (`/api/v1`)</p>
-                  </div>
-                </div>
-                {apiHealth.status === "online" && (
-                  <StatusPill kind="success" label={`Online (${apiHealth.latencyMs}ms)`} />
-                )}
-                {apiHealth.status === "offline" && <StatusPill kind="danger" label="Offline" />}
-                {apiHealth.status === "loading" && <StatusPill kind="neutral" label="Pinging..." />}
-              </div>
+        {/* The 4 Role Portals */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-muted">
+              Role Workspaces & Dashboards
+            </h2>
+            <span className="text-xs text-muted">Protected with role authentication</span>
+          </div>
 
-              <div className="bg-ice-50 p-3 rounded-xl border border-ice-200 text-xs font-mono space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-ink-500">Service:</span>
-                  <span className="font-medium text-ink-800">
-                    {apiHealth.data?.app || "pact-api"}
-                  </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Customer Portal */}
+            <Card className="p-5 flex flex-col justify-between hover:border-primary transition-colors group">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-card bg-surface border border-border flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                  <Users className="w-5 h-5" />
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-500">Version:</span>
-                  <span className="font-medium text-ink-800">
-                    {apiHealth.data?.version || "0.1.0"}
-                  </span>
+                <div>
+                  <h3 className="font-bold text-text text-base">Resident Customer</h3>
+                  <p className="text-xs text-muted mt-1 leading-normal">
+                    Browse catalogue, add to collective cart, order with voice, and settle fair-split invoices.
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-500">Environment:</span>
-                  <span className="font-medium text-ink-800">
-                    {apiHealth.data?.environment || "development"}
-                  </span>
+              </div>
+              <div className="pt-4 border-t border-border mt-4">
+                <Link
+                  href="/customer"
+                  className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  Enter Resident Portal <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </Card>
+
+            {/* Retailer Portal */}
+            <Card className="p-5 flex flex-col justify-between hover:border-primary transition-colors group">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-card bg-surface border border-border flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                  <Store className="w-5 h-5" />
                 </div>
-                {apiHealth.error && (
-                  <div className="text-red-600 pt-1 border-t border-ice-200">{apiHealth.error}</div>
-                )}
+                <div>
+                  <h3 className="font-bold text-text text-base">Kirana Retailer</h3>
+                  <p className="text-xs text-muted mt-1 leading-normal">
+                    Fulfill community bulk orders, adjust packed inventory, preview bills, and dispatch deliveries.
+                  </p>
+                </div>
+              </div>
+              <div className="pt-4 border-t border-border mt-4">
+                <Link
+                  href="/retailer"
+                  className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  Enter Retailer Portal <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </Card>
+
+            {/* Apartment Admin Portal */}
+            <Card className="p-5 flex flex-col justify-between hover:border-primary transition-colors group">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-card bg-surface border border-border flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                  <Building className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-text text-base">Apartment Admin</h3>
+                  <p className="text-xs text-muted mt-1 leading-normal">
+                    Track building participation, collection rates, trigger payment reminders, and confirm handovers.
+                  </p>
+                </div>
+              </div>
+              <div className="pt-4 border-t border-border mt-4">
+                <Link
+                  href="/admin"
+                  className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  Enter Admin Portal <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </Card>
+
+            {/* Platform Admin Portal */}
+            <Card className="p-5 flex flex-col justify-between hover:border-primary transition-colors group">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-card bg-surface border border-border flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                  <Shield className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-text text-base">Platform Admin</h3>
+                  <p className="text-xs text-muted mt-1 leading-normal">
+                    Manage all communities, merchant retailers, mappings, platform GMV analytics, and audit logs.
+                  </p>
+                </div>
+              </div>
+              <div className="pt-4 border-t border-border mt-4">
+                <Link
+                  href="/platform"
+                  className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  Enter Platform Portal <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        {/* System & Architecture Status */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          {/* Backend API Health Card */}
+          <Card className="p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Server className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-bold text-text">FastAPI Backend Service</h3>
+              </div>
+              {apiHealth.status === "online" && (
+                <StatusPill status="OPEN">{`Online (${apiHealth.latencyMs}ms)`}</StatusPill>
+              )}
+              {apiHealth.status === "offline" && (
+                <StatusPill status="REJECTED">Offline</StatusPill>
+              )}
+              {apiHealth.status === "loading" && (
+                <StatusPill status="PROCESSING">Checking...</StatusPill>
+              )}
+            </div>
+
+            <div className="p-3 bg-background rounded-card border border-border text-xs font-mono space-y-1">
+              <div className="flex justify-between">
+                <span className="text-muted">Status:</span>
+                <span className="font-semibold text-text">{apiHealth.status.toUpperCase()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Environment:</span>
+                <span className="text-text">{apiHealth.data?.environment || "development"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Service:</span>
+                <span className="text-text">{apiHealth.data?.app || "pact-api"}</span>
               </div>
             </div>
 
-            <div className="pt-4 mt-4 border-t border-ice-100 flex items-center justify-between">
+            <div className="flex items-center justify-between pt-2">
               <a
                 href="/docs"
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-teal-700 hover:text-teal-800 font-medium inline-flex items-center gap-1"
+                className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-1"
               >
-                Open API Docs (Swagger) <ExternalLink className="w-3 h-3" />
+                FastAPI Swagger Docs
               </a>
               <Button
-                variant="quiet"
+                variant="outline"
                 size="sm"
                 onClick={checkApiHealth}
-                className="text-xs flex items-center gap-1 text-ink-500 hover:text-ink-800"
+                isLoading={apiHealth.status === "loading"}
               >
-                <RefreshCw
-                  className={`w-3.5 h-3.5 ${apiHealth.status === "loading" ? "animate-spin" : ""}`}
-                />
-                Re-check
+                Re-check API
               </Button>
             </div>
           </Card>
 
-          {/* Frontend Web & Android Card */}
-          <Card className="p-6 bg-white border border-ice-200 shadow-sm rounded-2xl flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 bg-ice-100 rounded-xl text-teal-700">
-                    <Smartphone className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-ink-800 font-sans">
-                      Next.js 16 & Capacitor
-                    </h2>
-                    <p className="text-xs text-ink-500">App Router & Android Shell</p>
-                  </div>
-                </div>
-                <StatusPill kind="success" label="Active" />
-              </div>
-
-              <div className="bg-ice-50 p-3 rounded-xl border border-ice-200 text-xs font-mono space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-ink-500">Framework:</span>
-                  <span className="font-medium text-ink-800">Next.js 16.4.6 (Turbopack)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-500">Mobile Runtime:</span>
-                  <span className="font-medium text-ink-800">Capacitor 7.4.4 (Android SDK 36)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-500">Static Export:</span>
-                  <span className="font-medium text-ink-800">Ready (`build/` & `dist/`)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-500">Loaded At:</span>
-                  <span className="font-medium text-ink-800">{mountedTime || "Now"}</span>
-                </div>
-              </div>
+          {/* Core Business Invariants */}
+          <Card className="p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-bold text-text">Core System Invariants</h3>
             </div>
-
-            <div className="pt-4 mt-4 border-t border-ice-100 flex items-center justify-between">
-              <span className="text-xs text-ink-500">Zero raw hex tokens</span>
-              <span className="text-xs font-medium text-teal-700">Client-Side Hydrated</span>
-            </div>
+            <ul className="text-xs text-muted space-y-2">
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                <span><strong>F7 Invariant:</strong> Sum of resident invoices mathematically equals retailer bill (zero discrepancy).</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                <span><strong>Integer Paise:</strong> All financial arithmetic executed strictly in integer paise.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                <span><strong>Privacy Shield:</strong> Demand aggregated collectively without exposing private resident baskets.</span>
+              </li>
+            </ul>
           </Card>
         </div>
 
-        {/* Milestone 8 Voice Ordering Engine Feature Card */}
-        <Card className="p-6 bg-gradient-to-br from-teal-900 to-teal-950 text-white border-0 shadow-lg rounded-3xl overflow-hidden relative">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-teal-800/80 border border-teal-700/60 rounded-full text-xs font-semibold text-teal-200">
-                <Volume2 className="w-3.5 h-3.5 text-teal-300" />
-                <span>Milestone 8 Feature · Multilingual Voice Ordering</span>
-              </div>
-              <h2 className="text-2xl font-display font-bold text-white tracking-tight">
-                Voice-First Collective Grocery Dictation
-              </h2>
-              <p className="text-sm text-teal-100 max-w-xl font-sans leading-relaxed">
-                Dictate grocery lists naturally in English, Hindi, or Hinglish. Deterministic quantity extraction, fraction parsing (aadha, dedh, dhai), ambiguity clarification, and zero-risk cart review.
-              </p>
-              <div className="flex flex-wrap gap-2 pt-1 text-xs text-teal-200">
-                <span className="bg-teal-800/50 px-2.5 py-0.5 rounded-lg border border-teal-700/40">English (en-IN)</span>
-                <span className="bg-teal-800/50 px-2.5 py-0.5 rounded-lg border border-teal-700/40">Hinglish (Latin)</span>
-                <span className="bg-teal-800/50 px-2.5 py-0.5 rounded-lg border border-teal-700/40">Hindi (हिन्दी hi-IN)</span>
-                <span className="bg-teal-800/50 px-2.5 py-0.5 rounded-lg border border-teal-700/40">Web Speech API + Fallback</span>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2 shrink-0">
-              <Link href="/customer/voice">
-                <Button
-                  variant="primary"
-                  className="w-full sm:w-auto bg-white hover:bg-ice-100 text-teal-950 font-bold px-6 py-3.5 rounded-2xl shadow-md inline-flex items-center justify-center gap-2"
-                >
-                  <Mic className="w-4 h-4 text-teal-700" />
-                  <span>Launch Voice Ordering</span>
-                </Button>
-              </Link>
-            </div>
+        {/* Footer */}
+        <footer className="pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between text-xs text-muted gap-4">
+          <p>© 2026 PACT Collective Commerce Platform. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <Link href="/styleguide" className="hover:text-text">
+              Styleguide
+            </Link>
+            <Link href="/login" className="hover:text-text">
+              Sign In
+            </Link>
+            <Link href="/onboarding" className="hover:text-text">
+              Onboarding
+            </Link>
           </div>
-        </Card>
-
-        {/* Technology Stack & Milestone Checklist */}
-        <Card className="p-6 bg-white border border-ice-200 shadow-sm rounded-2xl space-y-4">
-          <div className="flex items-center gap-2 border-b border-ice-100 pb-3">
-            <Layers className="w-5 h-5 text-teal-700" />
-            <h3 className="text-base font-bold text-ink-800">Milestone 0 Verification Checklist</h3>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-ink-800">Clean Monorepo Topology:</strong>
-                <p className="text-ink-500">
-                  `apps/api`, `apps/web`, `infrastructure/`, `docs/`, `scripts/`
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-ink-800">FastAPI Health Endpoints:</strong>
-                <p className="text-ink-500">
-                  `/` root, `/health` global, and `/api/v1/health` versioned
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-ink-800">Next.js App Router:</strong>
-                <p className="text-ink-500">
-                  Static export compatibility, ErrorBoundary, Tailwind tokens
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-ink-800">Infrastructure Blueprints:</strong>
-                <p className="text-ink-500">
-                  Docker Compose (PostgreSQL 16, Kafka) and Render deployment YAML
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-ink-800">Standardized Formatting:</strong>
-                <p className="text-ink-500">
-                  Ruff (Python), ESLint 9 & Prettier 3 (TypeScript/React)
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-ink-800">Strict Separation:</strong>
-                <p className="text-ink-500">
-                  Zero business functionality yet; ready for Milestone 1
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Quick Commands Banner */}
-        <div className="p-4 bg-teal-900 text-ice-50 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Terminal className="w-5 h-5 text-teal-300" />
-            <div>
-              <p className="text-xs font-bold text-white font-mono">make dev</p>
-              <p className="text-xs text-teal-200">
-                Start full stack: FastAPI on :8000 · Next.js on :3000
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <a
-              href="https://github.com/amoghraikar/PACT-D3ADLOCK"
-              target="_blank"
-              rel="noreferrer"
-              className="px-3 py-1.5 bg-teal-800 hover:bg-teal-700 text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1.5"
-            >
-              GitHub Repository <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
-        </div>
+        </footer>
       </div>
     </main>
   );
