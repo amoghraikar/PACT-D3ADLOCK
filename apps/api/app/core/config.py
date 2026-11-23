@@ -39,15 +39,30 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     # Transports & Integrations
-    EVENT_TRANSPORT: str = "inline"
+    EVENT_TRANSPORT: str = "in_memory"  # in_memory, inline, kafka
     SEARCH_BACKEND: str = "postgres"
-    PAYMENT_GATEWAY: str = "mock"
+    PAYMENT_GATEWAY: str = "mock"  # mock, razorpay
     WEB_PUSH_ENABLED: bool = False
 
-    # Razorpay (optional in dev)
-    RAZORPAY_KEY_ID: str = ""
-    RAZORPAY_KEY_SECRET: str = ""
-    RAZORPAY_WEBHOOK_SECRET: str = ""
+    # Razorpay Payments
+    RAZORPAY_KEY_ID: str = "rzp_test_pactmockkey123"
+    RAZORPAY_KEY_SECRET: str = "rzp_test_secret_pact_mock_456"
+    RAZORPAY_WEBHOOK_SECRET: str = "pact_razorpay_webhook_secret_dev"
+
+    # Apache Kafka / Aiven Kafka
+    KAFKA_BOOTSTRAP_SERVERS: str = ""
+    KAFKA_SECURITY_PROTOCOL: str = "PLAINTEXT"  # PLAINTEXT or SASL_SSL for Aiven
+    KAFKA_SASL_MECHANISM: str = "SCRAM-SHA-256"
+    KAFKA_SASL_USERNAME: str = ""
+    KAFKA_SASL_PASSWORD: str = ""
+    KAFKA_CONSUMER_GROUP: str = "pact-group"
+    KAFKA_AUTO_OFFSET_RESET: str = "earliest"
+    KAFKA_TOPIC_PREFIX: str = "pact"
+
+    # Transactional Outbox
+    OUTBOX_BATCH_SIZE: int = 50
+    OUTBOX_MAX_RETRIES: int = 3
+    OUTBOX_POLL_INTERVAL_SECONDS: float = 2.0
 
     model_config = SettingsConfigDict(
         env_file=".env",

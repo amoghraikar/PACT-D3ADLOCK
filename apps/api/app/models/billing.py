@@ -107,7 +107,10 @@ class Invoice(Base):
         "DiscountAllocation", back_populates="invoice", cascade="all, delete-orphan"
     )
     payments: Mapped[list["PaymentRecord"]] = relationship(
-        "PaymentRecord", back_populates="invoice"
+        "PaymentRecord", back_populates="invoice", cascade="all, delete-orphan"
+    )
+    refunds: Mapped[list["Refund"]] = relationship(
+        "Refund", back_populates="invoice", cascade="all, delete-orphan"
     )
     delivery_handovers: Mapped[list["DeliveryHandover"]] = relationship(
         "DeliveryHandover", back_populates="invoice"
@@ -190,7 +193,9 @@ class PaymentRecord(Base):
 
     invoice: Mapped["Invoice"] = relationship("Invoice", back_populates="payments")
     user: Mapped["User"] = relationship("User")
-    refunds: Mapped[list["Refund"]] = relationship("Refund", back_populates="payment")
+    refunds: Mapped[list["Refund"]] = relationship(
+        "Refund", back_populates="payment", cascade="all, delete-orphan"
+    )
 
 
 class Refund(Base):
@@ -220,3 +225,4 @@ class Refund(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     payment: Mapped["PaymentRecord"] = relationship("PaymentRecord", back_populates="refunds")
+    invoice: Mapped["Invoice"] = relationship("Invoice", back_populates="refunds")

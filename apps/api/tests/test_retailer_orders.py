@@ -59,6 +59,7 @@ def _get_auth_token(phone: str, db) -> str:
 
 
 def _clean_cycle_and_orders(db, cycle: ShoppingCycle):
+    from app.models.billing import PaymentRecord, Refund
     from app.models.commerce import CommunityCartItem, RetailerPackingItem
 
     existing_orders = list(db.scalars(select(BulkOrder).where(BulkOrder.cycle_id == cycle.id)).all())
@@ -66,6 +67,8 @@ def _clean_cycle_and_orders(db, cycle: ShoppingCycle):
         db.query(RetailerBill).filter(RetailerBill.bulk_order_id == bo.id).delete()
         invoices = list(db.scalars(select(Invoice).where(Invoice.bulk_order_id == bo.id)).all())
         for inv in invoices:
+            db.query(Refund).filter(Refund.invoice_id == inv.id).delete()
+            db.query(PaymentRecord).filter(PaymentRecord.invoice_id == inv.id).delete()
             db.query(InvoiceItem).filter(InvoiceItem.invoice_id == inv.id).delete()
             db.query(DiscountAllocation).filter(DiscountAllocation.invoice_id == inv.id).delete()
             db.delete(inv)

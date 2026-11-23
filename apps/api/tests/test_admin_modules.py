@@ -35,7 +35,14 @@ from app.core.clock import set_clock_override
 from app.core.config import settings
 from app.core.db import SessionLocal
 from app.main import app
-from app.models.billing import DiscountAllocation, Invoice, InvoiceItem, RetailerBill
+from app.models.billing import (
+    DiscountAllocation,
+    Invoice,
+    InvoiceItem,
+    PaymentRecord,
+    Refund,
+    RetailerBill,
+)
 from app.models.catalogue import ProductVariant
 from app.models.commerce import BulkOrder, CommunityCartItem, RetailerPackingItem, ShoppingCycle
 from app.models.delivery import Delivery, DeliveryHandover
@@ -72,6 +79,8 @@ def _clean_cycle_and_orders(db, cycle: ShoppingCycle):
         db.query(RetailerBill).filter(RetailerBill.bulk_order_id == bo.id).delete()
         invoices = list(db.scalars(select(Invoice).where(Invoice.bulk_order_id == bo.id)).all())
         for inv in invoices:
+            db.query(Refund).filter(Refund.invoice_id == inv.id).delete()
+            db.query(PaymentRecord).filter(PaymentRecord.invoice_id == inv.id).delete()
             db.query(InvoiceItem).filter(InvoiceItem.invoice_id == inv.id).delete()
             db.query(DiscountAllocation).filter(DiscountAllocation.invoice_id == inv.id).delete()
             db.delete(inv)

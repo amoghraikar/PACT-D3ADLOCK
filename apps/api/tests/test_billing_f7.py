@@ -499,7 +499,14 @@ def test_api_finalize_bulk_order_billing(db):
     4. Verify resident can fetch invoice via /invoices/me and /invoices/{id}
     5. Verify idempotency on second call
     """
-    from app.models.billing import DiscountAllocation, Invoice, InvoiceItem, RetailerBill
+    from app.models.billing import (
+        DiscountAllocation,
+        Invoice,
+        InvoiceItem,
+        PaymentRecord,
+        Refund,
+        RetailerBill,
+    )
     from app.models.commerce import BulkOrder
     from app.repositories.cycle_repository import CycleRepository
 
@@ -518,6 +525,8 @@ def test_api_finalize_bulk_order_billing(db):
         db.query(RetailerBill).filter(RetailerBill.bulk_order_id == bo.id).delete()
         invoices = list(db.scalars(select(Invoice).where(Invoice.bulk_order_id == bo.id)).all())
         for inv in invoices:
+            db.query(Refund).filter(Refund.invoice_id == inv.id).delete()
+            db.query(PaymentRecord).filter(PaymentRecord.invoice_id == inv.id).delete()
             db.query(InvoiceItem).filter(InvoiceItem.invoice_id == inv.id).delete()
             db.query(DiscountAllocation).filter(DiscountAllocation.invoice_id == inv.id).delete()
             db.delete(inv)
@@ -610,6 +619,8 @@ def test_api_finalize_bulk_order_billing(db):
     db.query(RetailerBill).filter(RetailerBill.bulk_order_id == bulk_order_id).delete()
     invs = list(db.scalars(select(Invoice).where(Invoice.bulk_order_id == bulk_order_id)).all())
     for inv in invs:
+        db.query(Refund).filter(Refund.invoice_id == inv.id).delete()
+        db.query(PaymentRecord).filter(PaymentRecord.invoice_id == inv.id).delete()
         db.query(InvoiceItem).filter(InvoiceItem.invoice_id == inv.id).delete()
         db.query(DiscountAllocation).filter(DiscountAllocation.invoice_id == inv.id).delete()
         db.delete(inv)

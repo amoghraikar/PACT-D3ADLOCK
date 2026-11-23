@@ -27,6 +27,8 @@ from app.modules.catalogue.router import router as catalogue_router
 from app.modules.cycles.router import router as cycles_router
 from app.modules.dev.router import router as dev_router
 from app.modules.inventory.router import router as inventory_router
+from app.modules.notifications.router import router as notifications_router
+from app.modules.payments.router import router as payments_router
 from app.modules.platform.router import router as platform_router
 from app.modules.retailer.orders_router import router as retailer_orders_router
 from app.modules.voice.router import router as voice_router
@@ -178,6 +180,8 @@ api_v1_router.include_router(billing_router, prefix="/billing", tags=["F7 Billin
 api_v1_router.include_router(admin_router, prefix="/admin", tags=["Apartment Administration"])
 api_v1_router.include_router(platform_router, prefix="/platform", tags=["Platform Administration"])
 api_v1_router.include_router(voice_router, tags=["Multilingual Voice Engine"])
+api_v1_router.include_router(payments_router, prefix="/payments", tags=["Payments & Settlement"])
+api_v1_router.include_router(notifications_router, prefix="/notifications", tags=["Notifications & Alerts"])
 api_v1_router.include_router(dev_router, prefix="/dev", tags=["Development Controls"])
 
 # Mount top-level versioned router
