@@ -27,15 +27,15 @@ export function MicButton({
           state === "listening"
             ? "Stop listening"
             : state === "error"
-            ? "Retry voice ordering"
-            : "Start voice ordering"
+              ? "Retry voice ordering"
+              : "Start voice ordering"
         }
         className={`w-[88px] h-[88px] rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer focus-ring relative ${
           state === "idle"
             ? "bg-ink-800 text-white hover:bg-ink-900 shadow-md active:scale-95"
             : state === "listening"
-            ? "bg-teal-700 text-white ring-8 ring-ice-200 animate-pulse scale-105"
-            : "bg-white text-danger-700 border-2 border-danger-700 hover:bg-danger-100"
+              ? "bg-teal-700 text-white ring-8 ring-ice-200 animate-pulse scale-105"
+              : "bg-white text-danger-700 border-2 border-danger-700 hover:bg-danger-100"
         }`}
       >
         {state === "idle" && <Mic className="w-8 h-8 stroke-[2]" />}
@@ -49,15 +49,15 @@ export function MicButton({
           state === "listening"
             ? "text-teal-700 font-semibold"
             : state === "error"
-            ? "text-danger-700"
-            : "text-ink-600"
+              ? "text-danger-700"
+              : "text-ink-600"
         }`}
       >
         {state === "listening"
           ? "Listening… tap to stop"
           : state === "error"
-          ? errorLabel
-          : "Tap to speak"}
+            ? errorLabel
+            : "Tap to speak"}
       </span>
     </div>
   );

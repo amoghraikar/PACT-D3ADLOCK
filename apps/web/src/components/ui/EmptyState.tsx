@@ -31,9 +31,7 @@ export function EmptyState({
       </div>
 
       {/* Serif Title */}
-      <h3 className="relative z-10 font-display text-2xl text-ink-800 mb-2 max-w-md">
-        {title}
-      </h3>
+      <h3 className="relative z-10 font-display text-2xl text-ink-800 mb-2 max-w-md">{title}</h3>
 
       {/* One explanatory sentence */}
       <p className="relative z-10 text-sm text-ink-600 max-w-sm mb-6 leading-relaxed">

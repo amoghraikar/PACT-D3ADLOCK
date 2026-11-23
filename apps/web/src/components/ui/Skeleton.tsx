@@ -22,9 +22,7 @@ export function Skeleton({
 
   return (
     <div
-      className={`animate-pulse bg-ice-100 ${
-        circle ? "rounded-full" : "rounded-ctl"
-      } ${className}`}
+      className={`animate-pulse bg-ice-100 ${circle ? "rounded-full" : "rounded-ctl"} ${className}`}
       style={dynamicStyle}
       aria-hidden="true"
       {...props}

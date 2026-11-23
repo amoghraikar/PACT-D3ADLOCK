@@ -58,11 +58,12 @@ export function Dialog({
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
 
       {/* Modal / Bottom Sheet Box */}
-      <div
-        className="relative z-10 w-full sm:max-w-md bg-white rounded-t-card sm:rounded-card border border-ice-300 shadow-[var(--shadow-float)] p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-150"
-      >
+      <div className="relative z-10 w-full sm:max-w-md bg-white rounded-t-card sm:rounded-card border border-ice-300 shadow-[var(--shadow-float)] p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-150">
         <div className="flex items-start justify-between gap-4">
-          <h3 id="dialog-title" className="font-display text-xl sm:text-2xl text-ink-800 leading-snug">
+          <h3
+            id="dialog-title"
+            className="font-display text-xl sm:text-2xl text-ink-800 leading-snug"
+          >
             {title}
           </h3>
           <button
@@ -75,11 +76,7 @@ export function Dialog({
           </button>
         </div>
 
-        {description && (
-          <p className="text-sm text-ink-600 leading-relaxed">
-            {description}
-          </p>
-        )}
+        {description && <p className="text-sm text-ink-600 leading-relaxed">{description}</p>}
 
         {children && <div className="py-2">{children}</div>}
 

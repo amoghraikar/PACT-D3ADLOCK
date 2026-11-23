@@ -32,7 +32,9 @@ export function DataTable<T>({
   }
 
   return (
-    <div className={`w-full overflow-hidden border border-ice-300 rounded-card bg-white ${className}`}>
+    <div
+      className={`w-full overflow-hidden border border-ice-300 rounded-card bg-white ${className}`}
+    >
       {/* Desktop Table View (>= 768px) */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
@@ -42,7 +44,11 @@ export function DataTable<T>({
                 <th
                   key={col.key}
                   className={`px-4 py-3 text-xs font-semibold text-ink-600 uppercase tracking-wider ${
-                    col.align === "right" || col.isNumeric ? "text-right" : col.align === "center" ? "text-center" : "text-left"
+                    col.align === "right" || col.isNumeric
+                      ? "text-right"
+                      : col.align === "center"
+                        ? "text-center"
+                        : "text-left"
                   }`}
                 >
                   {col.header}
@@ -52,15 +58,16 @@ export function DataTable<T>({
           </thead>
           <tbody className="divide-y divide-ice-100">
             {data.map((item) => (
-              <tr
-                key={keyExtractor(item)}
-                className="h-14 hover:bg-ice-100 transition-colors"
-              >
+              <tr key={keyExtractor(item)} className="h-14 hover:bg-ice-100 transition-colors">
                 {columns.map((col) => (
                   <td
                     key={col.key}
                     className={`px-4 py-3 text-sm text-ink-800 ${
-                      col.align === "right" || col.isNumeric ? "text-right tabular-nums font-medium" : col.align === "center" ? "text-center" : "text-left"
+                      col.align === "right" || col.isNumeric
+                        ? "text-right tabular-nums font-medium"
+                        : col.align === "center"
+                          ? "text-center"
+                          : "text-left"
                     }`}
                   >
                     {col.render
@@ -81,7 +88,9 @@ export function DataTable<T>({
             {columns.map((col) => (
               <div key={col.key} className="flex justify-between items-center text-sm">
                 <span className="text-xs font-medium text-ink-600">{col.header}</span>
-                <span className={`${col.isNumeric ? "tabular-nums font-semibold" : "font-medium"} text-ink-800`}>
+                <span
+                  className={`${col.isNumeric ? "tabular-nums font-semibold" : "font-medium"} text-ink-800`}
+                >
                   {col.render
                     ? col.render(item)
                     : String((item as Record<string, unknown>)[col.key] ?? "")}

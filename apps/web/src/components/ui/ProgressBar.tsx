@@ -18,7 +18,13 @@ export function ProgressBar({ value, max = 100, label, className = "" }: Progres
           <span className="tabular-nums font-semibold text-ink-800">{percentage}%</span>
         </div>
       )}
-      <div className="w-full h-3 bg-ice-100 rounded-pill overflow-hidden" role="progressbar" aria-valuenow={percentage} aria-valuemin={0} aria-valuemax={100}>
+      <div
+        className="w-full h-3 bg-ice-100 rounded-pill overflow-hidden"
+        role="progressbar"
+        aria-valuenow={percentage}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
         <div
           className="h-full bg-teal-700 rounded-pill transition-all duration-300 ease-out"
           style={{ width: `${percentage}%` }}

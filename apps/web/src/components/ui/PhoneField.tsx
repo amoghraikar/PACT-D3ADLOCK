@@ -1,7 +1,9 @@
 import React from "react";
 
-export interface PhoneFieldProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value" | "prefix"> {
+export interface PhoneFieldProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange" | "value" | "prefix"
+> {
   label: string;
   value: string;
   onChange: (value: string) => void;

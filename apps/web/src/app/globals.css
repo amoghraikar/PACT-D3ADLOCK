@@ -1,31 +1,39 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ink-900: #152A31;
+  --color-ink-900: #152a31;
   --color-ink-800: #203840;
-  --color-ink-600: #415F69;
+  --color-ink-600: #415f69;
   --color-ink-500: #557079;
-  --color-ink-400: #6C8790;
+  --color-ink-400: #6c8790;
 
-  --color-ice-50: #F3FAFB;
-  --color-ice-100: #E6F4F5;
-  --color-ice-200: #D3EBED;
-  --color-ice-300: #B8DADD;
-  --color-white: #FFFFFF;
+  --color-ice-50: #f3fafb;
+  --color-ice-100: #e6f4f5;
+  --color-ice-200: #d3ebed;
+  --color-ice-300: #b8dadd;
+  --color-white: #ffffff;
 
-  --color-teal-700: #17656F;
+  --color-teal-700: #17656f;
 
-  --color-success-700: #1B6B45;
-  --color-success-100: #E3F4EA;
+  --color-success-700: #1b6b45;
+  --color-success-100: #e3f4ea;
 
-  --color-warning-700: #7A4E00;
-  --color-warning-100: #FFF1CF;
+  --color-warning-700: #7a4e00;
+  --color-warning-100: #fff1cf;
 
-  --color-danger-700: #A3241C;
-  --color-danger-100: #FCE8E6;
+  --color-danger-700: #a3241c;
+  --color-danger-100: #fce8e6;
 
   --font-display: var(--font-dm-serif, "DM Serif Display", serif);
-  --font-sans: var(--font-dm-sans, "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  --font-sans: var(
+    --font-dm-sans,
+    "DM Sans",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif
+  );
   --font-hindi: var(--font-noto-devanagari, "Noto Sans Devanagari", sans-serif);
 
   --radius-card: 16px;
@@ -36,23 +44,23 @@
 }
 
 :root {
-  --ink-900: #152A31;
+  --ink-900: #152a31;
   --ink-800: #203840;
-  --ink-600: #415F69;
+  --ink-600: #415f69;
   --ink-500: #557079;
-  --ink-400: #6C8790;
-  --ice-50: #F3FAFB;
-  --ice-100: #E6F4F5;
-  --ice-200: #D3EBED;
-  --ice-300: #B8DADD;
-  --white: #FFFFFF;
-  --teal-700: #17656F;
-  --success-700: #1B6B45;
-  --success-100: #E3F4EA;
-  --warning-700: #7A4E00;
-  --warning-100: #FFF1CF;
-  --danger-700: #A3241C;
-  --danger-100: #FCE8E6;
+  --ink-400: #6c8790;
+  --ice-50: #f3fafb;
+  --ice-100: #e6f4f5;
+  --ice-200: #d3ebed;
+  --ice-300: #b8dadd;
+  --white: #ffffff;
+  --teal-700: #17656f;
+  --success-700: #1b6b45;
+  --success-100: #e3f4ea;
+  --warning-700: #7a4e00;
+  --warning-100: #fff1cf;
+  --danger-700: #a3241c;
+  --danger-100: #fce8e6;
 
   --radius-card: 16px;
   --radius-ctl: 12px;
@@ -91,11 +99,7 @@ body {
 
 /* Subtle architectural stripe pattern from logo */
 .bg-stripes {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    var(--ice-300) 0 2px,
-    transparent 2px 8px
-  );
+  background-image: repeating-linear-gradient(to bottom, var(--ice-300) 0 2px, transparent 2px 8px);
 }
 
 /* Focus ring per U5: 2px teal-700, 2px offset */

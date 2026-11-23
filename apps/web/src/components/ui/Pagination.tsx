@@ -27,10 +27,16 @@ export function Pagination({
   const canNext = currentPage < totalPages;
 
   return (
-    <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 py-3 px-2 ${className}`}>
+    <div
+      className={`flex flex-col sm:flex-row items-center justify-between gap-3 py-3 px-2 ${className}`}
+    >
       {totalItems !== undefined && (
         <div className="text-xs text-ink-600">
-          Showing <span className="font-semibold text-ink-800">{((currentPage - 1) * (itemsPerPage || 1)) + 1}</span> to{" "}
+          Showing{" "}
+          <span className="font-semibold text-ink-800">
+            {(currentPage - 1) * (itemsPerPage || 1) + 1}
+          </span>{" "}
+          to{" "}
           <span className="font-semibold text-ink-800">
             {Math.min(currentPage * (itemsPerPage || 1), totalItems)}
           </span>{" "}

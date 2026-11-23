@@ -47,8 +47,18 @@ export function TopBar({
 
   const customerNav = [
     { href: "/customer", label: "Home", icon: Home, isActive: pathname === "/customer" },
-    { href: "/customer/shop", label: "Shop", icon: ShoppingBag, isActive: pathname === "/customer/shop" },
-    { href: "/customer/speak", label: "Voice Order", icon: Mic, isActive: pathname === "/customer/speak" },
+    {
+      href: "/customer/shop",
+      label: "Shop",
+      icon: ShoppingBag,
+      isActive: pathname === "/customer/shop",
+    },
+    {
+      href: "/customer/speak",
+      label: "Voice Order",
+      icon: Mic,
+      isActive: pathname === "/customer/speak",
+    },
     {
       href: "/customer/list",
       label: "Cart",
@@ -102,19 +112,19 @@ export function TopBar({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-ctl text-xs font-semibold transition-colors focus-ring ${item.isActive
-                    ? "bg-ink-800 text-white shadow-2xs"
-                    : "text-ink-700 hover:text-ink-900 hover:bg-white/60"
-                    }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-ctl text-xs font-semibold transition-colors focus-ring ${
+                    item.isActive
+                      ? "bg-ink-800 text-white shadow-2xs"
+                      : "text-ink-700 hover:text-ink-900 hover:bg-white/60"
+                  }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
                   <span>{item.label}</span>
                   {item.badge && (
                     <span
-                      className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold ${item.isActive
-                        ? "bg-ice-200 text-ink-800"
-                        : "bg-ink-800 text-white"
-                        }`}
+                      className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                        item.isActive ? "bg-ice-200 text-ink-800" : "bg-ink-800 text-white"
+                      }`}
                     >
                       {item.badge}
                     </span>
@@ -181,8 +191,9 @@ export function TopBar({
                     setPersonaOpen(false);
                     router.push("/customer");
                   }}
-                  className={`w-full text-left px-3 py-2 flex items-center gap-2.5 hover:bg-ice-100 transition-colors cursor-pointer ${userRole === "customer" ? "bg-ice-100 font-bold" : ""
-                    }`}
+                  className={`w-full text-left px-3 py-2 flex items-center gap-2.5 hover:bg-ice-100 transition-colors cursor-pointer ${
+                    userRole === "customer" ? "bg-ice-100 font-bold" : ""
+                  }`}
                 >
                   <div className="w-6 h-6 rounded-full bg-ice-200 text-ink-800 flex items-center justify-center font-bold text-[10px]">
                     A
@@ -201,8 +212,9 @@ export function TopBar({
                     setPersonaOpen(false);
                     router.push("/retailer");
                   }}
-                  className={`w-full text-left px-3 py-2 flex items-center gap-2.5 hover:bg-ice-100 transition-colors cursor-pointer ${userRole === "retailer" ? "bg-ice-100 font-bold" : ""
-                    }`}
+                  className={`w-full text-left px-3 py-2 flex items-center gap-2.5 hover:bg-ice-100 transition-colors cursor-pointer ${
+                    userRole === "retailer" ? "bg-ice-100 font-bold" : ""
+                  }`}
                 >
                   <div className="w-6 h-6 rounded-full bg-ice-200 text-ink-800 flex items-center justify-center font-bold text-[10px]">
                     R
@@ -221,8 +233,9 @@ export function TopBar({
                     setPersonaOpen(false);
                     router.push("/admin");
                   }}
-                  className={`w-full text-left px-3 py-2 flex items-center gap-2.5 hover:bg-ice-100 transition-colors cursor-pointer ${userRole === "community_admin" ? "bg-ice-100 font-bold" : ""
-                    }`}
+                  className={`w-full text-left px-3 py-2 flex items-center gap-2.5 hover:bg-ice-100 transition-colors cursor-pointer ${
+                    userRole === "community_admin" ? "bg-ice-100 font-bold" : ""
+                  }`}
                 >
                   <div className="w-6 h-6 rounded-full bg-ice-200 text-ink-800 flex items-center justify-center font-bold text-[10px]">
                     M
@@ -231,7 +244,9 @@ export function TopBar({
                     <span className="block font-bold text-ink-800">Meera Sundaram</span>
                     <span className="text-[11px] text-ink-500">Building Admin</span>
                   </div>
-                  {userRole === "community_admin" && <UserCheck className="w-3.5 h-3.5 text-teal-700" />}
+                  {userRole === "community_admin" && (
+                    <UserCheck className="w-3.5 h-3.5 text-teal-700" />
+                  )}
                 </button>
 
                 <div className="border-t border-ice-100 my-1" />

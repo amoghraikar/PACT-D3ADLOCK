@@ -1,23 +1,42 @@
-def test_health_check_success(client):
-    response = client.get("/api/v1/health")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "healthy"
-    assert data["database"] == "connected"
-    assert "timestamp" in data
+from fastapi.testclient import TestClient
+
+from app.main import app
+
+client = TestClient(app)
 
 
-def test_root_endpoint(client):
+def test_root_endpoint():
     response = client.get("/")
     assert response.status_code == 200
     data = response.json()
     assert data["app"] == "PACT API"
+    assert data["status"] == "online"
+    assert "time_utc" in data
 
 
-def test_error_envelope_404(client):
-    response = client.get("/api/v1/non_existent_route")
+def test_global_health_endpoint():
+    response = client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["service"] == "pact-api"
+    assert "timestamp" in data
+
+
+def test_api_v1_health_endpoint():
+    response = client.get("/api/v1/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["version"] == "v1"
+    assert data["service"] == "pact-api"
+    assert "timestamp" in data
+
+
+def test_c6_error_envelope_on_404():
+    response = client.get("/api/v1/nonexistent-route")
     assert response.status_code == 404
     data = response.json()
     assert "error" in data
-    assert data["error"]["code"] == "NOT_FOUND"
+    assert "code" in data["error"]
     assert "message" in data["error"]

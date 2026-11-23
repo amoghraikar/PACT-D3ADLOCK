@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { DM_Sans, DM_Serif_Display, Noto_Sans_Devanagari } from "next/font/google";
 import "./globals.css";
 import "@/lib/api";
-import { AuthProvider } from "@/context/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const dmSerif = DM_Serif_Display({
@@ -35,34 +34,26 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "PACT · Collective Commerce",
+    default: "PACT · Collective Commerce Platform",
     template: "%s · PACT",
   },
-  description: "One building · one shared monthly cart · one bulk order · one bill, split fairly. Buy together with your neighbors.",
+  description:
+    "One building · one shared monthly cart · one bulk order · one bill, split fairly. Buy together with your neighbors.",
   keywords: [
     "collective commerce",
     "apartment grocery",
     "group buying",
     "kirana bulk order",
     "bill splitting",
-    "community pantry",
     "PACT",
   ],
   authors: [{ name: "PACT Team" }],
   openGraph: {
-    title: "PACT · Collective Commerce for Communities",
-    description: "Shop together, lower prices, and split monthly grocery orders fairly with your neighborhood.",
+    title: "PACT · Collective Commerce Platform",
+    description:
+      "Shop together, lower prices, and split monthly grocery orders fairly with your neighborhood.",
     type: "website",
     siteName: "PACT",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "PACT · Collective Commerce",
-    description: "One building · one shared monthly cart · one bill, split fairly.",
-  },
-  robots: {
-    index: true,
-    follow: true,
   },
   icons: {
     icon: "/brand/pact-mark.png",
@@ -70,20 +61,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`${dmSerif.variable} ${dmSans.variable} ${notoDevanagari.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-ice-50 text-ink-800 font-sans selection:bg-ice-200">
-        <ErrorBoundary>
-          <AuthProvider>{children}</AuthProvider>
-        </ErrorBoundary>
+        <ErrorBoundary>{children}</ErrorBoundary>
       </body>
     </html>
   );

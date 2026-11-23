@@ -1,213 +1,295 @@
 "use client";
 
-import React from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
-import { Logo, Button, Card, StatusPill } from "@/components/ui";
-import Link from "next/link";
+import React, { useEffect, useState } from "react";
+import { Logo, Card, StatusPill, Button } from "@/components/ui";
 import {
-  ArrowRight,
-  Building2,
-  ShoppingCart,
-  Receipt,
-  UserCheck,
-  Store,
-  ShieldCheck,
-  LogOut,
+  Server,
+  Smartphone,
+  Layers,
+  CheckCircle2,
+  ExternalLink,
+  RefreshCw,
+  Terminal,
+  Activity,
 } from "lucide-react";
 
-export default function OnboardingRootPage() {
-  const router = useRouter();
-  const { user, membership, retailer, switchPersona, logout } = useAuth();
+interface ApiHealthState {
+  status: "idle" | "loading" | "online" | "offline";
+  latencyMs?: number;
+  data?: {
+    app?: string;
+    version?: string;
+    environment?: string;
+    timestamp?: string;
+  };
+  error?: string;
+}
 
-  const handleEnterWorkspace = () => {
-    if (!user) {
-      router.push("/login");
-      return;
+export default function LandingPage() {
+  const [apiHealth, setApiHealth] = useState<ApiHealthState>({ status: "loading" });
+  const [mountedTime, setMountedTime] = useState<string>("Ready");
+
+  const checkApiHealth = async () => {
+    setApiHealth((prev) => ({ ...prev, status: "loading" }));
+    const startTime = performance.now();
+    try {
+      const res = await fetch("/api/v1/health");
+      const latency = Math.round(performance.now() - startTime);
+      if (res.ok) {
+        const data = await res.json();
+        setApiHealth({
+          status: "online",
+          latencyMs: latency,
+          data,
+        });
+      } else {
+        setApiHealth({
+          status: "offline",
+          latencyMs: latency,
+          error: `HTTP ${res.status}: ${res.statusText}`,
+        });
+      }
+    } catch (err: any) {
+      setApiHealth({
+        status: "offline",
+        error: err?.message || "Failed to connect to backend",
+      });
     }
-    if (user.role === "customer") router.push("/customer");
-    else if (user.role === "retailer") router.push("/retailer");
-    else if (user.role === "community_admin") router.push("/admin");
-    else if (user.role === "platform_admin") router.push("/platform");
-    else router.push("/onboarding");
   };
 
-  const handleQuickLogin = (persona: "asha" | "ravi" | "meera") => {
-    switchPersona(persona);
-    if (persona === "asha") router.push("/customer");
-    else if (persona === "ravi") router.push("/retailer");
-    else if (persona === "meera") router.push("/admin");
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMountedTime(new Date().toLocaleTimeString());
+      checkApiHealth();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-ice-50 text-ink-800 flex flex-col justify-between px-4 py-8 sm:py-12">
-      <div className="w-full max-w-xl mx-auto space-y-8">
-        {/* Header / Brand */}
+    <main className="min-h-screen bg-ice-50 text-ink-800 flex flex-col justify-between px-4 py-8 sm:py-12">
+      <div className="w-full max-w-4xl mx-auto space-y-8">
+        {/* Brand Header */}
         <div className="text-center space-y-3">
           <div className="flex justify-center">
             <Logo size="lg" />
           </div>
           <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-ink-800 tracking-tight">
-            PACT
+            PACT Collective Commerce
           </h1>
-          <p className="text-base sm:text-lg font-semibold text-teal-700 tracking-normal">
-            Collective commerce for apartment communities
+          <p className="text-ink-500 text-lg sm:text-xl max-w-xl mx-auto font-sans leading-relaxed">
+            One building · one shared monthly cart · one bulk order · one bill, split fairly.
           </p>
-          <p className="text-xs sm:text-sm text-ink-600 max-w-md mx-auto">
-            Residents pool monthly grocery orders, the local kirana store fulfills one consolidated delivery, and bills are split fairly per flat.
-          </p>
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-ice-200 rounded-full text-xs font-medium text-ink-600 shadow-sm">
+            <Activity className="w-3.5 h-3.5 text-teal-700 animate-pulse" />
+            <span>Milestone 0 · Platform Initialization</span>
+          </div>
         </div>
 
-        {/* Active Session Status (If logged in during this session) */}
-        {user ? (
-          <Card className="border border-teal-200 bg-white/90 shadow-sm p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-sm">
-                  {user.name.slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <div className="font-semibold text-ink-800 text-sm">{user.name}</div>
-                  <div className="text-xs text-ink-600">
-                    {user.role === "customer" && `Resident · ${membership?.unit_label || "Flat A-101"}`}
-                    {user.role === "retailer" && `Kirana Store · ${retailer?.store_name || "Sri Lakshmi Stores"}`}
-                    {user.role === "community_admin" && "Building Admin"}
-                    {user.role === "platform_admin" && "Platform Admin"}
+        {/* System Health Status Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Backend API Health Card */}
+          <Card className="p-6 bg-white border border-ice-200 shadow-sm rounded-2xl flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-ice-100 rounded-xl text-teal-700">
+                    <Server className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-ink-800 font-sans">
+                      FastAPI Backend API
+                    </h2>
+                    <p className="text-xs text-ink-500">REST v1 Service (`/api/v1`)</p>
                   </div>
                 </div>
+                {apiHealth.status === "online" && (
+                  <StatusPill kind="success" label={`Online (${apiHealth.latencyMs}ms)`} />
+                )}
+                {apiHealth.status === "offline" && <StatusPill kind="danger" label="Offline" />}
+                {apiHealth.status === "loading" && <StatusPill kind="neutral" label="Pinging..." />}
               </div>
-              <StatusPill kind="success" label="Active Session" />
+
+              <div className="bg-ice-50 p-3 rounded-xl border border-ice-200 text-xs font-mono space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-ink-500">Service:</span>
+                  <span className="font-medium text-ink-800">
+                    {apiHealth.data?.app || "pact-api"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-500">Version:</span>
+                  <span className="font-medium text-ink-800">
+                    {apiHealth.data?.version || "0.1.0"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-500">Environment:</span>
+                  <span className="font-medium text-ink-800">
+                    {apiHealth.data?.environment || "development"}
+                  </span>
+                </div>
+                {apiHealth.error && (
+                  <div className="text-red-600 pt-1 border-t border-ice-200">{apiHealth.error}</div>
+                )}
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button
-                variant="primary"
-                size="default"
-                fullWidth
-                onClick={handleEnterWorkspace}
-                icon={<ArrowRight className="w-4 h-4" />}
+            <div className="pt-4 mt-4 border-t border-ice-100 flex items-center justify-between">
+              <a
+                href="/docs"
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-teal-700 hover:text-teal-800 font-medium inline-flex items-center gap-1"
               >
-                Go to Dashboard
-              </Button>
+                Open API Docs (Swagger) <ExternalLink className="w-3 h-3" />
+              </a>
               <Button
-                variant="secondary"
-                size="default"
-                onClick={logout}
-                icon={<LogOut className="w-4 h-4" />}
+                variant="quiet"
+                size="sm"
+                onClick={checkApiHealth}
+                className="text-xs flex items-center gap-1 text-ink-500 hover:text-ink-800"
               >
-                Sign Out
+                <RefreshCw
+                  className={`w-3.5 h-3.5 ${apiHealth.status === "loading" ? "animate-spin" : ""}`}
+                />
+                Re-check
               </Button>
             </div>
           </Card>
-        ) : (
-          /* Authentication Actions */
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Link href="/login?tab=signin" className="block w-full">
-                <Button
-                  variant="primary"
-                  size="default"
-                  fullWidth
-                  icon={<ArrowRight className="w-4 h-4" />}
-                >
-                  Sign In with Mobile
-                </Button>
-              </Link>
-              <Link href="/login?tab=register" className="block w-full">
-                <Button
-                  variant="secondary"
-                  size="default"
-                  fullWidth
-                >
-                  Register New Account
-                </Button>
-              </Link>
+
+          {/* Frontend Web & Android Card */}
+          <Card className="p-6 bg-white border border-ice-200 shadow-sm rounded-2xl flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-ice-100 rounded-xl text-teal-700">
+                    <Smartphone className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-ink-800 font-sans">
+                      Next.js 16 & Capacitor
+                    </h2>
+                    <p className="text-xs text-ink-500">App Router & Android Shell</p>
+                  </div>
+                </div>
+                <StatusPill kind="success" label="Active" />
+              </div>
+
+              <div className="bg-ice-50 p-3 rounded-xl border border-ice-200 text-xs font-mono space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-ink-500">Framework:</span>
+                  <span className="font-medium text-ink-800">Next.js 16.4.6 (Turbopack)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-500">Mobile Runtime:</span>
+                  <span className="font-medium text-ink-800">Capacitor 7.4.4 (Android SDK 36)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-500">Static Export:</span>
+                  <span className="font-medium text-ink-800">Ready (`build/` & `dist/`)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-500">Loaded At:</span>
+                  <span className="font-medium text-ink-800">{mountedTime || "Now"}</span>
+                </div>
+              </div>
             </div>
 
-            {/* Quick Demo Switchers */}
-            <div className="pt-4 border-t border-ice-200">
-              <p className="text-xs font-semibold text-ink-600 uppercase tracking-wider text-center mb-3">
-                Or explore instantly with a demo persona:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin("asha")}
-                  className="p-3 bg-white border border-ice-200 rounded-lg hover:border-teal-500 hover:shadow-xs transition-all text-left group"
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <UserCheck className="w-4 h-4 text-teal-600" />
-                    <span className="text-xs font-bold text-ink-800">Asha Rao</span>
-                  </div>
-                  <div className="text-[11px] text-ink-600">Resident · A-101</div>
-                </button>
+            <div className="pt-4 mt-4 border-t border-ice-100 flex items-center justify-between">
+              <span className="text-xs text-ink-500">Zero raw hex tokens</span>
+              <span className="text-xs font-medium text-teal-700">Client-Side Hydrated</span>
+            </div>
+          </Card>
+        </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin("ravi")}
-                  className="p-3 bg-white border border-ice-200 rounded-lg hover:border-teal-500 hover:shadow-xs transition-all text-left group"
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Store className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-bold text-ink-800">Ravi Kumar</span>
-                  </div>
-                  <div className="text-[11px] text-ink-600">Kirana Retailer</div>
-                </button>
+        {/* Technology Stack & Milestone Checklist */}
+        <Card className="p-6 bg-white border border-ice-200 shadow-sm rounded-2xl space-y-4">
+          <div className="flex items-center gap-2 border-b border-ice-100 pb-3">
+            <Layers className="w-5 h-5 text-teal-700" />
+            <h3 className="text-base font-bold text-ink-800">Milestone 0 Verification Checklist</h3>
+          </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin("meera")}
-                  className="p-3 bg-white border border-ice-200 rounded-lg hover:border-teal-500 hover:shadow-xs transition-all text-left group"
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <ShieldCheck className="w-4 h-4 text-purple-600" />
-                    <span className="text-xs font-bold text-ink-800">Meera S.</span>
-                  </div>
-                  <div className="text-[11px] text-ink-600">Building Admin</div>
-                </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-ink-800">Clean Monorepo Topology:</strong>
+                <p className="text-ink-500">
+                  `apps/api`, `apps/web`, `infrastructure/`, `docs/`, `scripts/`
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-ink-800">FastAPI Health Endpoints:</strong>
+                <p className="text-ink-500">
+                  `/` root, `/health` global, and `/api/v1/health` versioned
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-ink-800">Next.js App Router:</strong>
+                <p className="text-ink-500">
+                  Static export compatibility, ErrorBoundary, Tailwind tokens
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-ink-800">Infrastructure Blueprints:</strong>
+                <p className="text-ink-500">
+                  Docker Compose (PostgreSQL 16, Kafka) and Render deployment YAML
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-ink-800">Standardized Formatting:</strong>
+                <p className="text-ink-500">
+                  Ruff (Python), ESLint 9 & Prettier 3 (TypeScript/React)
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-ink-800">Strict Separation:</strong>
+                <p className="text-ink-500">
+                  Zero business functionality yet; ready for Milestone 1
+                </p>
               </div>
             </div>
           </div>
-        )}
+        </Card>
 
-        {/* 3 Step Onboarding Guide */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
-          <div className="bg-white/80 border border-ice-200 rounded-xl p-4 text-center space-y-2">
-            <div className="w-10 h-10 mx-auto rounded-full bg-teal-50 text-teal-700 flex items-center justify-center">
-              <Building2 className="w-5 h-5" />
+        {/* Quick Commands Banner */}
+        <div className="p-4 bg-teal-900 text-ice-50 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Terminal className="w-5 h-5 text-teal-300" />
+            <div>
+              <p className="text-xs font-bold text-white font-mono">make dev</p>
+              <p className="text-xs text-teal-200">
+                Start full stack: FastAPI on :8000 · Next.js on :3000
+              </p>
             </div>
-            <div className="font-semibold text-xs text-ink-800">1. Apartment Community</div>
-            <p className="text-[11px] text-ink-600 leading-relaxed">
-              Residents join with building code (e.g. GREEN1) and apartment number.
-            </p>
           </div>
-
-          <div className="bg-white/80 border border-ice-200 rounded-xl p-4 text-center space-y-2">
-            <div className="w-10 h-10 mx-auto rounded-full bg-teal-50 text-teal-700 flex items-center justify-center">
-              <ShoppingCart className="w-5 h-5" />
-            </div>
-            <div className="font-semibold text-xs text-ink-800">2. Monthly Group Cart</div>
-            <p className="text-[11px] text-ink-600 leading-relaxed">
-              Pool pantry staples monthly for bulk pricing from neighborhood kiranas.
-            </p>
-          </div>
-
-          <div className="bg-white/80 border border-ice-200 rounded-xl p-4 text-center space-y-2">
-            <div className="w-10 h-10 mx-auto rounded-full bg-teal-50 text-teal-700 flex items-center justify-center">
-              <Receipt className="w-5 h-5" />
-            </div>
-            <div className="font-semibold text-xs text-ink-800">3. Fair Bill Splitting</div>
-            <p className="text-[11px] text-ink-600 leading-relaxed">
-              Store packs and bills orders. Every resident receives their own itemized bill.
-            </p>
+          <div className="flex items-center gap-2">
+            <a
+              href="https://github.com/amoghraikar/PACT-D3ADLOCK"
+              target="_blank"
+              rel="noreferrer"
+              className="px-3 py-1.5 bg-teal-800 hover:bg-teal-700 text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1.5"
+            >
+              GitHub Repository <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="text-center pt-8 text-xs text-ink-500">
-        PACT · Collective Commerce Platform · {new Date().getFullYear()}
-      </footer>
-    </div>
+    </main>
   );
 }

@@ -43,11 +43,7 @@ export function Tabs({ items, activeId, onChange, className = "" }: TabsProps) {
   return (
     <div className={`flex items-center gap-2 overflow-x-auto no-scrollbar py-1 ${className}`}>
       {items.map((item) => (
-        <Chip
-          key={item.id}
-          selected={item.id === activeId}
-          onClick={() => onChange(item.id)}
-        >
+        <Chip key={item.id} selected={item.id === activeId} onClick={() => onChange(item.id)}>
           <span>{item.label}</span>
           {item.count !== undefined && (
             <span

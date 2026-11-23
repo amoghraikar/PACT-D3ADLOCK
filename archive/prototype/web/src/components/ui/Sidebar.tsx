@@ -85,7 +85,9 @@ export function Sidebar({
           <div className="pt-4 mt-auto border-t border-ice-300 flex items-center justify-between gap-2">
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-bold text-ink-800 truncate">{userName}</span>
-              <span className="text-[11px] text-ink-500 capitalize">{userRole?.replace("_", " ")}</span>
+              <span className="text-[11px] text-ink-500 capitalize">
+                {userRole?.replace("_", " ")}
+              </span>
             </div>
             {onLogout && (
               <button

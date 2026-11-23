@@ -53,15 +53,11 @@ export function MonthTimeline({ currentStep, explanation, className = "" }: Mont
                   isDone
                     ? "bg-success-700 text-white"
                     : isCurrent
-                    ? "bg-teal-700 text-white ring-4 ring-ice-200"
-                    : "bg-white border-2 border-ice-300 text-ink-400"
+                      ? "bg-teal-700 text-white ring-4 ring-ice-200"
+                      : "bg-white border-2 border-ice-300 text-ink-400"
                 }`}
               >
-                {isDone ? (
-                  <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                ) : (
-                  <span>{step.id}</span>
-                )}
+                {isDone ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <span>{step.id}</span>}
               </div>
 
               {/* Label */}
@@ -70,8 +66,8 @@ export function MonthTimeline({ currentStep, explanation, className = "" }: Mont
                   isCurrent
                     ? "font-bold text-ink-800"
                     : isDone
-                    ? "font-medium text-ink-600"
-                    : "font-normal text-ink-400"
+                      ? "font-medium text-ink-600"
+                      : "font-normal text-ink-400"
                 }`}
               >
                 {step.label}

@@ -47,11 +47,7 @@ export function Stepper({
         aria-label={isAtOne ? "Remove item" : "Decrease quantity"}
         className="w-12 h-12 flex items-center justify-center text-ink-800 hover:bg-ice-100 active:bg-ice-200 transition-colors disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed focus-ring"
       >
-        {isAtOne ? (
-          <Trash2 className="w-4 h-4 text-danger-700" />
-        ) : (
-          <Minus className="w-4 h-4" />
-        )}
+        {isAtOne ? <Trash2 className="w-4 h-4 text-danger-700" /> : <Minus className="w-4 h-4" />}
       </button>
 
       <span className="min-w-8 text-center font-bold text-base tabular-nums px-1 text-ink-800">

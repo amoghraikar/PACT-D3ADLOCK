@@ -1,7 +1,9 @@
 import React from "react";
 
-export interface TextFieldProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "prefix"> {
+export interface TextFieldProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "prefix"
+> {
   label: string;
   helperText?: string;
   error?: string;
@@ -15,18 +17,16 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
 
     return (
       <div className="w-full flex flex-col gap-1.5">
-        <label
-          htmlFor={inputId}
-          className="text-sm font-medium text-ink-800 select-none block"
-        >
+        <label htmlFor={inputId} className="text-sm font-medium text-ink-800 select-none block">
           {label}
         </label>
 
         <div
-          className={`flex items-center gap-2 h-[52px] px-3.5 bg-white border rounded-ctl transition-colors duration-150 ${error
-            ? "border-danger-700 text-danger-700"
-            : "border-ink-400 focus-within:border-teal-700 focus-within:ring-2 focus-within:ring-teal-700 focus-within:ring-offset-1"
-            } ${className}`}
+          className={`flex items-center gap-2 h-[52px] px-3.5 bg-white border rounded-ctl transition-colors duration-150 ${
+            error
+              ? "border-danger-700 text-danger-700"
+              : "border-ink-400 focus-within:border-teal-700 focus-within:ring-2 focus-within:ring-teal-700 focus-within:ring-offset-1"
+          } ${className}`}
         >
           {prefix && <div className="shrink-0 text-ink-600">{prefix}</div>}
           <input

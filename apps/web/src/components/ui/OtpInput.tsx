@@ -72,7 +72,7 @@ export function OtpInput({
     <div className="flex flex-col items-center gap-2">
       <div className="flex items-center justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
         {digits.map((digit, index) => {
-          const isFocused = !disabled && (digit === "" && (index === 0 || digits[index - 1] !== ""));
+          const isFocused = !disabled && digit === "" && (index === 0 || digits[index - 1] !== "");
           return (
             <input
               key={index}
@@ -93,8 +93,8 @@ export function OtpInput({
                 error
                   ? "border-danger-700 text-danger-700"
                   : isFocused
-                  ? "border-teal-700 ring-2 ring-teal-700 ring-offset-1"
-                  : "border-ink-400 focus:border-teal-700 focus:ring-2 focus:ring-teal-700 focus:ring-offset-1"
+                    ? "border-teal-700 ring-2 ring-teal-700 ring-offset-1"
+                    : "border-ink-400 focus:border-teal-700 focus:ring-2 focus:ring-teal-700 focus:ring-offset-1"
               }`}
             />
           );
