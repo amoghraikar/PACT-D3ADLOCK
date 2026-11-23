@@ -1,7 +1,8 @@
 """
 PACT Deterministic Database Seeder
 Seeds standard roles, communities, apartments, demo users, retailers,
-categories, products, variants, initial inventory, and an active shopping cycle.
+12 grocery categories, 72 products with multiple variants, stock inventory,
+and an active shopping cycle.
 """
 
 import logging
@@ -15,7 +16,7 @@ from app.core.db import SessionLocal
 from app.models.catalogue import Category, Product, ProductImage, ProductVariant
 from app.models.commerce import ShoppingCycle
 from app.models.identity import Role, User
-from app.models.inventory import InventoryItem
+from app.models.inventory import InventoryItem, InventoryMovement, StockBatch
 from app.models.organization import (
     Apartment,
     Building,
@@ -24,10 +25,10 @@ from app.models.organization import (
     Retailer,
     RetailerCommunity,
 )
+from app.seed_data import CATEGORIES_DATA, PRODUCTS_DATA
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("pact.seed")
-
 
 # Standard Demo UUIDs for predictable reference
 ROLES = [
@@ -54,200 +55,11 @@ COMMUNITIES = [
     },
 ]
 
-CATEGORIES = [
-    {"name": "Rice & Grains", "slug": "rice-grains", "icon": "grain", "display_order": 1},
-    {"name": "Atta & Flours", "slug": "atta-flours", "icon": "wheat", "display_order": 2},
-    {"name": "Dals & Pulses", "slug": "dals-pulses", "icon": "seed", "display_order": 3},
-    {"name": "Cooking Oils & Ghee", "slug": "cooking-oils-ghee", "icon": "oil", "display_order": 4},
-    {"name": "Dairy & Eggs", "slug": "dairy-eggs", "icon": "milk", "display_order": 5},
-    {"name": "Spices & Masalas", "slug": "spices-masalas", "icon": "sparkles", "display_order": 6},
-    {"name": "Dry Fruits & Nuts", "slug": "dry-fruits-nuts", "icon": "nut", "display_order": 7},
-    {"name": "Snacks & Biscuits", "slug": "snacks-biscuits", "icon": "cookie", "display_order": 8},
-    {"name": "Beverages & Tea", "slug": "beverages-tea", "icon": "coffee", "display_order": 9},
-    {
-        "name": "Cleaning & Household",
-        "slug": "cleaning-household",
-        "icon": "spray",
-        "display_order": 10,
-    },
-    {"name": "Personal Care", "slug": "personal-care", "icon": "heart", "display_order": 11},
-    {
-        "name": "Pooja & Ritual Essentials",
-        "slug": "pooja-essentials",
-        "icon": "flame",
-        "display_order": 12,
-    },
-]
-
-DEMO_PRODUCTS = [
-    # Rice & Grains
-    {
-        "cat_slug": "rice-grains",
-        "title": "Sona Masoori Rice",
-        "brand": "Standard Groceries",
-        "description": "Premium aged lightweight Sona Masoori rice from Andhra.",
-        "image_url": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&auto=format&fit=crop&q=80",
-        "variants": [
-            {
-                "sku": "RICE-SONA-1KG",
-                "title": "1 kg Pack",
-                "unit": "1 kg",
-                "mrp": 7000,
-                "price": 6000,
-            },
-            {
-                "sku": "RICE-SONA-5KG",
-                "title": "5 kg Pack",
-                "unit": "5 kg",
-                "mrp": 34000,
-                "price": 28000,
-            },
-        ],
-    },
-    {
-        "cat_slug": "rice-grains",
-        "title": "Royal Basmati Rice",
-        "brand": "Heritage",
-        "description": "Extra long grain authentic aromatic Basmati rice.",
-        "image_url": "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400&auto=format&fit=crop&q=80",
-        "variants": [
-            {
-                "sku": "RICE-BASM-1KG",
-                "title": "1 kg Pack",
-                "unit": "1 kg",
-                "mrp": 14000,
-                "price": 12000,
-            },
-            {
-                "sku": "RICE-BASM-5KG",
-                "title": "5 kg Pack",
-                "unit": "5 kg",
-                "mrp": 68000,
-                "price": 58000,
-            },
-        ],
-    },
-    # Atta & Flours
-    {
-        "cat_slug": "atta-flours",
-        "title": "Whole Wheat Sharbati Atta",
-        "brand": "Aashirvaad Select",
-        "description": "100% MP Sharbati wheat grains, stone ground for soft chapatis.",
-        "image_url": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&auto=format&fit=crop&q=80",
-        "variants": [
-            {
-                "sku": "ATTA-AASH-5KG",
-                "title": "5 kg Bag",
-                "unit": "5 kg",
-                "mrp": 32000,
-                "price": 29000,
-            },
-            {
-                "sku": "ATTA-AASH-10KG",
-                "title": "10 kg Bag",
-                "unit": "10 kg",
-                "mrp": 62000,
-                "price": 56000,
-            },
-        ],
-    },
-    # Dals & Pulses
-    {
-        "cat_slug": "dals-pulses",
-        "title": "Unpolished Toor Dal",
-        "brand": "Tata Sampann",
-        "description": "High-protein unpolished yellow pigeon peas.",
-        "image_url": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80",
-        "variants": [
-            {
-                "sku": "DAL-TOOR-1KG",
-                "title": "1 kg Pack",
-                "unit": "1 kg",
-                "mrp": 18500,
-                "price": 16500,
-            },
-        ],
-    },
-    {
-        "cat_slug": "dals-pulses",
-        "title": "Moong Dal (Yellow Split)",
-        "brand": "Organic Tattva",
-        "description": "Chemical-free unpolished yellow split lentils.",
-        "image_url": "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&auto=format&fit=crop&q=80",
-        "variants": [
-            {
-                "sku": "DAL-MOONG-1KG",
-                "title": "1 kg Pack",
-                "unit": "1 kg",
-                "mrp": 17000,
-                "price": 15000,
-            },
-        ],
-    },
-    # Cooking Oils & Ghee
-    {
-        "cat_slug": "cooking-oils-ghee",
-        "title": "Pure Cow Ghee",
-        "brand": "Nandini",
-        "description": "Traditional aromatic clarified cow butter from KMF.",
-        "image_url": "https://images.unsplash.com/photo-1589927986086-3d10fb5b0288?w=400&auto=format&fit=crop&q=80",
-        "variants": [
-            {
-                "sku": "GHEE-NAND-500ML",
-                "title": "500 ml Pouch",
-                "unit": "500 ml",
-                "mrp": 34000,
-                "price": 31500,
-            },
-            {
-                "sku": "GHEE-NAND-1L",
-                "title": "1 Litre Tin",
-                "unit": "1 litre",
-                "mrp": 66000,
-                "price": 61000,
-            },
-        ],
-    },
-    {
-        "cat_slug": "cooking-oils-ghee",
-        "title": "Cold Pressed Sunflower Oil",
-        "brand": "Fortune Sunlite",
-        "description": "Refined heart-healthy light cooking oil.",
-        "image_url": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400&auto=format&fit=crop&q=80",
-        "variants": [
-            {
-                "sku": "OIL-FORT-1L",
-                "title": "1 Litre Pouch",
-                "unit": "1 litre",
-                "mrp": 16000,
-                "price": 13500,
-            },
-        ],
-    },
-    # Dairy & Eggs
-    {
-        "cat_slug": "dairy-eggs",
-        "title": "Pasteurised Toned Milk",
-        "brand": "Amul Taaza",
-        "description": "Homogenised toned long-life milk.",
-        "image_url": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&auto=format&fit=crop&q=80",
-        "variants": [
-            {
-                "sku": "MILK-AMUL-1L",
-                "title": "1 Litre Tetra",
-                "unit": "1 litre",
-                "mrp": 7200,
-                "price": 6800,
-            },
-        ],
-    },
-]
-
 
 def seed_database(session: Session) -> None:
     logger.info("Starting PACT database seeding...")
 
-    # 1. Seed Roles
+    # 1. Seed Core Roles
     role_map = {}
     for r in ROLES:
         role = session.scalar(select(Role).where(Role.name == r["name"]))
@@ -263,7 +75,7 @@ def seed_database(session: Session) -> None:
     for c in COMMUNITIES:
         comm = session.scalar(select(Community).where(Community.code == c["code"]))
         if not comm:
-            comm = Community(**c)
+            comm = Community(**c, is_active=True)
             session.add(comm)
             session.flush()
         community_map[c["code"]] = comm
@@ -271,7 +83,7 @@ def seed_database(session: Session) -> None:
 
     green_meadows = community_map["GREEN_MEADOWS"]
 
-    # 3. Seed Buildings & Apartments in Green Meadows
+    # 3. Seed Buildings and Apartments for Green Meadows
     b_tower_a = session.scalar(
         select(Building).where(
             Building.community_id == green_meadows.id, Building.name == "Tower A"
@@ -282,11 +94,12 @@ def seed_database(session: Session) -> None:
         session.add(b_tower_a)
         session.flush()
 
+    apt_units = ["A-101", "A-102", "A-201", "A-202", "A-301"]
     apt_map = {}
-    for unit in ["A-101", "A-102", "A-201", "A-202"]:
+    for unit in apt_units:
         apt = session.scalar(
             select(Apartment).where(
-                Apartment.community_id == green_meadows.id, Apartment.unit_number == unit
+                Apartment.building_id == b_tower_a.id, Apartment.unit_number == unit
             )
         )
         if not apt:
@@ -377,19 +190,28 @@ def seed_database(session: Session) -> None:
         session.add(ret_comm)
         session.flush()
 
-    # 6. Seed Categories
+    # 6. Seed 12 Grocery Categories
     category_map = {}
-    for cat in CATEGORIES:
+    for cat in CATEGORIES_DATA:
         category = session.scalar(select(Category).where(Category.slug == cat["slug"]))
         if not category:
             category = Category(**cat, is_active=True)
             session.add(category)
             session.flush()
+        else:
+            category.name = cat["name"]
+            category.display_order = cat["display_order"]
+            category.icon = cat["icon"]
+            session.flush()
         category_map[cat["slug"]] = category
+    logger.info("Seeded %d categories", len(category_map))
 
-    # 7. Seed Products & Variants
-    for prod_data in DEMO_PRODUCTS:
-        category = category_map[prod_data["cat_slug"]]
+    # 7. Seed 72 Grocery Products, Variants, Images & Inventory
+    products_count = 0
+    variants_count = 0
+
+    for prod_data in PRODUCTS_DATA:
+        category = category_map[prod_data["category_slug"]]
         product = session.scalar(select(Product).where(Product.title == prod_data["title"]))
         if not product:
             product = Product(
@@ -402,23 +224,29 @@ def seed_database(session: Session) -> None:
             session.add(product)
             session.flush()
 
-            # Add Image
+            # Add Primary Image
             if prod_data.get("image_url"):
                 img = ProductImage(
                     product_id=product.id,
                     image_url=prod_data["image_url"],
                     alt_text=product.title,
+                    display_order=0,
                     is_primary=True,
                 )
                 session.add(img)
 
-            # Add Variants
-            for v in prod_data["variants"]:
+        products_count += 1
+
+        # Add Variants
+        for v in prod_data["variants"]:
+            variant = session.scalar(select(ProductVariant).where(ProductVariant.sku == v["sku"]))
+            if not variant:
                 variant = ProductVariant(
                     product_id=product.id,
                     sku=v["sku"],
                     title=v["title"],
                     unit=v["unit"],
+                    pack_quantity=1,
                     mrp_paise=v["mrp"],
                     default_price_paise=v["price"],
                     is_active=True,
@@ -426,16 +254,54 @@ def seed_database(session: Session) -> None:
                 session.add(variant)
                 session.flush()
 
-                # Add initial retailer inventory
-                inv = InventoryItem(
+            variants_count += 1
+
+            # Seed Retailer Inventory Record
+            inv_item = session.scalar(
+                select(InventoryItem).where(
+                    InventoryItem.retailer_id == retailer.id,
+                    InventoryItem.variant_id == variant.id,
+                )
+            )
+            initial_stock = v.get("stock", 50)
+            if not inv_item:
+                inv_item = InventoryItem(
                     retailer_id=retailer.id,
                     variant_id=variant.id,
-                    current_stock_qty=100,
+                    current_stock_qty=initial_stock,
                     reserved_stock_qty=0,
                     reorder_level_qty=15,
                     is_active=True,
                 )
-                session.add(inv)
+                session.add(inv_item)
+                session.flush()
+
+                # Add initial stock batch
+                batch = StockBatch(
+                    retailer_id=retailer.id,
+                    variant_id=variant.id,
+                    batch_number=f"BATCH-{variant.sku[:8]}-01",
+                    quantity=initial_stock,
+                    cost_price_paise=int(v["price"] * 0.85),
+                    supplier_name="Metro Cash & Carry Wholesale",
+                    inward_date=now_utc(),
+                )
+                session.add(batch)
+
+                # Add initial inward movement
+                movement = InventoryMovement(
+                    retailer_id=retailer.id,
+                    variant_id=variant.id,
+                    movement_type="inward",
+                    quantity_delta=initial_stock,
+                    reference_id=f"INITIAL-INWARD-{variant.sku}",
+                    created_at=now_utc(),
+                )
+                session.add(movement)
+
+    logger.info(
+        "Seeded %d products with %d variants and inventory batches.", products_count, variants_count
+    )
 
     # 8. Seed Active Shopping Cycle
     current_month = "2026-11"
@@ -446,7 +312,6 @@ def seed_database(session: Session) -> None:
         )
     )
     if not cycle:
-        # 22nd at 17:27 IST = 11:57 UTC
         cutoff = datetime(2026, 11, 22, 11, 57, 0, tzinfo=UTC)
         cycle = ShoppingCycle(
             community_id=green_meadows.id,
