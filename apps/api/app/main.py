@@ -20,7 +20,10 @@ from app.core.errors import (
 )
 from app.middleware.request_context import RequestLoggingMiddleware
 from app.modules.auth.router import router as auth_router
+from app.modules.cart.router import router as cart_router
 from app.modules.catalogue.router import router as catalogue_router
+from app.modules.cycles.router import router as cycles_router
+from app.modules.dev.router import router as dev_router
 from app.modules.inventory.router import router as inventory_router
 
 # Configure logging
@@ -163,6 +166,9 @@ def api_v1_ready(db: Session = Depends(get_db)):
 api_v1_router.include_router(auth_router, prefix="/auth", tags=["Auth"])
 api_v1_router.include_router(catalogue_router, prefix="/catalogue", tags=["Catalogue"])
 api_v1_router.include_router(inventory_router, prefix="/retailer", tags=["Retailer Inventory"])
+api_v1_router.include_router(cart_router, prefix="/cart", tags=["Collective Cart"])
+api_v1_router.include_router(cycles_router, prefix="/cycles", tags=["Shopping Cycles"])
+api_v1_router.include_router(dev_router, prefix="/dev", tags=["Development Controls"])
 
 # Mount top-level versioned router
 app.include_router(api_v1_router)

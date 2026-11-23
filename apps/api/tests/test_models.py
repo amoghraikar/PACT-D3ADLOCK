@@ -59,6 +59,14 @@ def test_prevent_duplicate_cart_item(db):
 
     assert user and comm and cycle and variant
 
+    # Clear prior item if exists
+    db.query(CommunityCartItem).filter(
+        CommunityCartItem.cycle_id == cycle.id,
+        CommunityCartItem.user_id == user.id,
+        CommunityCartItem.variant_id == variant.id,
+    ).delete()
+    db.flush()
+
     # Insert first cart item
     cart1 = CommunityCartItem(
         cycle_id=cycle.id,

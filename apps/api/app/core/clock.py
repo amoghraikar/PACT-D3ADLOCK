@@ -12,6 +12,11 @@ def set_clock_override(dt: datetime | None) -> None:
     _clock_override = dt
 
 
+def is_clock_override_active() -> bool:
+    """Return True if an override is active."""
+    return _clock_override is not None
+
+
 def now_utc() -> datetime:
     """Return the current time in UTC, overridable in tests."""
     if _clock_override is not None:
