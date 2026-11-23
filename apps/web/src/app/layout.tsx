@@ -3,6 +3,8 @@ import { DM_Sans, DM_Serif_Display, Noto_Sans_Devanagari } from "next/font/googl
 import "./globals.css";
 import "@/lib/api";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AuthProvider } from "@/context/AuthContext";
+import { ToastProvider } from "@/context/ToastContext";
 
 const dmSerif = DM_Serif_Display({
   weight: "400",
@@ -67,8 +69,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${dmSerif.variable} ${dmSans.variable} ${notoDevanagari.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-ice-50 text-ink-800 font-sans selection:bg-ice-200">
-        <ErrorBoundary>{children}</ErrorBoundary>
+      <body className="min-h-full flex flex-col bg-background text-text font-sans selection:bg-border">
+        <ErrorBoundary>
+          <AuthProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
   Mic,
@@ -13,7 +13,6 @@ import {
   Trash2,
   RefreshCw,
   ShoppingCart,
-  Languages,
   ArrowLeft,
   Volume2,
 } from "lucide-react";
@@ -31,7 +30,13 @@ export default function VoiceOrderingPage() {
   const [lang, setLang] = useState<"en-IN" | "hi-IN" | "hinglish">("en-IN");
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [transcript, setTranscript] = useState<string>("");
-  const [isSpeechSupported, setIsSpeechSupported] = useState<boolean>(true);
+  const isSpeechSupported = useSyncExternalStore(
+    () => () => {},
+    () =>
+      typeof window !== "undefined" &&
+      !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition),
+    () => true
+  );
   const [permissionError, setPermissionError] = useState<string | null>(null);
 
   const [interpretedItems, setInterpretedItems] = useState<InterpretedItem[]>([]);
@@ -41,16 +46,6 @@ export default function VoiceOrderingPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const recognitionRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        setIsSpeechSupported(false);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -73,7 +68,7 @@ export default function VoiceOrderingPage() {
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      setIsSpeechSupported(false);
+      setPermissionError("Speech recognition is not supported in this browser. Please use Chrome.");
       return;
     }
 

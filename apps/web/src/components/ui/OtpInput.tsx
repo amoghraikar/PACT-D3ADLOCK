@@ -104,3 +104,7 @@ export function OtpInput({
     </div>
   );
 }
+
+export const OTPInput = OtpInput;
+export type OTPInputProps = OtpInputProps;
+

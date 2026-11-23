@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import {
   Mic,
   MicOff,
@@ -40,7 +40,13 @@ export function VoiceOrderingModal({
   const [lang, setLang] = useState<"en-IN" | "hi-IN" | "hinglish">("en-IN");
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [transcript, setTranscript] = useState<string>("");
-  const [isSpeechSupported, setIsSpeechSupported] = useState<boolean>(true);
+  const isSpeechSupported = useSyncExternalStore(
+    () => () => {},
+    () =>
+      typeof window !== "undefined" &&
+      !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition),
+    () => true
+  );
   const [permissionError, setPermissionError] = useState<string | null>(null);
 
   const [interpretedItems, setInterpretedItems] = useState<InterpretedItem[]>([]);
@@ -50,17 +56,6 @@ export function VoiceOrderingModal({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const recognitionRef = useRef<any>(null);
-
-  // Check speech recognition capability
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        setIsSpeechSupported(false);
-      }
-    }
-  }, []);
 
   // Cleanup speech recognition on unmount or close
   useEffect(() => {
@@ -86,7 +81,7 @@ export function VoiceOrderingModal({
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      setIsSpeechSupported(false);
+      setPermissionError("Speech recognition is not supported in this browser. Please use Chrome.");
       return;
     }
 
