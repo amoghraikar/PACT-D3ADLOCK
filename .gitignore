@@ -1,57 +1,15 @@
-# Dependencies
 node_modules/
-.venv/
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Next.js Build Artifacts
-.next/
-out/
-build/
 dist/
-next-env.d.ts
+build/
+.vite/
+coverage/
+*.tsbuildinfo
 
-# Testing & Linting
-.coverage
-htmlcov/
-.pytest_cache/
-.ruff_cache/
-.hypothesis/
-playwright-report/
-test-results/
-
-# Environment Files
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 apps/api/.env
-apps/web/.env.local
+apps/web/.env
 
-# Operating System & IDEs
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Capacitor / Mobile Generated
-android/app/build/
-android/.gradle/
-android/local.properties
-android/captures/
-apps/web/android/app/build/
-apps/web/android/.gradle/
-apps/web/android/local.properties
-*.jks
-*.keystore
-*.apk
-*.aab
+*.log

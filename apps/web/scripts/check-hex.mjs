@@ -1,58 +1,30 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const srcDir = path.resolve(__dirname, "../src");
+const allowed = new Set([path.resolve(srcDir, "index.css")]);
+const hexRe = /#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
 
-const SRC_DIR = path.resolve(__dirname, "../src");
-const ALLOWED_FILES = new Set([
-  path.resolve(SRC_DIR, "app/globals.css"),
-]);
-
-// Hex regex matching #RGB, #RGBA, #RRGGBB, #RRGGBBAA
-const HEX_REGEX = /#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
-
-let violations = [];
-
-function scanDir(dir) {
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name !== "node_modules" && entry.name !== ".next") {
-        scanDir(fullPath);
-      }
-    } else if (entry.isFile() && /\.(tsx?|jsx?|css|html)$/.test(entry.name)) {
-      if (ALLOWED_FILES.has(fullPath)) continue;
-
-      const content = fs.readFileSync(fullPath, "utf-8");
-      const lines = content.split("\n");
-      lines.forEach((line, index) => {
-        const matches = line.match(HEX_REGEX);
-        if (matches) {
-          violations.push({
-            file: path.relative(path.resolve(__dirname, ".."), fullPath),
-            line: index + 1,
-            matches,
-            text: line.trim(),
-          });
-        }
+const violations = [];
+function scan(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) scan(full);
+    else if (/\.(tsx?|jsx?|css)$/.test(entry.name) && !allowed.has(full)) {
+      const lines = fs.readFileSync(full, "utf8").split("\n");
+      lines.forEach((line, idx) => {
+        const m = line.match(hexRe);
+        if (m) violations.push(`${path.relative(srcDir, full)}:${idx + 1}: ${m.join(", ")}`);
       });
     }
   }
 }
-
-scanDir(SRC_DIR);
+scan(srcDir);
 
 if (violations.length > 0) {
-  console.error(`\x1b[31m[ERROR] Raw hex colors found outside token file (globals.css):\x1b[0m\n`);
-  for (const v of violations) {
-    console.error(`  ${v.file}:${v.line} -> ${v.matches.join(", ")}`);
-    console.error(`    ${v.text}\n`);
-  }
-  console.error(`Found ${violations.length} raw hex violations. Use PACT design tokens instead.`);
+  console.error("Raw hex colors outside index.css:\n" + violations.join("\n"));
   process.exit(1);
-} else {
-  console.log(`\x1b[32m[PASS] No raw hex colors found outside globals.css!\x1b[0m`);
 }
+console.log("[PASS] Zero raw hex colors outside index.css");

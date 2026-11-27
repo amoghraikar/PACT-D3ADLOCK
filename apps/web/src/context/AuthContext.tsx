@@ -1,136 +1,99 @@
-"use client";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { ROLES, type RoleName, type UserSummaryDTO } from "@pact/shared";
+import { getStoredToken, setStoredToken } from "@/lib/api";
+import { authService } from "@/lib/services";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { UserSummary, UserRole, OtpRequestResponse, AuthTokenResponse } from "@/types/auth";
-import { authService } from "@/services/auth.service";
-import { getAuthToken, setAuthToken } from "@/services/api-client";
-
-interface AuthContextType {
-  user: UserSummary | null;
-  token: string | null;
+interface AuthContextValue {
+  user: UserSummaryDTO | null;
   isLoading: boolean;
-  isAuthenticated: boolean;
-  role: UserRole | null;
-  requestOtp: (phone: string) => Promise<OtpRequestResponse>;
-  verifyOtp: (phone: string, otp: string) => Promise<AuthTokenResponse>;
+  setAuthenticatedSession: (token: string, user: UserSummaryDTO) => void;
+  refreshUser: () => Promise<UserSummaryDTO | null>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function homeForRole(role: RoleName): string {
+  switch (role) {
+    case ROLES.RETAILER:
+      return "/retailer";
+    case ROLES.COMMUNITY_ADMIN:
+      return "/admin";
+    case ROLES.PLATFORM_ADMIN:
+      return "/platform";
+    case ROLES.CUSTOMER:
+    default:
+      return "/customer";
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserSummary | null>(null);
-  const [token, setTokenState] = useState<string | null>(null);
+  const [user, setUser] = useState<UserSummaryDTO | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const refreshUser = useCallback(async () => {
-    const currentToken = getAuthToken();
-    if (!currentToken) {
-      setUser(null);
-      setTokenState(null);
-      setIsLoading(false);
-      return;
-    }
-
+  const refreshUser = useCallback(async (): Promise<UserSummaryDTO | null> => {
     try {
-      setTokenState(currentToken);
-      const currentUser = await authService.getCurrentUser();
-      setUser(currentUser);
+      const profile = await authService.me();
+      setUser(profile);
+      return profile;
     } catch {
       setUser(null);
-      setTokenState(null);
-      setAuthToken(null);
-    } finally {
-      setIsLoading(false);
+      setStoredToken(null);
+      return null;
     }
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const initAuth = async () => {
-      const currentToken = getAuthToken();
-      if (!currentToken) {
-        if (isMounted) setIsLoading(false);
+    let active = true;
+    async function init() {
+      const token = getStoredToken();
+      if (!token) {
+        if (active) setIsLoading(false);
         return;
       }
-
       try {
-        const currentUser = await authService.getCurrentUser();
-        if (isMounted) {
-          setTokenState(currentToken);
-          setUser(currentUser);
-        }
+        const profile = await authService.me();
+        if (active) setUser(profile);
       } catch {
-        if (isMounted) {
-          setUser(null);
-          setTokenState(null);
-          setAuthToken(null);
-        }
+        setStoredToken(null);
+        if (active) setUser(null);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (active) setIsLoading(false);
       }
-    };
-
-    void initAuth();
-
-    // Listen for unauthorized 401 events from api-client
-    const handleUnauthorized = () => {
-      setUser(null);
-      setTokenState(null);
-      setAuthToken(null);
-    };
-
-    window.addEventListener("pact:unauthorized", handleUnauthorized);
+    }
+    void init();
     return () => {
-      isMounted = false;
-      window.removeEventListener("pact:unauthorized", handleUnauthorized);
+      active = false;
     };
   }, []);
 
-  const requestOtp = async (phone: string): Promise<OtpRequestResponse> => {
-    return authService.requestOtp(phone);
-  };
+  const setAuthenticatedSession = useCallback((token: string, nextUser: UserSummaryDTO) => {
+    setStoredToken(token);
+    setUser(nextUser);
+  }, []);
 
-  const verifyOtp = async (phone: string, otp: string): Promise<AuthTokenResponse> => {
-    const result = await authService.verifyOtp(phone, otp);
-    setTokenState(result.access_token);
-    setUser(result.user);
-    return result;
-  };
-
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await authService.logout();
+    } catch {
+      // Ignore network errors during logout
     } finally {
+      setStoredToken(null);
       setUser(null);
-      setTokenState(null);
-      setAuthToken(null);
     }
-  };
+  }, []);
 
-  const value: AuthContextType = {
-    user,
-    token,
-    isLoading,
-    isAuthenticated: !!user && !!token,
-    role: user?.role || null,
-    requestOtp,
-    verifyOtp,
-    logout,
-    refreshUser,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{ user, isLoading, setAuthenticatedSession, refreshUser, logout }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
 }

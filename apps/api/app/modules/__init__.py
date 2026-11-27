@@ -1,3 +1,0 @@
-"""
-PACT Feature Modules package.
-"""

@@ -1,0 +1,23 @@
+{
+  "name": "pact-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n api,worker,web -c cyan,yellow,green \"npm --workspace=@pact/api run dev\" \"npm --workspace=@pact/api run worker:dev\" \"npm --workspace=@pact/web run dev\"",
+    "build": "npm --workspace=@pact/shared run build && npm --workspace=@pact/api run build && npm --workspace=@pact/web run build",
+    "test": "npm --workspace=@pact/shared run test && npm --workspace=@pact/api run test",
+    "typecheck": "npm --workspace=@pact/shared run typecheck && npm --workspace=@pact/api run typecheck && npm --workspace=@pact/web run typecheck",
+    "lint": "npm --workspace=@pact/web run lint",
+    "db:migrate": "npm --workspace=@pact/api run db:migrate",
+    "db:seed": "npm --workspace=@pact/api run db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.2",
+    "vitest": "^3.1.1"
+  }
+}

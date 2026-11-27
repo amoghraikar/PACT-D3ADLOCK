@@ -1,0 +1,689 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// Identity, Auth & RBAC
+// =============================================================================
+
+model Role {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @unique @db.VarChar(50)
+  description String? @db.VarChar(255)
+  users       User[]
+
+  @@map("roles")
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  phone     String   @unique @db.VarChar(20)
+  email     String?  @unique @db.VarChar(255)
+  fullName  String   @map("full_name") @db.VarChar(100)
+  roleId    String   @map("role_id") @db.Uuid
+  language  String   @default("en") @db.VarChar(10)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  role                   Role                     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  sessions               UserSession[]
+  memberships            CommunityMembership[]
+  retailerProfile        Retailer?
+  cartItems              CommunityCartItem[]
+  invoices               Invoice[]
+  payments               PaymentRecord[]
+  receivedHandovers      DeliveryHandover[]       @relation("HandoverRecipient")
+  completedHandovers     DeliveryHandover[]       @relation("HandoverActor")
+  notifications          Notification[]
+  notificationPreference NotificationPreference[]
+  auditLogs              AuditLog[]
+
+  @@index([roleId])
+  @@map("users")
+}
+
+model UserSession {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash String   @unique @map("token_hash") @db.VarChar(128)
+  userAgent String?  @map("user_agent") @db.VarChar(255)
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz()
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz()
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("user_sessions")
+}
+
+model OtpVerification {
+  id        String   @id @default(uuid()) @db.Uuid
+  phone     String   @db.VarChar(20)
+  otpHash   String   @map("otp_hash") @db.VarChar(128)
+  attempts  Int      @default(0)
+  isUsed    Boolean  @default(false) @map("is_used")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz()
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([phone, createdAt])
+  @@map("otp_verifications")
+}
+
+// =============================================================================
+// Communities, Apartments & Retailers
+// =============================================================================
+
+model Community {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @db.VarChar(150)
+  code       String   @unique @db.VarChar(30)
+  address    String
+  city       String   @default("Bengaluru") @db.VarChar(80)
+  postalCode String   @map("postal_code") @db.VarChar(20)
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  buildings            Building[]
+  apartments           Apartment[]
+  memberships          CommunityMembership[]
+  retailerAssociations RetailerCommunity[]
+  shoppingCycles       ShoppingCycle[]
+  cartItems            CommunityCartItem[]
+  bulkOrders           BulkOrder[]
+  retailerBills        RetailerBill[]
+  invoices             Invoice[]
+  deliveries           Delivery[]
+
+  @@map("communities")
+}
+
+model Building {
+  id          String   @id @default(uuid()) @db.Uuid
+  communityId String   @map("community_id") @db.Uuid
+  name        String   @db.VarChar(60)
+  totalFloors Int      @default(1) @map("total_floors")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  community  Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  apartments Apartment[]
+
+  @@unique([communityId, name])
+  @@index([communityId])
+  @@map("buildings")
+}
+
+model Apartment {
+  id          String  @id @default(uuid()) @db.Uuid
+  communityId String  @map("community_id") @db.Uuid
+  buildingId  String? @map("building_id") @db.Uuid
+  unitNumber  String  @map("unit_number") @db.VarChar(30)
+  floorNumber Int?    @map("floor_number")
+
+  community   Community             @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  building    Building?             @relation(fields: [buildingId], references: [id], onDelete: SetNull)
+  memberships CommunityMembership[]
+
+  @@unique([communityId, unitNumber])
+  @@index([communityId])
+  @@index([buildingId])
+  @@map("apartments")
+}
+
+model CommunityMembership {
+  id          String   @id @default(uuid()) @db.Uuid
+  communityId String   @map("community_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  apartmentId String?  @map("apartment_id") @db.Uuid
+  role        String   @default("resident") @db.VarChar(30)
+  isActive    Boolean  @default(true) @map("is_active")
+  joinedAt    DateTime @default(now()) @map("joined_at") @db.Timestamptz()
+
+  community Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apartment Apartment? @relation(fields: [apartmentId], references: [id], onDelete: SetNull)
+
+  @@unique([communityId, userId])
+  @@index([communityId])
+  @@index([userId])
+  @@map("community_memberships")
+}
+
+model Retailer {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @unique @map("user_id") @db.Uuid
+  storeName       String   @map("store_name") @db.VarChar(120)
+  businessAddress String   @map("business_address")
+  gstin           String?  @db.VarChar(30)
+  phone           String   @db.VarChar(20)
+  status          String   @default("active") @db.VarChar(20)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  communityAssociations RetailerCommunity[]
+  bulkOrders            BulkOrder[]
+  inventoryItems        InventoryItem[]
+  stockBatches          StockBatch[]
+  inventoryMovements    InventoryMovement[]
+  retailerBills         RetailerBill[]
+
+  @@index([storeName])
+  @@map("retailers")
+}
+
+model RetailerCommunity {
+  id               String   @id @default(uuid()) @db.Uuid
+  retailerId       String   @map("retailer_id") @db.Uuid
+  communityId      String   @map("community_id") @db.Uuid
+  isPrimary        Boolean  @default(true) @map("is_primary")
+  isActive         Boolean  @default(true) @map("is_active")
+  deliveryFeePaise Int      @default(0) @map("delivery_fee_paise")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  retailer  Retailer  @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([retailerId, communityId])
+  @@index([retailerId])
+  @@index([communityId])
+  @@map("retailer_communities")
+}
+
+// =============================================================================
+// Catalogue & Inventory
+// =============================================================================
+
+model Category {
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String    @db.VarChar(80)
+  slug         String    @unique @db.VarChar(80)
+  icon         String?   @db.VarChar(50)
+  displayOrder Int       @default(0) @map("display_order")
+  isActive     Boolean   @default(true) @map("is_active")
+  products     Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
+  categoryId  String   @map("category_id") @db.Uuid
+  title       String   @db.VarChar(150)
+  brand       String?  @db.VarChar(100)
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  category Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  variants ProductVariant[]
+  images   ProductImage[]
+
+  @@index([categoryId])
+  @@index([title])
+  @@map("products")
+}
+
+model ProductVariant {
+  id                String  @id @default(uuid()) @db.Uuid
+  productId         String  @map("product_id") @db.Uuid
+  sku               String  @unique @db.VarChar(60)
+  title             String  @db.VarChar(150)
+  unit              String  @db.VarChar(40)
+  packQuantity      Int     @default(1) @map("pack_quantity")
+  mrpPaise          Int     @map("mrp_paise")
+  defaultPricePaise Int     @map("default_price_paise")
+  isActive          Boolean @default(true) @map("is_active")
+
+  product            Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  inventoryItems     InventoryItem[]
+  stockBatches       StockBatch[]
+  inventoryMovements InventoryMovement[]
+  cartItems          CommunityCartItem[]
+  bulkOrderItems     BulkOrderItem[]
+  invoiceItems       InvoiceItem[]
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id           String  @id @default(uuid()) @db.Uuid
+  productId    String  @map("product_id") @db.Uuid
+  imageUrl     String  @map("image_url") @db.VarChar(500)
+  altText      String? @map("alt_text") @db.VarChar(200)
+  displayOrder Int     @default(0) @map("display_order")
+  isPrimary    Boolean @default(false) @map("is_primary")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model InventoryItem {
+  id               String   @id @default(uuid()) @db.Uuid
+  retailerId       String   @map("retailer_id") @db.Uuid
+  variantId        String   @map("variant_id") @db.Uuid
+  currentStockQty  Int      @default(0) @map("current_stock_qty")
+  reservedStockQty Int      @default(0) @map("reserved_stock_qty")
+  reorderLevelQty  Int      @default(15) @map("reorder_level_qty")
+  isActive         Boolean  @default(true) @map("is_active")
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  retailer Retailer       @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  variant  ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  @@unique([retailerId, variantId])
+  @@index([retailerId])
+  @@index([variantId])
+  @@map("inventory_items")
+}
+
+model StockBatch {
+  id             String    @id @default(uuid()) @db.Uuid
+  retailerId     String    @map("retailer_id") @db.Uuid
+  variantId      String    @map("variant_id") @db.Uuid
+  batchNumber    String    @map("batch_number") @db.VarChar(60)
+  inwardDate     DateTime  @default(now()) @map("inward_date") @db.Timestamptz()
+  expiryDate     DateTime? @map("expiry_date") @db.Timestamptz()
+  quantity       Int
+  costPricePaise Int       @map("cost_price_paise")
+  supplierName   String?   @map("supplier_name") @db.VarChar(120)
+
+  retailer       Retailer              @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  variant        ProductVariant        @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  packingRecords RetailerPackingItem[]
+
+  @@index([retailerId])
+  @@index([variantId])
+  @@map("stock_batches")
+}
+
+model InventoryMovement {
+  id            String   @id @default(uuid()) @db.Uuid
+  retailerId    String   @map("retailer_id") @db.Uuid
+  variantId     String   @map("variant_id") @db.Uuid
+  movementType  String   @map("movement_type") @db.VarChar(30)
+  quantityDelta Int      @map("quantity_delta")
+  referenceId   String?  @map("reference_id") @db.VarChar(80)
+  notes         String?  @db.VarChar(255)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  retailer Retailer       @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  variant  ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  @@index([retailerId])
+  @@index([variantId])
+  @@map("inventory_movements")
+}
+
+// =============================================================================
+// Cycles, Collective Cart & Bulk Orders
+// =============================================================================
+
+model ShoppingCycle {
+  id          String    @id @default(uuid()) @db.Uuid
+  communityId String    @map("community_id") @db.Uuid
+  cycleMonth  String    @map("cycle_month") @db.VarChar(7)
+  cutoffAt    DateTime  @map("cutoff_at") @db.Timestamptz()
+  status      String    @default("OPEN") @db.VarChar(20)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  closedAt    DateTime? @map("closed_at") @db.Timestamptz()
+
+  community  Community           @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  cartItems  CommunityCartItem[]
+  bulkOrders BulkOrder[]
+
+  @@unique([communityId, cycleMonth])
+  @@index([communityId])
+  @@index([status])
+  @@map("shopping_cycles")
+}
+
+model CommunityCartItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  cycleId     String   @map("cycle_id") @db.Uuid
+  communityId String   @map("community_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  variantId   String   @map("variant_id") @db.Uuid
+  quantity    Int
+  notes       String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  cycle     ShoppingCycle  @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  community Community      @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  @@unique([cycleId, userId, variantId])
+  @@index([cycleId])
+  @@index([communityId])
+  @@index([userId])
+  @@map("community_cart_items")
+}
+
+model BulkOrder {
+  id                  String    @id @default(uuid()) @db.Uuid
+  cycleId             String    @map("cycle_id") @db.Uuid
+  communityId         String    @map("community_id") @db.Uuid
+  retailerId          String    @map("retailer_id") @db.Uuid
+  orderNumber         String    @unique @map("order_number") @db.VarChar(60)
+  status              String    @default("PENDING") @db.VarChar(30)
+  totalRequestedItems Int       @default(0) @map("total_requested_items")
+  totalPackedItems    Int       @default(0) @map("total_packed_items")
+  subtotalPaise       Int       @default(0) @map("subtotal_paise")
+  discountPaise       Int       @default(0) @map("discount_paise")
+  deliveryFeePaise    Int       @default(0) @map("delivery_fee_paise")
+  totalPaise          Int       @default(0) @map("total_paise")
+  placedAt            DateTime  @default(now()) @map("placed_at") @db.Timestamptz()
+  lockedAt            DateTime? @map("locked_at") @db.Timestamptz()
+  dispatchedAt        DateTime? @map("dispatched_at") @db.Timestamptz()
+  deliveredAt         DateTime? @map("delivered_at") @db.Timestamptz()
+
+  cycle        ShoppingCycle   @relation(fields: [cycleId], references: [id], onDelete: Restrict)
+  community    Community       @relation(fields: [communityId], references: [id], onDelete: Restrict)
+  retailer     Retailer        @relation(fields: [retailerId], references: [id], onDelete: Restrict)
+  items        BulkOrderItem[]
+  retailerBill RetailerBill?
+  invoices     Invoice[]
+  delivery     Delivery?
+
+  @@unique([cycleId, communityId])
+  @@index([retailerId])
+  @@index([status])
+  @@map("bulk_orders")
+}
+
+model BulkOrderItem {
+  id            String @id @default(uuid()) @db.Uuid
+  bulkOrderId   String @map("bulk_order_id") @db.Uuid
+  variantId     String @map("variant_id") @db.Uuid
+  requestedQty  Int    @map("requested_qty")
+  packedQty     Int    @default(0) @map("packed_qty")
+  unitPricePaise Int   @map("unit_price_paise")
+  subtotalPaise Int    @map("subtotal_paise")
+  isUnavailable Boolean @default(false) @map("is_unavailable")
+
+  bulkOrder      BulkOrder             @relation(fields: [bulkOrderId], references: [id], onDelete: Cascade)
+  variant        ProductVariant        @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  packingRecords RetailerPackingItem[]
+
+  @@unique([bulkOrderId, variantId])
+  @@index([bulkOrderId])
+  @@map("bulk_order_items")
+}
+
+model RetailerPackingItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  bulkOrderItemId String   @map("bulk_order_item_id") @db.Uuid
+  batchId         String?  @map("batch_id") @db.Uuid
+  packedQty       Int      @map("packed_qty")
+  notes           String?  @db.VarChar(255)
+  packedAt        DateTime @default(now()) @map("packed_at") @db.Timestamptz()
+
+  bulkOrderItem BulkOrderItem @relation(fields: [bulkOrderItemId], references: [id], onDelete: Cascade)
+  batch         StockBatch?   @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
+  @@index([bulkOrderItemId])
+  @@map("retailer_packing_items")
+}
+
+// =============================================================================
+// F7 Billing, Invoices & Payments
+// =============================================================================
+
+model RetailerBill {
+  id                  String    @id @default(uuid()) @db.Uuid
+  bulkOrderId         String    @unique @map("bulk_order_id") @db.Uuid
+  retailerId          String    @map("retailer_id") @db.Uuid
+  communityId         String    @map("community_id") @db.Uuid
+  billNumber          String    @unique @map("bill_number") @db.VarChar(60)
+  grossAmountPaise    Int       @map("gross_amount_paise")
+  discountAmountPaise Int       @default(0) @map("discount_amount_paise")
+  deliveryAmountPaise Int       @default(0) @map("delivery_amount_paise")
+  netAmountPaise      Int       @map("net_amount_paise")
+  status              String    @default("finalized") @db.VarChar(30)
+  issuedAt            DateTime  @default(now()) @map("issued_at") @db.Timestamptz()
+  finalizedAt         DateTime? @map("finalized_at") @db.Timestamptz()
+
+  bulkOrder BulkOrder @relation(fields: [bulkOrderId], references: [id], onDelete: Restrict)
+  retailer  Retailer  @relation(fields: [retailerId], references: [id], onDelete: Restrict)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Restrict)
+
+  @@index([retailerId])
+  @@map("retailer_bills")
+}
+
+model Invoice {
+  id                  String    @id @default(uuid()) @db.Uuid
+  bulkOrderId         String    @map("bulk_order_id") @db.Uuid
+  userId              String    @map("user_id") @db.Uuid
+  communityId         String    @map("community_id") @db.Uuid
+  invoiceNumber       String    @unique @map("invoice_number") @db.VarChar(60)
+  baseAmountPaise     Int       @map("base_amount_paise")
+  discountAmountPaise Int       @default(0) @map("discount_amount_paise")
+  deliveryFeePaise    Int       @default(0) @map("delivery_fee_paise")
+  totalAmountPaise    Int       @map("total_amount_paise")
+  paidAmountPaise     Int       @default(0) @map("paid_amount_paise")
+  status              String    @default("unpaid") @db.VarChar(30)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  paidAt              DateTime? @map("paid_at") @db.Timestamptz()
+
+  bulkOrder         BulkOrder            @relation(fields: [bulkOrderId], references: [id], onDelete: Restrict)
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  community         Community            @relation(fields: [communityId], references: [id], onDelete: Restrict)
+  items             InvoiceItem[]
+  discounts         DiscountAllocation[]
+  payments          PaymentRecord[]
+  refunds           Refund[]
+  deliveryHandovers DeliveryHandover[]
+
+  @@unique([bulkOrderId, userId])
+  @@index([userId])
+  @@index([communityId])
+  @@index([status])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id             String @id @default(uuid()) @db.Uuid
+  invoiceId      String @map("invoice_id") @db.Uuid
+  variantId      String @map("variant_id") @db.Uuid
+  requestedQty   Int    @map("requested_qty")
+  packedQty      Int    @map("packed_qty")
+  unitPricePaise Int    @map("unit_price_paise")
+  lineTotalPaise Int    @map("line_total_paise")
+
+  invoice Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model DiscountAllocation {
+  id           String  @id @default(uuid()) @db.Uuid
+  invoiceId    String  @map("invoice_id") @db.Uuid
+  discountType String  @map("discount_type") @db.VarChar(50)
+  amountPaise  Int     @map("amount_paise")
+  description  String? @db.VarChar(200)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("discount_allocations")
+}
+
+model PaymentRecord {
+  id             String   @id @default(uuid()) @db.Uuid
+  invoiceId      String   @map("invoice_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  amountPaise    Int      @map("amount_paise")
+  gateway        String   @default("mock") @db.VarChar(40)
+  transactionId  String?  @unique @map("transaction_id") @db.VarChar(100)
+  gatewayOrderId String?  @map("gateway_order_id") @db.VarChar(100)
+  status         String   @default("initiated") @db.VarChar(30)
+  recordedAt     DateTime @default(now()) @map("recorded_at") @db.Timestamptz()
+
+  invoice Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  refunds Refund[]
+
+  @@index([invoiceId])
+  @@index([gatewayOrderId])
+  @@map("payment_records")
+}
+
+model Refund {
+  id              String    @id @default(uuid()) @db.Uuid
+  paymentRecordId String    @map("payment_record_id") @db.Uuid
+  invoiceId       String    @map("invoice_id") @db.Uuid
+  amountPaise     Int       @map("amount_paise")
+  reason          String    @db.VarChar(255)
+  status          String    @default("completed") @db.VarChar(30)
+  initiatedAt     DateTime  @default(now()) @map("initiated_at") @db.Timestamptz()
+  completedAt     DateTime? @map("completed_at") @db.Timestamptz()
+
+  payment PaymentRecord @relation(fields: [paymentRecordId], references: [id], onDelete: Restrict)
+  invoice Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@index([paymentRecordId])
+  @@index([invoiceId])
+  @@map("refunds")
+}
+
+// =============================================================================
+// Deliveries & Handovers
+// =============================================================================
+
+model Delivery {
+  id            String    @id @default(uuid()) @db.Uuid
+  bulkOrderId   String    @unique @map("bulk_order_id") @db.Uuid
+  communityId   String    @map("community_id") @db.Uuid
+  status        String    @default("scheduled") @db.VarChar(30)
+  dispatchedAt  DateTime? @map("dispatched_at") @db.Timestamptz()
+  arrivedAtGate DateTime? @map("arrived_at_gate") @db.Timestamptz()
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz()
+
+  bulkOrder BulkOrder          @relation(fields: [bulkOrderId], references: [id], onDelete: Restrict)
+  community Community          @relation(fields: [communityId], references: [id], onDelete: Restrict)
+  handovers DeliveryHandover[]
+
+  @@index([communityId])
+  @@map("deliveries")
+}
+
+model DeliveryHandover {
+  id                 String    @id @default(uuid()) @db.Uuid
+  deliveryId         String    @map("delivery_id") @db.Uuid
+  invoiceId          String    @unique @map("invoice_id") @db.Uuid
+  recipientUserId    String    @map("recipient_user_id") @db.Uuid
+  handedOverByUserId String?   @map("handed_over_by_user_id") @db.Uuid
+  status             String    @default("pending") @db.VarChar(30)
+  handoverTimestamp  DateTime? @map("handover_timestamp") @db.Timestamptz()
+  notes              String?
+
+  delivery     Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  invoice      Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  recipient    User     @relation("HandoverRecipient", fields: [recipientUserId], references: [id], onDelete: Restrict)
+  handedOverBy User?    @relation("HandoverActor", fields: [handedOverByUserId], references: [id], onDelete: SetNull)
+
+  @@index([deliveryId])
+  @@map("delivery_handovers")
+}
+
+// =============================================================================
+// Notifications, Audit Trail, Outbox & Platform Settings
+// =============================================================================
+
+model Notification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  title     String    @db.VarChar(120)
+  message   String
+  kind      String    @default("general") @db.VarChar(40)
+  isRead    Boolean   @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at") @db.Timestamptz()
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id      String  @id @default(uuid()) @db.Uuid
+  userId  String  @map("user_id") @db.Uuid
+  channel String  @db.VarChar(30)
+  enabled Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, channel])
+  @@map("notification_preferences")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String?  @map("user_id") @db.Uuid
+  action       String   @db.VarChar(80)
+  entityType   String   @map("entity_type") @db.VarChar(60)
+  entityId     String   @map("entity_id") @db.VarChar(80)
+  payloadAfter String?  @map("payload_after")
+  ipAddress    String?  @map("ip_address") @db.VarChar(45)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model OutboxEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  eventType   String    @map("event_type") @db.VarChar(80)
+  payload     String
+  attempts    Int       @default(0)
+  lastError   String?   @map("last_error")
+  isProcessed Boolean   @default(false) @map("is_processed")
+  processedAt DateTime? @map("processed_at") @db.Timestamptz()
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([isProcessed, createdAt])
+  @@map("outbox_events")
+}
+
+model IdempotencyRecord {
+  id             String   @id @default(uuid()) @db.Uuid
+  idempotencyKey String   @unique @map("idempotency_key") @db.VarChar(128)
+  requestPath    String   @map("request_path") @db.VarChar(255)
+  responseCode   Int      @map("response_code")
+  responseBody   String   @map("response_body")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  expiresAt      DateTime @map("expires_at") @db.Timestamptz()
+
+  @@map("idempotency_records")
+}
+
+model PlatformConfig {
+  key       String   @id @db.VarChar(80)
+  value     String   @db.VarChar(255)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("platform_configs")
+}
